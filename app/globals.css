@@ -63,4 +63,14 @@ a { color: inherit; text-decoration: none; }
   .module-card::before { background: #24223a; }
   .motion-button { background: #101014; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.module-card { appearance: none; color: inherit; cursor: pointer; }
+.module-card.is-selected { animation: card-dissolve .72s cubic-bezier(.4,0,.2,1) forwards; pointer-events: none; }
+.is-transitioning .module-card:not(.is-selected) { animation: fade-away .42s ease forwards; }
+.particle-field { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.particle-field i { --angle: calc(var(--i) * 20deg); position: absolute; left: 50%; top: 48%; width: 3px; height: 3px; border-radius: 50%; background: var(--foreground); box-shadow: 0 0 8px var(--accent); animation: particle-burst .78s ease-out forwards; animation-delay: calc(var(--i) * 18ms); }
+.module-seal { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; background: #000; color: #f1f0ed; font-size: clamp(2.6rem, 12vw, 6rem); font-weight: 300; letter-spacing: .18em; animation: seal-in 1.2s ease both; }
+@keyframes card-dissolve { 0% { opacity: 1; filter: none; transform: scale(1); } 55% { opacity: .7; filter: blur(2px); transform: scale(.98); } 100% { opacity: 0; filter: blur(10px); transform: scale(1.06); } }
+@keyframes fade-away { to { opacity: 0; filter: blur(5px); transform: scale(.97); } }
+@keyframes particle-burst { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + cos(var(--angle)) * 150px), calc(-50% + sin(var(--angle)) * 150px)) scale(0); } }
+@keyframes seal-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } .module-seal { animation: none; } }
