@@ -152,3 +152,24 @@ a { color: inherit; text-decoration: none; }
 .book-back-cover p { color: var(--muted); font-size: .8rem; }
 @media (prefers-reduced-transparency: reduce) { .book-menu-button, .book-tools { background: #17162a; backdrop-filter: none; -webkit-backdrop-filter: none; } }
 @media (max-width: 600px) { .book-audio-dock { top: 3.2rem; width: min(250px, 72vw); } .book-stage { flex: 1; min-height: 0; padding-top: 5.2rem; padding-bottom: 0; align-items: center; } .starlight-flipbook { max-height: calc(100svh - 150px); } .book-header-title { display: none; } .book-back { margin-left: auto; } .book-instruction { margin: .5rem 0 0; font-size: .55rem; } }
+
+/* Compact, physical-feeling single-sheet book */
+.book-frame { width: min(430px, calc(100vw - 2rem)); height: min(600px, calc(100svh - 174px)); min-height: 360px; perspective: 1400px; touch-action: pan-y; filter: drop-shadow(0 24px 45px rgba(0,0,0,.5)); }
+.book-frame .book-face { width: 100%; height: 100%; animation: sheet-next .38s ease both; }
+.book-frame.prev .book-face { animation-name: sheet-prev; }
+.book-frame .book-cover, .book-frame .book-back-cover { background: linear-gradient(135deg, #15151a, #050507); }
+.cover-title { margin: auto 0; text-align: center; }
+.cover-title h1 { font-size: clamp(3.2rem, 14vw, 6rem); }
+.cover-title p { margin: 0; color: var(--accent); font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; }
+.book-entry { gap: .55rem; padding: .75rem; }
+.book-entry .book-video { flex: 0 0 42%; min-height: 0; }
+.book-entry .book-copy { min-height: 0; overflow: hidden; }
+.book-entry .book-copy h2 { margin: .35rem 0 .45rem; font-size: clamp(1.25rem, 5vw, 2rem); }
+.book-entry .poem { margin: 0; font-size: .82rem; line-height: 1.45; }
+.book-controls { display: flex; align-items: center; justify-content: center; gap: 1.25rem; color: var(--muted); font: .6rem var(--font-mono); letter-spacing: .1em; }
+.book-controls button { border: 1px solid var(--border); border-radius: 999px; width: 2rem; height: 2rem; background: rgba(35,30,72,.25); color: var(--foreground); cursor: pointer; }
+.book-controls button:disabled { opacity: .3; cursor: not-allowed; }
+@keyframes sheet-next { from { opacity: .4; transform: rotateY(-12deg) translateX(8px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-prev { from { opacity: .4; transform: rotateY(12deg) translateX(-8px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) { .book-frame { width: calc(100vw - 2rem); height: calc(100svh - 174px); max-height: 430px; min-height: 0; } .book-controls { margin-top: .35rem; } }
+@media (prefers-reduced-motion: reduce) { .book-frame .book-face { animation: none; } }
