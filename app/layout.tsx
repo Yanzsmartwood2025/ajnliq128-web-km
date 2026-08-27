@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'FUEGO — Choose your frequency',
-  description: 'A constellation of voices. Enter the world of Aria and Joziel.',
+  title: 'AJNLIQ128 — FUEGO',
+  description: 'Enter the AJNLIQ128 constellation.',
   generator: 'FUEGO',
   icons: {
     icon: [
