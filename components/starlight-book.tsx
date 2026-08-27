@@ -1,7 +1,7 @@
 'use client'
 
 import HTMLFlipBook from 'react-pageflip'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export type StarlightEntry = { videoUrl: string; title: string; poem: string; audioUrl: string }
 
@@ -18,7 +18,22 @@ function EntryPage({ entry, page }: { entry: StarlightEntry; page: number }) { r
 
 export function StarlightBook() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(true)
+  const [viewport, setViewport] = useState({ width: 360, height: 640 })
   const pages = useMemo(() => [<Cover key="cover" />, ...entries.map((entry, i) => <EntryPage key={i} entry={entry} page={i + 1} />), <BackCover key="back" />], [])
 
-  return <main className="book-shell"><video className="book-video-background" autoPlay loop muted playsInline aria-hidden="true"><source src="/starlight-background.mp4" type="video/mp4" /></video><div className="book-video-overlay" /><header className="book-header"><button className="book-menu-button" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen}><span className="book-menu-icon"><i /><i /><i /></span><span className="sr-only">Abrir herramientas</span></button><a href="/aria" className="book-close" aria-label="Cerrar libro">×</a><div className="book-audio-dock"><span className="book-audio-label">AUDIOBOOK / MY MUSIC</span><audio controls preload="none" /></div></header>{menuOpen && <aside className="book-tools"><span className="book-kicker">YOUR CONSTELLATION</span><a href="/login">Iniciar sesión</a><a href="/registro">Crear cuenta</a><button type="button" onClick={() => setMenuOpen(false)}>Cerrar bandeja</button></aside>}<section className="book-stage"><HTMLFlipBook width={360} height={520} size="stretch" minWidth={280} maxWidth={520} minHeight={420} maxHeight={760} drawShadow showCover mobileScrollSupport useMouseEvents usePortrait maxShadowOpacity={0.65} className="book-flip" startPage={0}>{pages.map((page, index) => <div key={index} className="book-page-wrapper">{page}</div>)}</HTMLFlipBook></section><p className="book-instruction">Arrastra cualquier borde o esquina para pasar la hoja</p></main>
+  useEffect(() => {
+    const updateLayout = () => {
+      setViewport({ width: window.innerWidth, height: window.innerHeight })
+      setIsMobile(window.innerWidth < 768)
+    }
+    updateLayout()
+    window.addEventListener('resize', updateLayout)
+    return () => window.removeEventListener('resize', updateLayout)
+  }, [])
+
+  const width = isMobile ? Math.max(280, Math.min(viewport.width - 32, 430)) : Math.min(560, Math.max(420, Math.floor((viewport.width - 120) / 2)))
+  const height = isMobile ? Math.max(400, Math.min(viewport.height - 166, 610)) : Math.min(720, Math.max(560, viewport.height - 150))
+
+  return <main className="book-shell"><video className="book-video-background" autoPlay loop muted playsInline aria-hidden="true"><source src="/starlight-background.mp4" type="video/mp4" /></video><div className="book-video-overlay" /><header className="book-header"><button className="book-menu-button" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen}><span className="book-menu-icon"><i /><i /><i /></span><span className="sr-only">Abrir herramientas</span></button><div className="book-header-title">STARLIGHT LOG · ARIA</div><a href="/aria" className="book-close" aria-label="Cerrar libro">×</a><div className="book-audio-dock"><span className="book-audio-label">AUDIOBOOK / MY MUSIC</span><audio controls preload="none" /></div></header>{menuOpen && <aside className="book-tools"><span className="book-kicker">YOUR CONSTELLATION</span><a href="/login">Iniciar sesión</a><a href="/registro">Crear cuenta</a><button type="button" onClick={() => setMenuOpen(false)}>Cerrar bandeja</button></aside>}<section className="book-stage"><HTMLFlipBook key={isMobile ? 'single' : 'double'} width={width} height={height} size="stretch" minWidth={280} maxWidth={560} minHeight={400} maxHeight={720} drawShadow showCover mobileScrollSupport={false} useMouseEvents usePortrait={isMobile} maxShadowOpacity={0.65} className="starlight-flipbook">{pages.map((page, index) => <div key={index} className="book-page-wrapper">{page}</div>)}</HTMLFlipBook></section><p className="book-instruction">Desliza o arrastra cualquier esquina para pasar la hoja</p></main>
 }
