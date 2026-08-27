@@ -190,8 +190,8 @@ a { color: inherit; text-decoration: none; }
   .book-audio-dock { top: 50%; width: min(190px, 52vw); transform: translate(-50%, -50%); }
   .book-audio-label { font-size: .42rem; }
   .book-audio-dock audio { height: 1.45rem; }
-  .book-stage { flex: 1; padding: 3.7rem 0 0; align-items: flex-start; }
-  .starlight-flipbook { width: calc(100vw - 1rem) !important; height: calc(100svh - 4.2rem) !important; }
+  .book-stage { flex: 1; padding: 5rem 0 0; align-items: flex-start; }
+  .starlight-flipbook { width: calc(100vw - 1rem) !important; height: calc(100svh - 5.5rem) !important; }
   .book-entry { padding: .6rem; }
   .book-entry .book-video { flex-basis: 36%; }
   .book-entry .book-copy h2 { font-size: 1.2rem; }
