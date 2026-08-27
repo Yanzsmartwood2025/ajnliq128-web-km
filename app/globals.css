@@ -21,10 +21,17 @@ a { color: inherit; text-decoration: none; }
 .auth-page { min-height: 100svh; display: grid; place-items: center; padding: 6rem 1.25rem 2rem; }
 .auth-panel { width: min(430px, 100%); padding: clamp(1.5rem, 6vw, 3rem); border: 1px solid rgba(241,240,237,.25); border-radius: var(--radius); background: rgba(16,16,20,.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 24px 80px rgba(0,0,0,.35); }
 .auth-back, .auth-kicker, .auth-lede, .auth-switch { color: var(--muted); }
-.auth-back { display: inline-block; margin-bottom: 2.5rem; font-size: .72rem; }
-.auth-kicker { margin: 0 0 1rem; font: .65rem var(--font-mono); letter-spacing: .14em; }
+.auth-panel-topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2.5rem; }
+.auth-back { display: inline-block; color: var(--muted); font-size: .72rem; transition: color .2s; }
+.auth-back:hover { color: var(--foreground); }
+.auth-kicker { margin: 0; font: .65rem var(--font-mono); letter-spacing: .14em; }
 .auth-panel h1 { margin: 0; font-size: clamp(2rem, 8vw, 3.25rem); font-weight: 300; letter-spacing: -.05em; }
 .auth-lede { margin: .75rem 0 2rem; line-height: 1.5; }
+.google-auth-button { width: 100%; display: flex; align-items: center; justify-content: center; gap: .7rem; border: 1px solid rgba(60,64,67,.35); border-radius: .7rem; padding: .78rem 1rem; background: #fff; color: #202124; cursor: pointer; font-size: .85rem; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: background .2s, box-shadow .2s; }
+.google-auth-button:hover { background: #f8fafd; box-shadow: 0 2px 5px rgba(0,0,0,.28); }
+.google-icon { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; }
+.auth-divider { display: flex; align-items: center; gap: .75rem; margin: 1.15rem 0; color: var(--muted); font-size: .7rem; letter-spacing: .08em; }
+.auth-divider::before, .auth-divider::after { content: ''; height: 1px; flex: 1; background: rgba(241,240,237,.18); }
 .auth-form { display: grid; gap: 1rem; }
 .auth-form label { display: grid; gap: .45rem; color: var(--muted); font-size: .75rem; letter-spacing: .04em; }
 .auth-form input { width: 100%; border: 1px solid rgba(241,240,237,.2); border-radius: .7rem; padding: .8rem .85rem; outline: none; background: rgba(8,10,24,.5); color: var(--foreground); transition: border-color .2s, background .2s; }
