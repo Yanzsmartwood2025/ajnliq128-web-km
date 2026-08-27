@@ -128,3 +128,21 @@ a { color: inherit; text-decoration: none; }
 .book-note { margin: .45rem 0 0; font-size: .55rem; letter-spacing: .06em; }
 .book-instruction { margin: 1rem 0 0; color: var(--muted); text-align: center; font: .62rem var(--font-mono); letter-spacing: .08em; }
 @media (max-width: 600px) { .book-stage { padding-top: 3rem; } .book-header span:last-child { display: none; } }
+
+.book-header { position: relative; min-height: 3rem; gap: .7rem; }
+.book-menu-button { display: grid; place-items: center; width: 2.7rem; height: 2.7rem; border: 1px solid rgba(241,240,237,.25); border-radius: 999px; background: rgba(35,30,72,.16); color: var(--foreground); cursor: pointer; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.book-menu-icon { display: grid; gap: 4px; width: 1.1rem; }
+.book-menu-icon i { display: block; height: 1px; background: currentColor; }
+.book-audio-dock { position: absolute; left: 50%; top: 0; display: grid; gap: .2rem; width: min(300px, 58vw); transform: translateX(-50%); text-align: center; }
+.book-audio-label { color: var(--muted); font: .5rem var(--font-mono); letter-spacing: .1em; white-space: nowrap; }
+.book-audio-dock audio { width: 100%; height: 1.8rem; opacity: .9; }
+.book-header-title { margin-left: auto; }
+.book-tools { position: fixed; top: 4.8rem; left: clamp(1rem, 5vw, 5rem); z-index: 12; display: grid; gap: .75rem; width: min(250px, calc(100vw - 2rem)); padding: 1.2rem; border: 1px solid rgba(241,240,237,.25); border-radius: 1rem; background: rgba(16,16,20,.84); box-shadow: 0 20px 55px rgba(0,0,0,.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.book-tools a, .book-tools button { border: 1px solid rgba(241,240,237,.16); border-radius: .65rem; padding: .7rem .8rem; background: rgba(35,30,72,.22); color: var(--foreground); text-align: left; cursor: pointer; font-size: .75rem; }
+.book-tools a:hover, .book-tools button:hover { border-color: rgba(241,240,237,.45); }
+.book-tools button { color: var(--muted); }
+.book-back-cover { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 3rem 2rem; background: radial-gradient(circle at 50% 45%, rgba(79,64,113,.22), transparent 42%), #101014; text-align: center; }
+.book-back-cover strong { display: block; font-size: 2rem; font-weight: 300; letter-spacing: .18em; }
+.book-back-cover p { color: var(--muted); font-size: .8rem; }
+@media (prefers-reduced-transparency: reduce) { .book-menu-button, .book-tools { background: #17162a; backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (max-width: 600px) { .book-audio-dock { top: 3.4rem; width: min(280px, 76vw); } .book-stage { padding-top: 5.5rem; } .book-header-title { display: none; } .book-back { margin-left: auto; } }

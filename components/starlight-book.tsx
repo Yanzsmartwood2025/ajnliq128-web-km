@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import HTMLFlipBook from 'react-pageflip'
 
 export type StarlightEntry = {
@@ -25,8 +25,16 @@ export const starlightEntries: StarlightEntry[] = [
   },
 ]
 
+function MenuIcon() {
+  return <span className="book-menu-icon" aria-hidden="true"><i /><i /><i /></span>
+}
+
 function Cover() {
   return <article className="book-page book-cover"><span className="book-kicker">ARIA / DIGITAL EDITION</span><h1>Starlight<br />Log</h1><p>A field recording of the spaces between signal and soul.</p><span className="book-cover-mark">AJNLIQ128</span></article>
+}
+
+function BackCover() {
+  return <article className="book-page book-back-cover"><span className="book-cover-mark">AJNLIQ128</span><div><strong>THE END</strong><p>Keep a light for the spaces between.</p></div><span className="book-kicker">ARIA / DIGITAL EDITION</span></article>
 }
 
 function EntryPage({ entry, index }: { entry: StarlightEntry; index: number }) {
@@ -35,5 +43,17 @@ function EntryPage({ entry, index }: { entry: StarlightEntry; index: number }) {
 
 export function StarlightBook() {
   const bookRef = useRef<unknown>(null)
-  return <main className="book-shell"><header className="book-header"><a href="/aria" className="book-back">← ARIA</a><span>ST★RLIGHT LOG</span><span>01 / 06</span></header><section className="book-stage"><HTMLFlipBook ref={bookRef} width={430} height={600} size="stretch" minWidth={280} maxWidth={520} minHeight={420} maxHeight={700} showCover={true} mobileScrollSupport={true} useMouseEvents={true} className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={0} drawShadow={true} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={true} maxShadowOpacity={0.32} showPageCorners={true} disableFlipByClick={false}><Cover />{starlightEntries.map((entry, index) => <EntryPage key={entry.title} entry={entry} index={index} />)}</HTMLFlipBook></section><p className="book-instruction">Arrastra una esquina para pasar la página</p></main>
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  return <main className="book-shell">
+    <header className="book-header">
+      <button className="book-menu-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-controls="book-tools"><MenuIcon /><span className="sr-only">Abrir herramientas</span></button>
+      <a href="/aria" className="book-back">← ARIA</a>
+      <div className="book-audio-dock"><span className="book-audio-label">AUDIOBOOK / MY MUSIC</span><audio controls preload="none" src="https://cdn.example.com/starlight-log/playlist.mp3"><span>Your browser does not support audio playback.</span></audio></div>
+      <span className="book-header-title">ST★RLIGHT LOG</span>
+    </header>
+    {menuOpen && <aside id="book-tools" className="book-tools" aria-label="Herramientas del libro"><span className="book-kicker">YOUR CONSTELLATION</span><a href="/login">Iniciar sesión</a><a href="/registro">Crear cuenta</a><button type="button" onClick={() => setMenuOpen(false)}>Cerrar bandeja</button></aside>}
+    <section className="book-stage"><HTMLFlipBook ref={bookRef} width={430} height={600} size="stretch" minWidth={280} maxWidth={520} minHeight={420} maxHeight={700} showCover={true} mobileScrollSupport={true} useMouseEvents={true} className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={0} drawShadow={true} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={true} maxShadowOpacity={0.32} showPageCorners={true} disableFlipByClick={false}><Cover />{starlightEntries.map((entry, index) => <EntryPage key={entry.title} entry={entry} index={index} />)}<BackCover /></HTMLFlipBook></section>
+    <p className="book-instruction">Desliza o arrastra una esquina para pasar la página</p>
+  </main>
 }
