@@ -52,7 +52,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 }
 
 export function LoginHeader() {
-  return <Link href="/login" className="login-button">Iniciar sesión</Link>
+  return (
+    <Link href="/login" className="login-button" aria-label="Iniciar sesión" title="Iniciar sesión">
+      <svg className="login-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5.5 20c.65-3.15 2.85-5 6.5-5s5.85 1.85 6.5 5" />
+      </svg>
+    </Link>
+  )
 }
 
 export function SiteHeader() {
