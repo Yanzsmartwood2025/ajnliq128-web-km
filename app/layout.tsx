@@ -1,11 +1,12 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { GalaxyBackground } from '@/components/galaxy-background'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'FUEGO — Choose your frequency',
+  description: 'A constellation of voices. Enter the world of Aria and Joziel.',
+  generator: 'FUEGO',
   icons: {
     icon: [
       {
@@ -39,8 +40,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es" className="bg-background">
       <body className="antialiased">
+        <GalaxyBackground />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
