@@ -1,7 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { GalaxyBackground } from '@/components/galaxy-background'
 
 export const metadata: Metadata = {
   title: 'FUEGO — Choose your frequency',
@@ -42,7 +41,6 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background">
       <body className="antialiased">
-        <GalaxyBackground />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

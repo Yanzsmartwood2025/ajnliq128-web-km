@@ -16,11 +16,11 @@ export function GalaxyBackground() {
     }
     const orientation = typeof DeviceOrientationEvent !== 'undefined' ? DeviceOrientationEvent : undefined
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    const requiresPermission = Boolean(orientation && 'requestPermission' in orientation)
+    const requestPermission = orientation && 'requestPermission' in orientation && typeof orientation.requestPermission === 'function'
 
     window.addEventListener('pointermove', onPointer, { passive: true })
-    if (isIOS && requiresPermission) setNeedsPermission(true)
-    if (!requiresPermission) window.addEventListener('deviceorientation', onMove)
+    if (isIOS && requestPermission) setNeedsPermission(true)
+    if (!requestPermission) window.addEventListener('deviceorientation', onMove, { passive: true })
     return () => {
       window.removeEventListener('pointermove', onPointer)
       window.removeEventListener('deviceorientation', onMove)
@@ -29,15 +29,20 @@ export function GalaxyBackground() {
 
   async function enableMotion() {
     try {
-      const permission = await (DeviceOrientationEvent as typeof DeviceOrientationEvent & { requestPermission: () => Promise<string> }).requestPermission()
+      const requestPermission = (DeviceOrientationEvent as typeof DeviceOrientationEvent & { requestPermission: () => Promise<string> }).requestPermission
+      const permission = await requestPermission()
       if (permission === 'granted') {
-        window.addEventListener('deviceorientation', (event) => setOffset({ x: (event.gamma ?? 0) * 0.18, y: (event.beta ?? 0) * 0.08 }), { passive: true })
+        window.addEventListener('deviceorientation', onOrientation, { passive: true })
         setMotionReady(true)
         setNeedsPermission(false)
       }
     } catch {
       setNeedsPermission(false)
     }
+  }
+
+  function onOrientation(event: DeviceOrientationEvent) {
+    setOffset({ x: (event.gamma ?? 0) * 0.18, y: (event.beta ?? 0) * 0.08 })
   }
 
   return <>
