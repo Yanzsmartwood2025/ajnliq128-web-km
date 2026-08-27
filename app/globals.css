@@ -19,7 +19,7 @@ a { color: inherit; text-decoration: none; }
 .stars { position: absolute; inset: -10%; background-image: radial-gradient(circle, rgba(255,255,255,.72) 0 1px, transparent 1.5px), radial-gradient(circle, rgba(214,198,213,.55) 0 1px, transparent 1.5px); background-size: 91px 107px, 173px 149px; background-position: 12px 33px, 60px 10px; opacity: .55; transition: transform .7s ease-out; }
 .stars-two { background-size: 137px 181px, 227px 211px; opacity: .25; filter: blur(.4px); }
 .galaxy-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 25%, rgba(5,5,7,.76) 100%); }
-.motion-button { position: fixed; right: 1rem; bottom: 1rem; pointer-events: auto; border: 1px solid var(--border); border-radius: 999px; padding: .6rem .9rem; background: rgba(16,16,20,.72); color: var(--muted); font-size: .72rem; letter-spacing: .04em; }
+.motion-button { position: fixed; right: 1rem; bottom: 1rem; z-index: 2; pointer-events: auto; border: 1px solid var(--border); border-radius: 999px; padding: .6rem .9rem; background: rgba(16,16,20,.72); color: var(--muted); font-size: .72rem; letter-spacing: .04em; }
 .home, .hub { min-height: 100svh; padding: 2rem clamp(1.25rem, 5vw, 5rem); }
 .home { display: flex; align-items: center; justify-content: center; }
 .splash { position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem; background: #000; color: white; font-size: .8rem; letter-spacing: .65em; transition: opacity .8s ease, visibility .8s; }
@@ -30,8 +30,10 @@ a { color: inherit; text-decoration: none; }
 .eyebrow { color: var(--muted); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; }
 h1 { margin: 1rem 0 3.2rem; font-size: clamp(2.5rem, 7vw, 5.5rem); font-weight: 300; letter-spacing: -.06em; line-height: .95; }
 .module-list { display: flex; flex-direction: column; gap: .85rem; }
-.module-card { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.35rem 1.5rem; background: rgba(20,20,25,.38); backdrop-filter: blur(16px); transition: border-color .3s, background .3s, transform .3s; text-align: left; }
-.module-card:hover { border-color: rgba(241,240,237,.55); background: rgba(35,32,38,.52); transform: translateY(-3px); }
+.module-card { position: relative; isolation: isolate; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; overflow: hidden; border: 1px solid rgba(241,240,237,.25); border-radius: var(--radius); padding: 1.35rem 1.5rem; background: rgba(35,30,72,.10); backdrop-filter: blur(14px); transition: border-color .3s, background .3s, transform .3s; text-align: left; }
+.module-card::before { content: ''; position: absolute; inset: .45rem; z-index: -1; border-radius: calc(var(--radius) - .45rem); background: rgba(8,10,24,.30); pointer-events: none; }
+.module-card > * { position: relative; }
+.module-card:hover { border-color: rgba(241,240,237,.55); background: rgba(35,30,72,.18); transform: translateY(-3px); }
 .module-nayla { color: var(--muted); cursor: not-allowed; opacity: .55; }
 .wordmark { font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 300; letter-spacing: .12em; line-height: 1; }
 .module-caption { color: var(--muted); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
@@ -53,4 +55,9 @@ h1 { margin: 1rem 0 3.2rem; font-size: clamp(2.5rem, 7vw, 5.5rem); font-weight: 
 .program-card h2 { max-width: 190px; margin: 1.5rem 0; font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 300; letter-spacing: -.04em; }
 .program-status span { color: var(--accent); font-size: 1rem; }
 @media (max-width: 600px) { .program-grid { grid-template-columns: 1fr; } .program-card { min-height: 145px; } .module-caption { display: none; } h1 { margin-bottom: 2.5rem; } }
+@media (prefers-reduced-transparency: reduce) {
+  .module-card { background: #17162a; backdrop-filter: none; }
+  .module-card::before { background: #24223a; }
+  .motion-button { background: #101014; }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

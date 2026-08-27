@@ -14,23 +14,40 @@ export function GalaxyBackground() {
     const onPointer = (event: PointerEvent) => {
       setOffset({ x: (event.clientX / window.innerWidth - 0.5) * 12, y: (event.clientY / window.innerHeight - 0.5) * 8 })
     }
+    const orientation = typeof DeviceOrientationEvent !== 'undefined' ? DeviceOrientationEvent : undefined
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    const requiresPermission = Boolean(orientation && 'requestPermission' in orientation)
+
     window.addEventListener('pointermove', onPointer, { passive: true })
-    if (typeof DeviceOrientationEvent !== 'undefined' && 'requestPermission' in DeviceOrientationEvent) setNeedsPermission(true)
-    window.addEventListener('deviceorientation', onMove)
-    return () => { window.removeEventListener('pointermove', onPointer); window.removeEventListener('deviceorientation', onMove) }
+    if (isIOS && requiresPermission) setNeedsPermission(true)
+    if (!requiresPermission) window.addEventListener('deviceorientation', onMove)
+    return () => {
+      window.removeEventListener('pointermove', onPointer)
+      window.removeEventListener('deviceorientation', onMove)
+    }
   }, [])
 
   async function enableMotion() {
-    const permission = await (DeviceOrientationEvent as typeof DeviceOrientationEvent & { requestPermission: () => Promise<string> }).requestPermission()
-    if (permission === 'granted') { setMotionReady(true); setNeedsPermission(false) }
+    try {
+      const permission = await (DeviceOrientationEvent as typeof DeviceOrientationEvent & { requestPermission: () => Promise<string> }).requestPermission()
+      if (permission === 'granted') {
+        window.addEventListener('deviceorientation', (event) => setOffset({ x: (event.gamma ?? 0) * 0.18, y: (event.beta ?? 0) * 0.08 }), { passive: true })
+        setMotionReady(true)
+        setNeedsPermission(false)
+      }
+    } catch {
+      setNeedsPermission(false)
+    }
   }
 
-  return <div className="galaxy" aria-hidden="true">
-    <div className="stars stars-one" style={{ transform: `translate3d(${offset.x * 0.35}px, ${offset.y * 0.35}px, 0)` }} />
-    <div className="stars stars-two" style={{ transform: `translate3d(${offset.x * 0.7}px, ${offset.y * 0.7}px, 0)` }} />
-    <div className="galaxy-vignette" />
+  return <>
+    <div className="galaxy" aria-hidden="true">
+      <div className="stars stars-one" style={{ transform: `translate3d(${offset.x * 0.35}px, ${offset.y * 0.35}px, 0)` }} />
+      <div className="stars stars-two" style={{ transform: `translate3d(${offset.x * 0.7}px, ${offset.y * 0.7}px, 0)` }} />
+      <div className="galaxy-vignette" />
+    </div>
     {needsPermission && !motionReady && <button className="motion-button" onClick={enableMotion} aria-label="Activar movimiento del fondo">Activar movimiento</button>}
-  </div>
+  </>
 }
 
 export function FlameMark() {
