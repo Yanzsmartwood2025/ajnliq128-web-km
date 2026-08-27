@@ -176,9 +176,8 @@ a { color: inherit; text-decoration: none; }
 
 /* Starlight Log: immersive responsive book */
 .book-shell { position: relative; isolation: isolate; }
-.book-stage { flex: 1; min-height: 0; align-items: center; padding: .5rem 0 0; }
+.book-stage { flex: 1; min-height: 0; align-items: flex-start; padding: 0; }
 .starlight-flipbook { width: min(100%, 1120px) !important; height: min(78svh, 720px) !important; }
-.starlight-flipbook .page-wrapper { background: #101014; }
 .book-page-wrapper { width: 100%; height: 100%; overflow: hidden; }
 .book-face { user-select: none; width: 100%; height: 100%; min-height: 100%; }
 .book-video { flex: 0 0 39%; }
@@ -186,15 +185,18 @@ a { color: inherit; text-decoration: none; }
 .book-audio-dock audio { display: block; }
 .book-instruction { margin: .4rem 0 0; }
 @media (max-width: 767px) {
-  .book-shell { padding-inline: .5rem; }
-  .book-header { min-height: 3.2rem; }
-  .book-audio-dock { top: 0; }
-  .book-stage { padding-top: .5rem; }
-  .starlight-flipbook { width: calc(100vw - 1rem) !important; height: calc(100svh - 142px) !important; }
+  .book-shell { position: relative; padding: .5rem; }
+  .book-header { position: absolute; inset: .5rem .5rem auto; z-index: 4; min-height: 3.2rem; }
+  .book-audio-dock { top: 50%; width: min(190px, 52vw); transform: translate(-50%, -50%); }
+  .book-audio-label { font-size: .42rem; }
+  .book-audio-dock audio { height: 1.45rem; }
+  .book-stage { flex: 1; padding: 3.7rem 0 0; align-items: flex-start; }
+  .starlight-flipbook { width: calc(100vw - 1rem) !important; height: calc(100svh - 4.2rem) !important; }
   .book-entry { padding: .6rem; }
   .book-entry .book-video { flex-basis: 36%; }
   .book-entry .book-copy h2 { font-size: 1.2rem; }
   .book-entry .poem { font-size: .76rem; }
+  .book-instruction { display: none; }
 }
 @media (min-width: 768px) {
   .book-shell { padding-inline: clamp(1.5rem, 5vw, 5rem); }
