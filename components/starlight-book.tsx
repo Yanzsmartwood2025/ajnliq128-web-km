@@ -34,6 +34,7 @@ function EntryPage({ entry, index }: { entry: StarlightEntry; index: number }) {
 export function StarlightBook() {
   const bookRef = useRef<unknown>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
   const [bookSize, setBookSize] = useState({ width: 430, height: 600 })
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export function StarlightBook() {
       <span className="book-header-title">ST★RLIGHT LOG · 22 HOJAS</span>
     </header>
     {menuOpen && <aside id="book-tools" className="book-tools" aria-label="Herramientas del libro"><span className="book-kicker">YOUR CONSTELLATION</span><a href="/login">Iniciar sesión</a><a href="/registro">Crear cuenta</a><button type="button" onClick={() => setMenuOpen(false)}>Cerrar bandeja</button></aside>}
-    <section className="book-stage"><HTMLFlipBook ref={bookRef} width={bookSize.width} height={bookSize.height} size="stretch" minWidth={260} maxWidth={520} minHeight={360} maxHeight={700} showCover mobileScrollSupport useMouseEvents className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={0} drawShadow flippingTime={720} usePortrait startZIndex={0} autoSize={false} maxShadowOpacity={0.32} showPageCorners disableFlipByClick={false}>{[<Cover key="cover" />, ...starlightEntries.map((entry, index) => <EntryPage key={`${entry.title}-${index}`} entry={entry} index={index} />), <BackCover key="back-cover" />]}</HTMLFlipBook></section>
+    <section className="book-stage"><HTMLFlipBook ref={bookRef} width={bookSize.width} height={bookSize.height} size="stretch" minWidth={260} maxWidth={520} minHeight={360} maxHeight={700} showCover mobileScrollSupport useMouseEvents className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={currentPage} drawShadow flippingTime={720} usePortrait startZIndex={0} autoSize={false} maxShadowOpacity={0.32} showPageCorners disableFlipByClick={false} onFlip={(event) => setCurrentPage(event.data)}>{[<Cover key="cover" />, ...starlightEntries.map((entry, index) => <EntryPage key={`${entry.title}-${index}`} entry={entry} index={index} />), <BackCover key="back-cover" />]}</HTMLFlipBook></section>
     <p className="book-instruction">Desliza a la derecha o izquierda para cambiar de hoja · arrastra con el ratón en PC</p>
   </main>
 }
