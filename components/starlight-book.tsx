@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import HTMLFlipBook from 'react-pageflip'
 
 export type StarlightEntry = {
@@ -30,7 +30,7 @@ function MenuIcon() {
 }
 
 function Cover() {
-  return <article className="book-page book-cover"><span className="book-kicker">ARIA / DIGITAL EDITION</span><h1>Starlight<br />Log</h1><p>A field recording of the spaces between signal and soul.</p><span className="book-cover-mark">AJNLIQ128</span></article>
+  return <article className="book-page book-cover"><span className="book-kicker">ARIA / DIGITAL EDITION</span><h1>Starlight<br />Log</h1><p>by Aria</p><span className="book-cover-mark">AJNLIQ128</span></article>
 }
 
 function BackCover() {
@@ -44,6 +44,20 @@ function EntryPage({ entry, index }: { entry: StarlightEntry; index: number }) {
 export function StarlightBook() {
   const bookRef = useRef<unknown>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [bookSize, setBookSize] = useState({ width: 430, height: 600 })
+
+  useEffect(() => {
+    const updateBookSize = () => {
+      const compact = window.innerWidth <= 600
+      const width = compact ? Math.max(260, Math.min(window.innerWidth - 32, 360)) : 430
+      const availableHeight = window.innerHeight - (compact ? 150 : 170)
+      const height = compact ? Math.max(360, Math.min(availableHeight, width * 1.4)) : 600
+      setBookSize({ width, height })
+    }
+    updateBookSize()
+    window.addEventListener('resize', updateBookSize)
+    return () => window.removeEventListener('resize', updateBookSize)
+  }, [])
 
   return <main className="book-shell">
     <header className="book-header">
@@ -53,7 +67,7 @@ export function StarlightBook() {
       <span className="book-header-title">ST★RLIGHT LOG</span>
     </header>
     {menuOpen && <aside id="book-tools" className="book-tools" aria-label="Herramientas del libro"><span className="book-kicker">YOUR CONSTELLATION</span><a href="/login">Iniciar sesión</a><a href="/registro">Crear cuenta</a><button type="button" onClick={() => setMenuOpen(false)}>Cerrar bandeja</button></aside>}
-    <section className="book-stage"><HTMLFlipBook ref={bookRef} width={430} height={600} size="stretch" minWidth={280} maxWidth={520} minHeight={420} maxHeight={700} showCover={true} mobileScrollSupport={true} useMouseEvents={true} className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={0} drawShadow={true} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={true} maxShadowOpacity={0.32} showPageCorners={true} disableFlipByClick={false}><Cover />{starlightEntries.map((entry, index) => <EntryPage key={entry.title} entry={entry} index={index} />)}<BackCover /></HTMLFlipBook></section>
+    <section className="book-stage"><HTMLFlipBook ref={bookRef} width={bookSize.width} height={bookSize.height} size="stretch" minWidth={260} maxWidth={520} minHeight={360} maxHeight={700} showCover={true} mobileScrollSupport={true} useMouseEvents={true} className="starlight-flipbook" style={{ margin: '0 auto' }} startPage={0} drawShadow={true} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={false} maxShadowOpacity={0.32} showPageCorners={true} disableFlipByClick={true}><Cover />{starlightEntries.map((entry, index) => <EntryPage key={entry.title} entry={entry} index={index} />)}<BackCover /></HTMLFlipBook></section>
     <p className="book-instruction">Desliza o arrastra una esquina para pasar la página</p>
   </main>
 }
