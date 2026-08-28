@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { ProgramLauncher } from './program-launcher'
@@ -7,14 +10,41 @@ const programs = {
   joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire"],
 }
 
+const videoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
+
+function LazyHubVideo({ character }: { character: 'aria' | 'joziel' }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+  const poster = character === 'aria' ? '/aria-card.png' : '/joziel-card.png'
+
+  useEffect(() => {
+    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches
+    if (reducedData) return
+    const node = videoRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setShouldLoad(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: '200px' })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <video ref={videoRef} className="hub-video" autoPlay={shouldLoad} muted loop playsInline preload="none" poster={poster} aria-hidden="true">
+      {shouldLoad ? <source src={videoUrl} type="video/mp4" /> : null}
+    </video>
+  )
+}
+
 export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   const isAria = character === 'aria'
   const name = isAria ? 'ARIA' : 'JOZIEL'
   return (
-    <main className="hub hub-with-video">
-      <video className="hub-video" autoPlay muted loop playsInline aria-hidden="true">
-        <source src="https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4" type="video/mp4" />
-      </video>
+    <main className={`hub hub-with-video hub-${character}`}>
+      <LazyHubVideo character={character} />
       <div className="hub-video-wash" aria-hidden="true" />
       <header className="hub-header">
         <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
