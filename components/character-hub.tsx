@@ -10,5 +10,18 @@ const programs = {
 export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   const isAria = character === 'aria'
   const name = isAria ? 'ARIA' : 'JOZIEL'
-  return <main className="hub"><header className="hub-header"><Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link><span className="hub-index">{isAria ? '01' : '02'} / 02</span></header><section className="hub-intro"><p className="eyebrow">FUEGO / MODULE {isAria ? '01' : '02'}</p><Wordmark name={name} /><p className="hub-description">{isAria ? 'A synthetic heart exploring the space between code, conscience, and feeling.' : 'A midnight mind for the strange hours, the sharp questions, and the beautiful unknown.'}</p></section><div className="program-grid">{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} />)}</div></main>
+  return (
+    <main className="hub hub-with-video">
+      <video className="hub-video" autoPlay muted loop playsInline aria-hidden="true">
+        <source src="https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4" type="video/mp4" />
+      </video>
+      <div className="hub-video-wash" aria-hidden="true" />
+      <header className="hub-header">
+        <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
+        <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
+      </header>
+      <section className="hub-intro"><p className="eyebrow">FUEGO / MODULE {isAria ? '01' : '02'}</p><Wordmark name={name} /><p className="hub-description">{isAria ? 'A synthetic heart exploring the space between code, conscience, and feeling.' : 'A midnight mind for the strange hours, the sharp questions, and the beautiful unknown.'}</p></section>
+      <div className="program-grid">{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} />)}</div>
+    </main>
+  )
 }
