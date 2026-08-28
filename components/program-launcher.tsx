@@ -18,6 +18,7 @@ export function ProgramLauncher({ character, program, index, destination, onActi
   }
 
   return <button type="button" className={`program-card program-card-button${launching ? ' is-launching' : ''}`} onClick={openProgram} disabled={!enabled || launching} aria-label={`Abrir ${program}`}>
+    <span className="program-card-glass" aria-hidden="true"><span className="program-card-clip" /></span>
     <span className="program-number">0{index + 1}</span>
     <h2>{program}</h2>
     <span className="program-status">{enabled ? 'Enter frequency' : 'Temporarily unavailable'} <span aria-hidden="true">↗</span></span>

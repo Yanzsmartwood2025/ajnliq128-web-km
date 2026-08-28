@@ -97,11 +97,14 @@ a { color: inherit; text-decoration: none; }
 .hub-video-wash { position: fixed; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(5,5,7,.58), rgba(5,5,7,.34) 45%, rgba(5,5,7,.7)); pointer-events: none; }
 .program-grid { display: flex; gap: 1rem; overflow-x: auto; overflow-y: visible; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 1.25rem clamp(1px, 2vw, 1rem) 2rem; margin-inline: calc(-1 * clamp(1px, 2vw, 1rem)); }
 .program-grid::-webkit-scrollbar { display: none; }
-.program-card { position: relative; isolation: isolate; flex: 0 0 min(78vw, 340px); min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; padding: 1.4rem; overflow: hidden; scroll-snap-align: center; border: 1px solid rgba(255,255,255,.27); border-radius: 1.35rem; background: linear-gradient(145deg, rgba(103,88,170,.14), rgba(8,8,11,.20)); backdrop-filter: blur(15px) saturate(145%); -webkit-backdrop-filter: blur(15px) saturate(145%); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 16px 36px rgba(0,0,0,.28), 0 -8px 28px rgba(255,255,255,.05); transition: background .3s, border-color .3s, transform .3s, box-shadow .3s; }
-.program-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(115deg, rgba(255,255,255,.16), transparent 32%, rgba(90,75,160,.1) 72%, transparent); pointer-events: none; }
+.program-card { position: relative; isolation: isolate; flex: 0 0 min(78vw, 340px); min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; padding: 1.4rem; overflow: visible; scroll-snap-align: center; border: 0; border-radius: 1.35rem; background: transparent; transition: transform .3s; }
+.program-card-glass { position: absolute; inset: 0; z-index: 0; overflow: visible; border: 1px solid rgba(255,255,255,.27); border-radius: inherit; background: linear-gradient(145deg, rgba(103,88,170,.14), rgba(8,8,11,.20)); backdrop-filter: blur(15px) saturate(145%); -webkit-backdrop-filter: blur(15px) saturate(145%); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 16px 36px rgba(0,0,0,.28), 0 -8px 28px rgba(255,255,255,.05); pointer-events: none; transition: background .3s, border-color .3s, box-shadow .3s; }
+.program-card-clip { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
+.program-card-clip::before { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,.16), transparent 32%, rgba(90,75,160,.1) 72%, transparent); pointer-events: none; }
 .program-card h2, .program-card .program-status, .program-card .program-number { position: relative; z-index: 1; color: var(--foreground); text-shadow: 0 2px 12px rgba(0,0,0,.7); }
 .program-card .program-status, .program-card .program-number { color: rgba(241,240,237,.76); }
-.program-card:hover { border-color: rgba(255,255,255,.58); background: linear-gradient(145deg, rgba(116,99,194,.23), rgba(20,18,38,.34)); transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 20px 42px rgba(0,0,0,.34), 0 -8px 25px rgba(255,255,255,.08); }
+.program-card:hover { transform: translateY(-2px); }
+.program-card:hover .program-card-glass { border-color: rgba(255,255,255,.58); background: linear-gradient(145deg, rgba(116,99,194,.23), rgba(20,18,38,.34)); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 20px 42px rgba(0,0,0,.34), 0 -8px 25px rgba(255,255,255,.08); }
 .program-number, .program-status { color: var(--muted); font: .65rem var(--font-mono); letter-spacing: .1em; }
 .program-card h2 { max-width: 190px; margin: 1.5rem 0; font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 300; letter-spacing: -.04em; }
 .program-status span { color: var(--accent); font-size: 1rem; }
@@ -178,11 +181,6 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-transparency: reduce) { .book-menu-button, .book-tools { background: #17162a; backdrop-filter: none; -webkit-backdrop-filter: none; } }
 @media (max-width: 600px) { .book-audio-dock { top: 3.2rem; width: min(250px, 72vw); } .book-stage { flex: 1; min-height: 0; padding-top: 5.2rem; padding-bottom: 0; align-items: center; } .starlight-flipbook { max-height: calc(100svh - 150px); } .book-header-title { display: none; } .book-back { margin-left: auto; } .book-instruction { margin: .5rem 0 0; font-size: .55rem; } }
 
-/* Compact, physical-feeling single-sheet book */
-.book-frame { width: min(430px, calc(100vw - 2rem)); height: min(600px, calc(100svh - 174px)); min-height: 360px; perspective: 1400px; touch-action: pan-y; filter: drop-shadow(0 24px 45px rgba(0,0,0,.5)); }
-.book-frame .book-face { width: 100%; height: 100%; animation: sheet-next .38s ease both; }
-.book-frame.prev .book-face { animation-name: sheet-prev; }
-.book-frame .book-cover, .book-frame .book-back-cover { background: linear-gradient(135deg, #15151a, #050507); }
 .cover-title { margin: auto 0; text-align: center; }
 .cover-title h1 { font-size: clamp(3.2rem, 14vw, 6rem); }
 .cover-title p { margin: 0; color: var(--accent); font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; }
@@ -191,13 +189,6 @@ a { color: inherit; text-decoration: none; }
 .book-entry .book-copy { min-height: 0; overflow: hidden; }
 .book-entry .book-copy h2 { margin: .35rem 0 .45rem; font-size: clamp(1.25rem, 5vw, 2rem); }
 .book-entry .poem { margin: 0; font-size: .82rem; line-height: 1.45; }
-.book-controls { display: flex; align-items: center; justify-content: center; gap: 1.25rem; color: var(--muted); font: .6rem var(--font-mono); letter-spacing: .1em; }
-.book-controls button { border: 1px solid var(--border); border-radius: 999px; width: 2rem; height: 2rem; background: rgba(35,30,72,.25); color: var(--foreground); cursor: pointer; }
-.book-controls button:disabled { opacity: .3; cursor: not-allowed; }
-@keyframes sheet-next { from { opacity: .4; transform: rotateY(-12deg) translateX(8px); } to { opacity: 1; transform: none; } }
-@keyframes sheet-prev { from { opacity: .4; transform: rotateY(12deg) translateX(-8px); } to { opacity: 1; transform: none; } }
-@media (max-width: 600px) { .book-frame { width: calc(100vw - 2rem); height: calc(100svh - 174px); max-height: 430px; min-height: 0; } .book-controls { margin-top: .35rem; } }
-@media (prefers-reduced-motion: reduce) { .book-frame .book-face { animation: none; } }
 
 /* Starlight Log: immersive responsive book */
 .book-shell { position: relative; isolation: isolate; }
