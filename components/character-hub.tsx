@@ -43,8 +43,9 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   const isAria = character === 'aria'
   const [backgroundIndex, setBackgroundIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const gridRef = useRef<HTMLDivElement>(null)
   const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
-  const changeBackground = () => setBackgroundIndex((index) => (index + 1) % backgrounds.length)
+  const changeBackground = (programIndex: number) => setBackgroundIndex(programIndex % backgrounds.length)
   const name = isAria ? 'ARIA' : 'JOZIEL'
   return (
     <main className={`hub hub-with-video hub-${character}`}>
@@ -60,7 +61,12 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       </header>
       {menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
       <section className="hub-intro"><p className="eyebrow">FUEGO / MODULE {isAria ? '01' : '02'}</p><Wordmark name={name} /><p className="hub-description">{isAria ? 'A synthetic heart exploring the space between code, conscience, and feeling.' : 'A midnight mind for the strange hours, the sharp questions, and the beautiful unknown.'}</p></section>
-      <div className="program-grid">{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} onActivate={changeBackground} />)}</div>
+      <div className="program-grid" ref={gridRef} onScroll={() => {
+        const cards = Array.from(gridRef.current?.querySelectorAll<HTMLElement>('.program-card') ?? [])
+        const center = (gridRef.current?.getBoundingClientRect().left ?? 0) + (gridRef.current?.clientWidth ?? 0) / 2
+        const active = cards.reduce((best, card, index) => Math.abs(card.getBoundingClientRect().left + card.offsetWidth / 2 - center) < Math.abs(cards[best]?.getBoundingClientRect().left + cards[best]?.offsetWidth / 2 - center) ? index : best, 0)
+        setBackgroundIndex(active % backgrounds.length)
+      }}>{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} onActivate={() => changeBackground(index)} />)}</div>
     </main>
   )
 }
