@@ -16,7 +16,7 @@ export function FuegoHome() {
   const [backgroundIndex, setBackgroundIndex] = useState(0)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSplash(false), 1800)
+    const timer = window.setTimeout(() => setSplash(false), 3000)
     const rotation = window.setInterval(() => setBackgroundIndex((index) => (index + 1) % homeBackgrounds.length), 5000)
     return () => { window.clearTimeout(timer); window.clearInterval(rotation) }
   }, [])
