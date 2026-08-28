@@ -55,12 +55,12 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       <header className="hub-header">
         <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
         <div className="hub-actions">
-          <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">◌</button>
+          <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">▣</button>
           <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
         </div>
       </header>
       {menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
-      <section className="hub-intro"><p className="eyebrow">FUEGO / MODULE {isAria ? '01' : '02'}</p><Wordmark name={name} /><p className="hub-description">{isAria ? 'A synthetic heart exploring the space between code, conscience, and feeling.' : 'A midnight mind for the strange hours, the sharp questions, and the beautiful unknown.'}</p></section>
+      <section className="hub-intro"><Wordmark name={name} /></section>
       <div className="program-grid" ref={gridRef} onScroll={() => {
         const cards = Array.from(gridRef.current?.querySelectorAll<HTMLElement>('.program-card') ?? [])
         const center = (gridRef.current?.getBoundingClientRect().left ?? 0) + (gridRef.current?.clientWidth ?? 0) / 2
