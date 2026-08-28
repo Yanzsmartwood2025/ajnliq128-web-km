@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { moduleFlags, slugifyProgram, type Character } from '@/lib/module-flags'
 
-export function ProgramLauncher({ character, program, index, destination }: { character: Character; program: string; index: number; destination?: string }) {
+export function ProgramLauncher({ character, program, index, destination, onActivate }: { character: Character; program: string; index: number; destination?: string; onActivate?: () => void }) {
   const router = useRouter()
   const [launching, setLaunching] = useState(false)
   const slug = slugifyProgram(program)
@@ -13,6 +13,7 @@ export function ProgramLauncher({ character, program, index, destination }: { ch
   function openProgram() {
     if (!enabled || launching) return
     setLaunching(true)
+    onActivate?.()
     window.setTimeout(() => router.push(destination ?? `/${character}/${slug}`), 1200)
   }
 
