@@ -6,6 +6,7 @@ import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
 
 const particles = Array.from({ length: 18 }, (_, index) => index)
+const homeBackgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
 
 export function FuegoHome() {
   const router = useRouter()
@@ -13,13 +14,12 @@ export function FuegoHome() {
   const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | null>(null)
   const [naylaNotice, setNaylaNotice] = useState(false)
   const [backgroundIndex, setBackgroundIndex] = useState(0)
-  const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSplash(false), 1800)
-    const rotation = window.setInterval(() => setBackgroundIndex((index) => (index + 1) % backgrounds.length), 5000)
+    const rotation = window.setInterval(() => setBackgroundIndex((index) => (index + 1) % homeBackgrounds.length), 5000)
     return () => { window.clearTimeout(timer); window.clearInterval(rotation) }
-  }, [backgrounds.length])
+  }, [])
 
   const enterModule = (module: 'ARIA' | 'JOZIEL') => {
     if (selectedModule) return
@@ -29,7 +29,7 @@ export function FuegoHome() {
 
   return (
     <main className={`home ${splash ? 'is-splashing' : 'is-ready'} ${selectedModule ? 'is-transitioning' : ''}`}>
-      <div className="home-placeholder-bg" aria-hidden="true" style={{ backgroundImage: `url(${backgrounds[backgroundIndex]})` }} />
+      <div className="home-placeholder-bg" aria-hidden="true" style={{ backgroundImage: `url(${homeBackgrounds[backgroundIndex]})` }} />
       <div className="home-placeholder-wash" aria-hidden="true" />
       <section className="splash" aria-label="Fuego"><FlameMark /><span>FUEGO</span></section>
       <section className="home-content">
