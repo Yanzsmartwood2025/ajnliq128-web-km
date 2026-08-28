@@ -1,7 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { SiteHeader } from '@/components/auth-form'
 
 export const metadata: Metadata = {
   title: 'AJNLIQ128 — FUEGO',
@@ -42,7 +41,6 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background">
       <body className="antialiased">
-        <SiteHeader />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

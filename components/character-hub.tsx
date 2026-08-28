@@ -42,6 +42,7 @@ function LazyHubVideo({ character }: { character: 'aria' | 'joziel' }) {
 export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   const isAria = character === 'aria'
   const [backgroundIndex, setBackgroundIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
   const changeBackground = () => setBackgroundIndex((index) => (index + 1) % backgrounds.length)
   const name = isAria ? 'ARIA' : 'JOZIEL'
@@ -52,8 +53,12 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       <div className="hub-video-wash" aria-hidden="true" />
       <header className="hub-header">
         <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
-        <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
+        <div className="hub-actions">
+          <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">◌</button>
+          <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
+        </div>
       </header>
+      {menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
       <section className="hub-intro"><p className="eyebrow">FUEGO / MODULE {isAria ? '01' : '02'}</p><Wordmark name={name} /><p className="hub-description">{isAria ? 'A synthetic heart exploring the space between code, conscience, and feeling.' : 'A midnight mind for the strange hours, the sharp questions, and the beautiful unknown.'}</p></section>
       <div className="program-grid">{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} onActivate={changeBackground} />)}</div>
     </main>

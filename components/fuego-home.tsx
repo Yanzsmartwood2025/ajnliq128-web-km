@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { FlameMark, Wordmark } from './galaxy-background'
+import { LoginHeader } from './auth-form'
 
 const particles = Array.from({ length: 18 }, (_, index) => index)
 
@@ -32,6 +33,7 @@ export function FuegoHome() {
       <div className="home-placeholder-wash" aria-hidden="true" />
       <section className="splash" aria-label="Fuego"><FlameMark /><span>FUEGO</span></section>
       <section className="home-content">
+        {!splash && <div className="home-login"><LoginHeader /></div>}
         <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
         <div className="module-list" aria-label="Choose a module">
           <button className={`module-card module-aria ${selectedModule === 'ARIA' ? 'is-selected' : ''}`} onClick={() => enterModule('ARIA')} aria-label="Enter Aria">
