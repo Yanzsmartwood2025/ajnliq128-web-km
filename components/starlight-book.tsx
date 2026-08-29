@@ -2,8 +2,8 @@
 
 import HTMLFlipBook from 'react-pageflip'
 import { useEffect, useMemo, useState } from 'react'
-import { MessageCircle } from 'lucide-react'
-import { ChatOverlay } from './chat-overlay'
+import { Dna } from 'lucide-react'
+import { ChatPage } from './chat-page'
 
 export type StarlightEntry = { videoUrl: string; title: string; poem: string; audioUrl: string }
 
@@ -46,10 +46,13 @@ export function StarlightBook() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(true)
   const [viewport, setViewport] = useState({ width: 360, height: 640 })
+  const [showGifts, setShowGifts] = useState(false)
+
   const pages = useMemo(() => [
     <Cover key="cover" />,
     <IntroPage1 key="intro1" />,
     <IntroPage2 key="intro2" />,
+    <ChatPage key="chat" />,
     ...entries.map((entry, i) => <EntryPage key={i} entry={entry} page={i + 1} />),
     <BackCover key="back" />
   ], [])
@@ -64,8 +67,6 @@ export function StarlightBook() {
     return () => window.removeEventListener('resize', updateLayout)
   }, [])
 
-  const [chatOpen, setChatOpen] = useState(false)
-
   const width = isMobile ? Math.max(280, Math.min(viewport.width - 32, 430)) : Math.min(560, Math.max(420, Math.floor((viewport.width - 120) / 2)))
   const height = isMobile ? Math.max(400, Math.min(viewport.height - 88, 610)) : Math.min(720, Math.max(560, viewport.height - 150))
 
@@ -74,28 +75,70 @@ export function StarlightBook() {
       <video className="book-video-background" autoPlay loop muted playsInline aria-hidden="true"><source src="/starlight-background.mp4" type="video/mp4" /></video>
       <div className="book-video-overlay" />
 
-      {!chatOpen && (
-        <header className="book-header">
-          <button className="book-menu-button" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen}>
-            <span className="book-menu-icon"><i /><i /><i /></span>
-            <span className="sr-only">Abrir herramientas</span>
-          </button>
+      <header className="book-header">
+        <button className="book-menu-button" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen}>
+          <span className="book-menu-icon"><i /><i /><i /></span>
+          <span className="sr-only">Abrir herramientas</span>
+        </button>
 
-          <button className="book-menu-button" type="button" onClick={() => setChatOpen(true)} style={{ marginLeft: '0.7rem' }}>
-            <MessageCircle size={18} />
-            <span className="sr-only">Abrir chat</span>
-          </button>
-
-          <div className="book-header-title">STARLIGHT LOG · ARIA</div>
-          <a href="/aria" className="book-close" aria-label="Cerrar libro">×</a>
-          <div className="book-audio-dock">
+        <div className="book-header-title">STARLIGHT LOG · ARIA</div>
+        <a href="/aria" className="book-close" aria-label="Cerrar libro">×</a>
+        <div className="book-audio-dock" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div>
             <span className="book-audio-label">AUDIOBOOK / MY MUSIC</span>
             <audio controls preload="none" />
           </div>
-        </header>
+          <button
+            onClick={() => setShowGifts(!showGifts)}
+            className="header-gifts-button"
+            aria-label="Regalos"
+          >
+            <Dna size={18} />
+          </button>
+        </div>
+      </header>
+
+      {/* Gifts Modal Overlay */}
+      {showGifts && (
+        <div style={{
+          position: 'absolute',
+          top: '4.5rem',
+          right: 'clamp(1rem, 5vw, 5rem)',
+          width: 'min(320px, calc(100vw - 2rem))',
+          padding: '1.25rem',
+          borderRadius: '1rem',
+          background: 'linear-gradient(145deg, rgba(103,88,170,.2), rgba(16,16,20,.68))',
+          backdropFilter: 'blur(16px) saturate(135%)',
+          border: '1px solid rgba(255,255,255,.25)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,.18), 0 20px 55px rgba(0,0,0,.45)',
+          zIndex: 60,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '0.75rem',
+          maxHeight: '60vh',
+          overflowY: 'auto'
+        }}>
+          {Array.from({length: 15}).map((_, i) => (
+            <div key={i} style={{
+              aspectRatio: '1',
+              borderRadius: '0.5rem',
+              background: 'rgba(35,30,72,.22)',
+              border: '1px solid rgba(241,240,237,.16)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.5rem'
+            }}>
+              ✨
+              <span style={{ fontSize: '0.6rem', marginTop: '4px', color: 'var(--muted)' }}>50</span>
+            </div>
+          ))}
+        </div>
       )}
 
-      {menuOpen && !chatOpen && (
+      {menuOpen && (
         <aside className="book-tools">
           <span className="book-kicker">YOUR CONSTELLATION</span>
           <a href="/login">Iniciar sesión</a>
@@ -104,22 +147,13 @@ export function StarlightBook() {
         </aside>
       )}
 
-      <section
-        className="book-stage"
-        style={{
-          transition: 'transform 0.5s ease, filter 0.5s ease',
-          transform: chatOpen ? 'scale(0.85) translateY(-5%)' : 'scale(1) translateY(0)',
-          filter: chatOpen ? 'blur(8px) brightness(0.6)' : 'blur(0) brightness(1)'
-        }}
-      >
-        <HTMLFlipBook key={isMobile ? 'single' : 'double'} width={width} height={height} size="fixed" minWidth={280} maxWidth={560} minHeight={400} maxHeight={720} drawShadow showCover showPageCorners mobileScrollSupport={false} useMouseEvents={!chatOpen} usePortrait={isMobile} flippingTime={650} maxShadowOpacity={0.72} className="starlight-flipbook" style={{}} startPage={0} startZIndex={0} autoSize={false} clickEventForward={true} swipeDistance={12} disableFlipByClick={false}>
+      <section className="book-stage">
+        <HTMLFlipBook key={isMobile ? 'single' : 'double'} width={width} height={height} size="fixed" minWidth={280} maxWidth={560} minHeight={400} maxHeight={720} drawShadow showCover showPageCorners mobileScrollSupport={false} useMouseEvents={true} usePortrait={isMobile} flippingTime={650} maxShadowOpacity={0.72} className="starlight-flipbook" style={{}} startPage={0} startZIndex={0} autoSize={false} clickEventForward={true} swipeDistance={12} disableFlipByClick={false}>
           {pages.map((page, index) => <div key={index} className="book-page-wrapper" data-density={index === 0 || index === pages.length - 1 ? 'hard' : 'soft'}>{page}</div>)}
         </HTMLFlipBook>
       </section>
 
-      {!chatOpen && <p className="book-instruction">Desliza o arrastra cualquier esquina para pasar la hoja</p>}
-
-      {chatOpen && <ChatOverlay onClose={() => setChatOpen(false)} />}
+      <p className="book-instruction">Desliza o arrastra cualquier esquina para pasar la hoja</p>
     </main>
   )
 }

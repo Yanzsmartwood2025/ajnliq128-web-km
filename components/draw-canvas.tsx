@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 
 export function DrawCanvas({ onClose, onSend }: { onClose: () => void, onSend: (base64Img: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -69,6 +70,28 @@ export function DrawCanvas({ onClose, onSend }: { onClose: () => void, onSend: (
       display: 'flex',
       flexDirection: 'column'
     }}>
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          width: '2.5rem',
+          height: '2.5rem',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          color: 'white',
+          display: 'grid',
+          placeItems: 'center',
+          cursor: 'pointer',
+          zIndex: 101
+        }}
+        aria-label="Cerrar dibujo"
+      >
+        <X size={20} />
+      </button>
+
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
