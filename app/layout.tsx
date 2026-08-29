@@ -1,11 +1,19 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { PwaUpdater } from '@/components/PwaUpdater'
+import { Toaster } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
   title: 'AJNLIQ128 — FUEGO',
   description: 'Enter the AJNLIQ128 constellation.',
   generator: 'FUEGO',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'AJNLIQ128',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: [
       {
@@ -41,7 +49,10 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background">
       <body className="antialiased">
-        {children}
+        <Toaster>
+          {children}
+        </Toaster>
+        <PwaUpdater />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
