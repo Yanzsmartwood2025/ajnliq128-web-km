@@ -1,11 +1,12 @@
-import { FloatingLines } from '@/components/ui/floating-lines'
+import { BackgroundProvider } from '@/components/BackgroundManager'
 import { FuegoHome } from '@/components/fuego-home'
 
 export default function Page() {
   return (
-    <div style={{ position: 'relative', zIndex: 0, backgroundColor: '#050507', minHeight: '100svh' }}>
-      <FloatingLines />
-      <FuegoHome />
-    </div>
+    <BackgroundProvider>
+      <div style={{ position: 'relative', zIndex: 0, backgroundColor: 'transparent', minHeight: '100svh' }}>
+        <FuegoHome />
+      </div>
+    </BackgroundProvider>
   )
 }
