@@ -47,8 +47,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className="bg-background">
-      <body className="antialiased">
+    <html lang="es">
+      <body className="antialiased bg-transparent">
         <Toaster>
           {children}
         </Toaster>

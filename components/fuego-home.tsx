@@ -21,17 +21,27 @@ export function FuegoHome() {
     return () => window.clearTimeout(timer)
   }, [])
 
-  const enterModule = (module: 'ARIA' | 'JOZIEL') => {
-    if (selectedModule) return
-    setSelectedModule(module)
+  const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL') => {
+    e.stopPropagation() // Prevent click from triggering "touch outside"
+    if (selectedModule === module) {
+      // Second touch -> Enter module
+      enterModule(module)
+    } else {
+      // First touch -> Focus bubble and play sound
+      setSelectedModule(module)
+      const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
+      if (audio) {
+        audio.currentTime = 0
+        audio.volume = 1
+        audio.play().catch(e => console.error("Audio play failed", e))
+      }
+    }
+  }
 
-    // Play sound and fade out
+  const enterModule = (module: 'ARIA' | 'JOZIEL') => {
+    // Fade out logic and navigate
     const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
     if (audio) {
-      audio.volume = 1
-      audio.play().catch(e => console.error("Audio play failed", e))
-
-      // Fade out logic
       let fadeTimer = 0
       const fadeInterval = setInterval(() => {
         fadeTimer += 50
@@ -45,15 +55,34 @@ export function FuegoHome() {
     }
 
     window.setTimeout(() => {
-      if (audio) audio.pause()
+      if (audio) {
+        audio.pause()
+        audio.currentTime = 0
+      }
       router.push(module === 'ARIA' ? '/aria' : '/joziel')
     }, 2000)
   }
 
+  const handleTouchOutside = () => {
+    if (selectedModule) {
+      setSelectedModule(null)
+      const ariaAudio = ariaAudioRef.current
+      const jozielAudio = jozielAudioRef.current
+      if (ariaAudio) {
+        ariaAudio.pause()
+        ariaAudio.currentTime = 0
+      }
+      if (jozielAudio) {
+        jozielAudio.pause()
+        jozielAudio.currentTime = 0
+      }
+    }
+  }
+
   // Organic floating animation variants
   const floatingAnimation = (delay: number, durationX: number, durationY: number) => ({
-    y: ["-3vh", "3vh", "-3vh"],
-    x: ["-2vw", "2vw", "-2vw"],
+    y: ["-5vh", "5vh", "-5vh"],
+    x: ["-4vw", "4vw", "-4vw"],
     transition: {
       y: {
         duration: durationY,
@@ -82,24 +111,30 @@ export function FuegoHome() {
         {!splash && <div className="home-login"><LoginHeader /></div>}
         <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
 
+        {selectedModule && (
+          <div
+            onClick={handleTouchOutside}
+            style={{ position: 'fixed', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+          />
+        )}
         <div style={{ position: 'relative', width: '100%', height: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <AnimatePresence>
             {(!selectedModule || selectedModule === 'ARIA') && (
               <motion.button
                 key="aria"
                 className="floating-bubble"
-                initial={{ opacity: 0, scale: 0, marginLeft: '-20vw', marginTop: '-5vh' }}
+                initial={{ opacity: 0, scale: 0, marginLeft: '-25vw', marginTop: '-10vh' }}
                 animate={selectedModule === 'ARIA'
                   ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
-                  : { opacity: 1, scale: 1, marginLeft: '-20vw', marginTop: '-5vh', ...floatingAnimation(0, 6, 7) }
+                  : { opacity: 1, scale: 1, marginLeft: '-25vw', marginTop: '-10vh', ...floatingAnimation(0, 6, 7) }
                 }
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => enterModule('ARIA')}
+                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'ARIA')}
                 style={{
                   position: 'absolute',
                 }}
               >
-                <div className="bubble-video-container">
+                <div className="bubble-video-container" style={{ opacity: selectedModule === 'ARIA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
                   <video src="/placeholder-video-1.mp4" autoPlay loop muted playsInline className="bubble-video" />
                 </div>
                 <span className="bubble-label">ARIA</span>
@@ -110,18 +145,18 @@ export function FuegoHome() {
               <motion.button
                 key="joziel"
                 className="floating-bubble"
-                initial={{ opacity: 0, scale: 0, marginLeft: '20vw', marginTop: '10vh' }}
+                initial={{ opacity: 0, scale: 0, marginLeft: '25vw', marginTop: '15vh' }}
                 animate={selectedModule === 'JOZIEL'
                   ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
-                  : { opacity: 1, scale: 1, marginLeft: '20vw', marginTop: '10vh', ...floatingAnimation(1.5, 7, 5) }
+                  : { opacity: 1, scale: 1, marginLeft: '25vw', marginTop: '15vh', ...floatingAnimation(1.5, 7, 5) }
                 }
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => enterModule('JOZIEL')}
+                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'JOZIEL')}
                 style={{
                   position: 'absolute',
                 }}
               >
-                <div className="bubble-video-container">
+                <div className="bubble-video-container" style={{ opacity: selectedModule === 'JOZIEL' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
                   <video src="/placeholder-video-2.mp4" autoPlay loop muted playsInline className="bubble-video" />
                 </div>
                 <span className="bubble-label">JOZIEL</span>
@@ -135,10 +170,10 @@ export function FuegoHome() {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 0.5, scale: 0.8, ...floatingAnimation(3, 5, 8) }}
                 exit={{ opacity: 0, scale: 0 }}
-                onClick={() => setNaylaNotice(true)}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setNaylaNotice(true); }}
                 style={{
                   position: 'absolute',
-                  marginTop: '-20vh',
+                  marginTop: '-25vh',
                   marginLeft: '0vw'
                 }}
               >
