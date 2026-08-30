@@ -10,8 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 export function FuegoHome() {
   const router = useRouter()
   const [splash, setSplash] = useState(true)
-  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | null>(null)
-  const [naylaNotice, setNaylaNotice] = useState(false)
+  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
 
   // Audio refs
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
@@ -22,9 +21,14 @@ export function FuegoHome() {
     return () => window.clearTimeout(timer)
   }, [])
 
-  const enterModule = (module: 'ARIA' | 'JOZIEL') => {
+  const enterModule = (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
     if (selectedModule) return
     setSelectedModule(module)
+
+    if (module === 'NAYLA') {
+      window.setTimeout(() => router.push('/nayla'), 2000)
+      return
+    }
 
     // Play sound and fade out
     const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
@@ -94,9 +98,9 @@ export function FuegoHome() {
                 <div className="bubble-video-container"><video src="/placeholder-video-2.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">JOZIEL</span>
               </motion.button>
             )}
-            {!selectedModule && (
-              <motion.button key="nayla" className={`floating-bubble is-disabled ${naylaNotice ? 'is-notice' : ''}`} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.5, scale: 0.8, ...floatingAnimation(3, 5, 8) }} exit={{ opacity: 0, scale: 0 }} onClick={() => setNaylaNotice(true)} style={{ position: 'absolute', marginTop: '-20vh', marginLeft: '0vw' }}>
-                <div className="bubble-video-container"><video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">{naylaNotice ? 'PRÓXIMAMENTE' : 'NAYLA'}</span>
+            {(!selectedModule || selectedModule === 'NAYLA') && (
+              <motion.button key="nayla" className="floating-bubble" initial={{ opacity: 0, scale: 0 }} animate={selectedModule === 'NAYLA' ? { scale: 1.5, opacity: 1, x: 0, y: 0, marginLeft: 0, marginTop: 0 } : { opacity: 1, scale: 0.8, ...floatingAnimation(3, 5, 8) }} exit={{ opacity: 0, scale: 0 }} onClick={() => enterModule('NAYLA')} style={{ position: 'absolute', marginTop: '-20vh', marginLeft: '0vw' }}>
+                <div className="bubble-video-container"><video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">NAYLA</span>
                 <span className="nayla-side-rays" aria-hidden="true"><SideRays speed={1.35} rayColor1="#ffffff" rayColor2="#ffffff" intensity={1.4} spread={1.7} origin="top-right" opacity={0.72} /></span>
               </motion.button>
             )}
