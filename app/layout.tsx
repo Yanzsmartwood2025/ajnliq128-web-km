@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { PwaUpdater } from '@/components/PwaUpdater'
 import { Toaster } from '@/components/ui/toast'
+import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
   title: 'AJNLIQ128 — FUEGO',
@@ -49,11 +50,13 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="antialiased bg-transparent">
-        <Toaster>
-          {children}
-        </Toaster>
-        <PwaUpdater />
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <AuthProvider>
+          <Toaster>
+            {children}
+          </Toaster>
+          <PwaUpdater />
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </AuthProvider>
       </body>
     </html>
   )
