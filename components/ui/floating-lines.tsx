@@ -75,7 +75,7 @@ export function FloatingLines() {
         height: '100%',
         zIndex: -1,
         pointerEvents: 'none',
-        background: '#000'
+        background: 'transparent' // Changed to let it act as an overlay/underlay without hiding everything if it is z-index -1
       }}
     />
   )
