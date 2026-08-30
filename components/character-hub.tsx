@@ -45,7 +45,51 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
   const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
-  const changeBackground = (programIndex: number) => setBackgroundIndex(programIndex % backgrounds.length)
+
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+
+    const observer = new IntersectionObserver((entries) => {
+      // Find the card that is closest to the center (has the highest intersection ratio)
+      // or simply the one that is intersecting our center-line rootMargin.
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const idx = Number(entry.target.getAttribute('data-index'))
+          if (!isNaN(idx)) {
+            setBackgroundIndex(prev => {
+              const nextIndex = idx % backgrounds.length
+              return prev === nextIndex ? prev : nextIndex
+            })
+          }
+        }
+      })
+    }, {
+      root: grid,
+      rootMargin: '0px -49% 0px -49%',
+      threshold: 0
+    })
+
+    const cards = grid.querySelectorAll('.program-card')
+    cards.forEach(card => observer.observe(card))
+
+    return () => observer.disconnect()
+  }, [backgrounds.length])
+
+  const changeBackgroundAndCenter = (programIndex: number, el: HTMLElement) => {
+    const nextIndex = programIndex % backgrounds.length
+    setBackgroundIndex(prev => prev === nextIndex ? prev : nextIndex)
+
+    // Smooth scroll to center the element
+    const grid = gridRef.current
+    if (grid) {
+      const elRect = el.getBoundingClientRect()
+      const gridRect = grid.getBoundingClientRect()
+      const centerOffset = elRect.left - gridRect.left - (gridRect.width / 2) + (elRect.width / 2)
+      grid.scrollBy({ left: centerOffset, behavior: 'smooth' })
+    }
+  }
+
   const name = isAria ? 'ARIA' : 'JOZIEL'
   return (
     <main className={`hub hub-with-video hub-${character}`}>
@@ -61,12 +105,18 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       </header>
       {menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
       <section className="hub-intro"><Wordmark name={name} /></section>
-      <div className="program-grid" ref={gridRef} onScroll={() => {
-        const cards = Array.from(gridRef.current?.querySelectorAll<HTMLElement>('.program-card') ?? [])
-        const center = (gridRef.current?.getBoundingClientRect().left ?? 0) + (gridRef.current?.clientWidth ?? 0) / 2
-        const active = cards.reduce((best, card, index) => Math.abs(card.getBoundingClientRect().left + card.offsetWidth / 2 - center) < Math.abs(cards[best]?.getBoundingClientRect().left + cards[best]?.offsetWidth / 2 - center) ? index : best, 0)
-        setBackgroundIndex(active % backgrounds.length)
-      }}>{programs[character].map((program, index) => <ProgramLauncher character={character} program={program} index={index} key={program} destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined} onActivate={() => changeBackground(index)} />)}</div>
+      <div className="program-grid" ref={gridRef}>
+        {programs[character].map((program, index) => (
+          <ProgramLauncher
+            character={character}
+            program={program}
+            index={index}
+            key={program}
+            destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined}
+            onActivate={(el) => changeBackgroundAndCenter(index, el)}
+          />
+        ))}
+      </div>
     </main>
   )
 }
