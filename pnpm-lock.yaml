@@ -11,6 +11,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.5.0
         version: 1.5.0(@date-fns/tz@1.4.1)(@types/react@19.2.14)(date-fns@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@react-spring/web':
+        specifier: ^10.1.2
+        version: 10.1.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@serwist/next':
         specifier: ^9.5.12
         version: 9.5.12(next@16.3.3(@babel/core@7.29.7)(@types/node@24.10.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.7.3)
@@ -20,6 +23,9 @@ importers:
       '@types/three':
         specifier: ^0.185.4
         version: 0.185.4
+      '@use-gesture/react':
+        specifier: ^10.3.1
+        version: 10.3.1(react@19.2.4)
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.3.3(@babel/core@7.29.7)(@types/node@24.10.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -44,6 +50,9 @@ importers:
       react:
         specifier: ^19
         version: 19.2.4
+      react-colorful:
+        specifier: ^5.8.0
+        version: 5.8.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-dom:
         specifier: ^19
         version: 19.2.4(react@19.2.4)
@@ -57,8 +66,8 @@ importers:
         specifier: ^4.11.0
         version: 4.19.0(typescript@5.7.3)
       tailwind-merge:
-        specifier: ^3.3.1
-        version: 3.4.0
+        specifier: ^3.6.0
+        version: 3.6.0
       three:
         specifier: ^0.180.0
         version: 0.180.0
@@ -635,6 +644,33 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@react-spring/animated@10.1.2':
+    resolution: {integrity: sha512-yAsQ/bbp6+vko7WNCI1M00c6KLE9XKTGCrgRhQqS4JcK3oF5qBV4rHYrQEprvEvYXxt+1H5FsLS2eVValEPfFw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@react-spring/core@10.1.2':
+    resolution: {integrity: sha512-lPGOAg0V+PV3ucopOajD+YCxoe8twALqAeG4c/+sqVjBsyUNNdx8qfz/DcNSPKA8PV3+AyQELlCxlDfap9cmBQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@react-spring/rafz@10.1.2':
+    resolution: {integrity: sha512-KC6vSFZyPnRJ2rXqipV9QqR4SaYbYXjvKfdYKWipNK2mWuV79gr20WmpVUOsTiEHGRY3WSOdWCHN+P9Pdaqb7Q==}
+
+  '@react-spring/shared@10.1.2':
+    resolution: {integrity: sha512-47/8bNQ/o0uEmxEnPBuERlC29VSqiTn5P9ln9tUMSVkYKYxBtouYE686F5kAGj+eHRPoNCw7drxWE9nv2d1LMw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@react-spring/types@10.1.2':
+    resolution: {integrity: sha512-G4CWowmVPz+rDG1y9QRVq/prZNxiNwQaHC0kgT/MgY6jAGgdRgTV4VThpvJDwWvUitk3xZB4soP4d36fjeQ09g==}
+
+  '@react-spring/web@10.1.2':
+    resolution: {integrity: sha512-KxDB3zaDqy9qFsu7fdxjyraAxweHH4k5TW5WGT/OuMK6hKaxSDfhrQfRBzfFaSVvMBf+NghbJFanllV4ia6i7A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
@@ -988,6 +1024,14 @@ packages:
     resolution: {integrity: sha512-nAB74NfSNKknqQ1RrYj6uz8FcXEomu/MATJZxh/x+BArzN2U3JbOYC0APYzUIGhVY3m5hRxA8VPNdPBoG8txlA==}
     cpu: [x64]
     os: [win32]
+
+  '@use-gesture/core@10.3.1':
+    resolution: {integrity: sha512-WcINiDt8WjqBdUXye25anHiNxPc0VOrlT8F6LLkU6cycrOGUDyY/yyFmsg3k8i5OLvv25llc0QC45GhR/C8llw==}
+
+  '@use-gesture/react@10.3.1':
+    resolution: {integrity: sha512-Yy19y6O2GJq8f7CHf7L0nxL8bf4PZCPaVOCgJrusOeFHY1LvHgYXnmnXg6N5iwAnbgbZCDjo60SiM6IPJi9C5g==}
+    peerDependencies:
+      react: '>= 16.8.0'
 
   '@vercel/analytics@1.6.1':
     resolution: {integrity: sha512-oH9He/bEM+6oKlv3chWuOOcp8Y6fo6/PSro8hEkgCW3pu9/OiCXiUpRUogDh3Fs3LH2sosDrx8CxeOLBEE+afg==}
@@ -2747,6 +2791,12 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
+  react-colorful@5.8.0:
+    resolution: {integrity: sha512-Wy9OzPfjSN9bF12OB8N7UQvlsZ0I+7wHxpN+bV5BjNQGxOj6IiwkRjevJK9yOBjJWGQvAaf1OXtn8rUeEatAng==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
@@ -3119,8 +3169,8 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
-  tailwind-merge@3.4.0:
-    resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
+  tailwind-merge@3.6.0:
+    resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -3887,6 +3937,39 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@react-spring/animated@10.1.2(react@19.2.4)':
+    dependencies:
+      '@react-spring/shared': 10.1.2(react@19.2.4)
+      '@react-spring/types': 10.1.2
+      react: 19.2.4
+
+  '@react-spring/core@10.1.2(react@19.2.4)':
+    dependencies:
+      '@react-spring/animated': 10.1.2(react@19.2.4)
+      '@react-spring/shared': 10.1.2(react@19.2.4)
+      '@react-spring/types': 10.1.2
+      react: 19.2.4
+
+  '@react-spring/rafz@10.1.2': {}
+
+  '@react-spring/shared@10.1.2(react@19.2.4)':
+    dependencies:
+      '@react-spring/rafz': 10.1.2
+      '@react-spring/types': 10.1.2
+      react: 19.2.4
+
+  '@react-spring/types@10.1.2': {}
+
+  '@react-spring/web@10.1.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@react-spring/animated': 10.1.2(react@19.2.4)
+      '@react-spring/core': 10.1.2(react@19.2.4)
+      '@react-spring/shared': 10.1.2(react@19.2.4)
+      '@react-spring/types': 10.1.2
+      csstype: 3.2.3
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   '@rtsao/scc@1.1.0': {}
 
   '@rushstack/eslint-patch@1.16.1': {}
@@ -4195,6 +4278,13 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
+
+  '@use-gesture/core@10.3.1': {}
+
+  '@use-gesture/react@10.3.1(react@19.2.4)':
+    dependencies:
+      '@use-gesture/core': 10.3.1
+      react: 19.2.4
 
   '@vercel/analytics@1.6.1(next@16.3.3(@babel/core@7.29.7)(@types/node@24.10.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     optionalDependencies:
@@ -6054,6 +6144,11 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
+  react-colorful@5.8.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   react-dom@19.2.4(react@19.2.4):
     dependencies:
       react: 19.2.4
@@ -6303,7 +6398,7 @@ snapshots:
       recast: 0.23.11
       socks: 2.8.9
       stringify-object: 5.0.0
-      tailwind-merge: 3.4.0
+      tailwind-merge: 3.6.0
       ts-morph: 26.0.0
       tsconfig-paths: 4.2.0
       undici: 7.29.0
@@ -6565,7 +6660,7 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tailwind-merge@3.4.0: {}
+  tailwind-merge@3.6.0: {}
 
   tailwindcss@4.3.3: {}
 
