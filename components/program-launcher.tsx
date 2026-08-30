@@ -4,20 +4,20 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { moduleFlags, slugifyProgram, type Character } from '@/lib/module-flags'
 
-export function ProgramLauncher({ character, program, index, destination, onActivate }: { character: Character; program: string; index: number; destination?: string; onActivate?: () => void }) {
+export function ProgramLauncher({ character, program, index, destination, onActivate }: { character: Character; program: string; index: number; destination?: string; onActivate?: (el: HTMLElement) => void }) {
   const router = useRouter()
   const [launching, setLaunching] = useState(false)
   const slug = slugifyProgram(program)
   const enabled = moduleFlags[character].enabled && moduleFlags[character].programs[slug] !== false
 
-  function openProgram() {
+  function openProgram(e: React.MouseEvent<HTMLButtonElement>) {
     if (!enabled || launching) return
     setLaunching(true)
-    onActivate?.()
+    onActivate?.(e.currentTarget)
     window.setTimeout(() => router.push(destination ?? `/${character}/${slug}`), 1200)
   }
 
-  return <button type="button" className={`program-card program-card-button${launching ? ' is-launching' : ''}`} onClick={openProgram} disabled={!enabled || launching} aria-label={`Abrir ${program}`}>
+  return <button type="button" data-index={index} className={`program-card program-card-button${launching ? ' is-launching' : ''}`} onClick={openProgram} disabled={!enabled || launching} aria-label={`Abrir ${program}`}>
     <span className="program-card-glass" aria-hidden="true"><span className="program-card-clip" /></span>
     <span className="program-number">0{index + 1}</span>
     <h2>{program}</h2>
