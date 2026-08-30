@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BackgroundSettings } from './BackgroundSettings'
 import { mediaUrl } from '@/lib/media-urls'
 
 export function FuegoHome() {
@@ -108,7 +109,12 @@ export function FuegoHome() {
       <section className="splash" aria-label="Fuego"><FlameMark /><span>FUEGO</span></section>
 
       <section className="home-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
-        {!splash && <div className="home-login"><LoginHeader /></div>}
+        {!splash && (
+          <div className="home-login" style={{ display: 'flex', alignItems: 'center' }}>
+            <BackgroundSettings />
+            <LoginHeader />
+          </div>
+        )}
         <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
 
         {selectedModule && (
