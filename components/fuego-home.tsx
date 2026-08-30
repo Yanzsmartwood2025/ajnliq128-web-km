@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
+import { mediaUrl } from '@/lib/media-urls'
 
 export function FuegoHome() {
   const router = useRouter()
@@ -134,7 +135,18 @@ export function FuegoHome() {
                 }}
               >
                 <div className="bubble-video-container" style={{ opacity: selectedModule === 'ARIA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video src="/placeholder-video-1.mp4" autoPlay loop muted playsInline className="bubble-video" />
+                  <video
+                    src={mediaUrl('fuego/botones/aria-preview.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="bubble-video"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/placeholder-video-1.mp4";
+                    }}
+                  />
                 </div>
                 <span className="bubble-label">ARIA</span>
               </motion.button>
@@ -156,7 +168,18 @@ export function FuegoHome() {
                 }}
               >
                 <div className="bubble-video-container" style={{ opacity: selectedModule === 'JOZIEL' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video src="/placeholder-video-2.mp4" autoPlay loop muted playsInline className="bubble-video" />
+                  <video
+                    src={mediaUrl('fuego/botones/joziel-preview.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="bubble-video"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/placeholder-video-2.mp4";
+                    }}
+                  />
                 </div>
                 <span className="bubble-label">JOZIEL</span>
               </motion.button>
@@ -178,7 +201,18 @@ export function FuegoHome() {
                 }}
               >
                 <div className="bubble-video-container" style={{ opacity: selectedModule === 'NAYLA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" />
+                  <video
+                    src={mediaUrl('fuego/botones/nayla-preview.mp4')}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="bubble-video"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/placeholder-video-3.mp4";
+                    }}
+                  />
                 </div>
                 <span className="bubble-label">NAYLA</span>
               </motion.button>
