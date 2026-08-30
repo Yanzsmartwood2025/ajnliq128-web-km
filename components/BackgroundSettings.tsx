@@ -175,7 +175,7 @@ export function BackgroundSettings() {
       >
         <Settings2 size={16} />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]" style={{
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto" style={{
         background: 'rgba(8, 10, 24, 0.65)',
         backdropFilter: 'blur(24px) saturate(150%)',
         WebkitBackdropFilter: 'blur(24px) saturate(150%)',
