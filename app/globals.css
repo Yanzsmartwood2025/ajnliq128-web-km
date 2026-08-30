@@ -424,7 +424,8 @@ a { color: inherit; text-decoration: none; }
 .floating-bubble.is-disabled {
   cursor: not-allowed;
   filter: grayscale(1);
-}
+  }
+.floating-bubble:not(.is-disabled) { cursor: pointer; }
 
 .bubble-video-container {
   position: absolute;
