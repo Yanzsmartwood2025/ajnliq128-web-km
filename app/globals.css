@@ -390,6 +390,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* Floating Bubbles Styles */
+.floating-bubble-container {
+  display: inline-block;
+}
+
 .floating-bubble {
   position: relative;
   width: clamp(140px, 20vw, 180px);
