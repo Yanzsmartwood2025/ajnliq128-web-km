@@ -9,8 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 export function FuegoHome() {
   const router = useRouter()
   const [splash, setSplash] = useState(true)
-  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | null>(null)
-  const [naylaNotice, setNaylaNotice] = useState(false)
+  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
 
   // Audio refs
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
@@ -21,7 +20,7 @@ export function FuegoHome() {
     return () => window.clearTimeout(timer)
   }, [])
 
-  const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL') => {
+  const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
     e.stopPropagation() // Prevent click from triggering "touch outside"
     if (selectedModule === module) {
       // Second touch -> Enter module
@@ -29,7 +28,7 @@ export function FuegoHome() {
     } else {
       // First touch -> Focus bubble and play sound
       setSelectedModule(module)
-      const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
+      const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
       if (audio) {
         audio.currentTime = 0
         audio.volume = 1
@@ -38,9 +37,9 @@ export function FuegoHome() {
     }
   }
 
-  const enterModule = (module: 'ARIA' | 'JOZIEL') => {
+  const enterModule = (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
     // Fade out logic and navigate
-    const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
+    const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
     if (audio) {
       let fadeTimer = 0
       const fadeInterval = setInterval(() => {
@@ -59,7 +58,7 @@ export function FuegoHome() {
         audio.pause()
         audio.currentTime = 0
       }
-      router.push(module === 'ARIA' ? '/aria' : '/joziel')
+      router.push(module === 'ARIA' ? '/aria' : (module === 'JOZIEL' ? '/joziel' : '/nayla'))
     }, 2000)
   }
 
@@ -163,24 +162,25 @@ export function FuegoHome() {
               </motion.button>
             )}
 
-            {!selectedModule && (
+            {(!selectedModule || selectedModule === 'NAYLA') && (
               <motion.button
                 key="nayla"
-                className={`floating-bubble is-disabled ${naylaNotice ? 'is-notice' : ''}`}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 0.5, scale: 0.8, ...floatingAnimation(3, 5, 8) }}
-                exit={{ opacity: 0, scale: 0 }}
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setNaylaNotice(true); }}
+                className="floating-bubble"
+                initial={{ opacity: 0, scale: 0, marginLeft: '0vw', marginTop: '-25vh' }}
+                animate={selectedModule === 'NAYLA'
+                  ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
+                  : { opacity: 1, scale: 1, marginLeft: '0vw', marginTop: '-25vh', ...floatingAnimation(3, 5, 8) }
+                }
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'NAYLA')}
                 style={{
                   position: 'absolute',
-                  marginTop: '-25vh',
-                  marginLeft: '0vw'
                 }}
               >
-                <div className="bubble-video-container">
+                <div className="bubble-video-container" style={{ opacity: selectedModule === 'NAYLA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
                   <video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" />
                 </div>
-                <span className="bubble-label">{naylaNotice ? 'PRÓXIMAMENTE' : 'NAYLA'}</span>
+                <span className="bubble-label">NAYLA</span>
               </motion.button>
             )}
           </AnimatePresence>
