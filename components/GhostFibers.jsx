@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useRef } from 'react';
 import { Mesh, Program, Renderer, Triangle } from 'ogl';
 import './GhostFibers.css';
