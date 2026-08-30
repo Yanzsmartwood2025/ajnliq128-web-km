@@ -1,4 +1,5 @@
 import { AuthForm } from '@/components/auth-form'
+import { AnimatedGrain } from '@/components/ui/animated-grain'
 
 export const metadata = {
   title: 'Iniciar sesión — AJNLIQ128',
@@ -6,5 +7,10 @@ export const metadata = {
 }
 
 export default function LoginPage() {
-  return <AuthForm mode="login" />
+  return (
+    <>
+      <AnimatedGrain />
+      <AuthForm mode="login" />
+    </>
+  )
 }

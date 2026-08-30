@@ -24,7 +24,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <main className="auth-page">
-      <section className="auth-panel" aria-labelledby="auth-title">
+      <section className="auth-panel" aria-labelledby="auth-title" style={{ background: 'transparent' }}>
         <div className="auth-panel-topline">
           <p className="auth-kicker">AJNLIQ128 / FUEGO</p>
           <Link href="/" className="auth-back" aria-label="Volver a FUEGO">← Volver</Link>
