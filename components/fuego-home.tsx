@@ -4,13 +4,13 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
-import SideRays from './SideRays'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function FuegoHome() {
   const router = useRouter()
   const [splash, setSplash] = useState(true)
-  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
+  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | null>(null)
+  const [naylaNotice, setNaylaNotice] = useState(false)
 
   // Audio refs
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
@@ -21,8 +21,6 @@ export function FuegoHome() {
     return () => window.clearTimeout(timer)
   }, [])
 
-<
-    fix-bubble-ui-interactions-3179756796680854832
   const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL') => {
     e.stopPropagation() // Prevent click from triggering "touch outside"
     if (selectedModule === module) {
@@ -42,18 +40,6 @@ export function FuegoHome() {
 
   const enterModule = (module: 'ARIA' | 'JOZIEL') => {
     // Fade out logic and navigate
-=======
-  const enterModule = (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
-    if (selectedModule) return
-    setSelectedModule(module)
-
-    if (module === 'NAYLA') {
-      window.setTimeout(() => router.push('/nayla'), 2000)
-      return
-    }
-
-    // Play sound and fade out
- main
     const audio = module === 'ARIA' ? ariaAudioRef.current : jozielAudioRef.current
     if (audio) {
       let fadeTimer = 0
@@ -124,7 +110,6 @@ export function FuegoHome() {
       <section className="home-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
         {!splash && <div className="home-login"><LoginHeader /></div>}
         <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
-fix-bubble-ui-interactions-3179756796680854832
 
         {selectedModule && (
           <div
@@ -153,17 +138,10 @@ fix-bubble-ui-interactions-3179756796680854832
                   <video src="/placeholder-video-1.mp4" autoPlay loop muted playsInline className="bubble-video" />
                 </div>
                 <span className="bubble-label">ARIA</span>
-=======
-        <div style={{ position: 'relative', width: '100%', height: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <AnimatePresence>
-            {(!selectedModule || selectedModule === 'ARIA') && (
-              <motion.button key="aria" className="floating-bubble" initial={{ opacity: 0, scale: 0 }} animate={selectedModule === 'ARIA' ? { scale: 1.5, opacity: 1, x: 0, y: 0, marginLeft: 0, marginTop: 0 } : { opacity: 1, scale: 1, marginLeft: '-20vw', marginTop: '-5vh', ...floatingAnimation(0, 6, 7) }} exit={{ opacity: 0, scale: 0.8 }} onClick={() => enterModule('ARIA')} style={{ position: 'absolute' }}>
-                <div className="bubble-video-container"><video src="/placeholder-video-1.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">ARIA</span>
-main
               </motion.button>
             )}
+
             {(!selectedModule || selectedModule === 'JOZIEL') && (
- fix-bubble-ui-interactions-3179756796680854832
               <motion.button
                 key="joziel"
                 className="floating-bubble"
@@ -203,16 +181,6 @@ main
                   <video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" />
                 </div>
                 <span className="bubble-label">{naylaNotice ? 'PRÓXIMAMENTE' : 'NAYLA'}</span>
-=======
-              <motion.button key="joziel" className="floating-bubble" initial={{ opacity: 0, scale: 0 }} animate={selectedModule === 'JOZIEL' ? { scale: 1.5, opacity: 1, x: 0, y: 0, marginLeft: 0, marginTop: 0 } : { opacity: 1, scale: 1, marginLeft: '20vw', marginTop: '10vh', ...floatingAnimation(1.5, 7, 5) }} exit={{ opacity: 0, scale: 0.8 }} onClick={() => enterModule('JOZIEL')} style={{ position: 'absolute' }}>
-                <div className="bubble-video-container"><video src="/placeholder-video-2.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">JOZIEL</span>
-              </motion.button>
-            )}
-            {(!selectedModule || selectedModule === 'NAYLA') && (
-              <motion.button key="nayla" className="floating-bubble" initial={{ opacity: 0, scale: 0 }} animate={selectedModule === 'NAYLA' ? { scale: 1.5, opacity: 1, x: 0, y: 0, marginLeft: 0, marginTop: 0 } : { opacity: 1, scale: 0.8, ...floatingAnimation(3, 5, 8) }} exit={{ opacity: 0, scale: 0 }} onClick={() => enterModule('NAYLA')} style={{ position: 'absolute', marginTop: '-20vh', marginLeft: '0vw' }}>
-                <div className="bubble-video-container"><video src="/placeholder-video-3.mp4" autoPlay loop muted playsInline className="bubble-video" /></div><span className="bubble-label">NAYLA</span>
-                <span className="nayla-side-rays" aria-hidden="true"><SideRays speed={1.35} rayColor1="#ffffff" rayColor2="#ffffff" intensity={1.4} spread={1.7} origin="top-right" opacity={0.72} /></span>
- main
               </motion.button>
             )}
           </AnimatePresence>

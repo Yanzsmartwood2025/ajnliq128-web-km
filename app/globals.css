@@ -74,12 +74,6 @@ a { color: inherit; text-decoration: none; }
 .module-card:hover img { transform: scale(1.04); }
 .module-nayla { color: var(--muted); cursor: not-allowed; opacity: .55; }
 .module-nayla img { filter: grayscale(.8); }
-.module-nayla { isolation: isolate; overflow: hidden; }
-.nayla-side-rays { position: absolute; inset: 0; z-index: 1; opacity: .9; mix-blend-mode: screen; pointer-events: none; }
-.nayla-side-rays::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 35%, rgba(255,255,255,.1), transparent 68%); pointer-events: none; }
-.nayla-side-rays canvas { display: block; width: 100% !important; height: 100% !important; }
-.module-nayla .module-card-content { z-index: 3; background: rgba(8,10,24,.42); }
-.module-nayla::after { content: ''; position: absolute; inset: 0; z-index: 2; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3), inset 0 0 28px rgba(255,255,255,.12); pointer-events: none; }
 .wordmark { font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 300; letter-spacing: .12em; line-height: 1; }
 .module-caption { color: var(--muted); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
 .module-arrow { color: var(--accent); font-size: 1.2rem; }
@@ -434,8 +428,7 @@ a { color: inherit; text-decoration: none; }
 .floating-bubble.is-disabled {
   cursor: not-allowed;
   filter: grayscale(1);
-  }
-.floating-bubble:not(.is-disabled) { cursor: pointer; }
+}
 
 .bubble-video-container {
   position: absolute;
