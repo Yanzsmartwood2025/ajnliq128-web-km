@@ -1,7 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { PwaUpdater } from '@/components/PwaUpdater'
 import { Toaster } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
@@ -52,7 +51,6 @@ export default function RootLayout({
         <Toaster>
           {children}
         </Toaster>
-        <PwaUpdater />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
