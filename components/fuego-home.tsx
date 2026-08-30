@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
+import SideRays from './SideRays'
 
 const particles = Array.from({ length: 18 }, (_, index) => index)
 const homeBackgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
@@ -48,6 +49,7 @@ export function FuegoHome() {
           </button>
           <button className={`module-card module-nayla ${naylaNotice ? 'is-notice' : ''}`} disabled={selectedModule !== null} onClick={() => setNaylaNotice(true)} aria-label="Nayla, coming soon">
             <img src="/nayla-card.png" alt="Nayla, coming soon" />
+            <span className="nayla-side-rays" aria-hidden="true"><SideRays speed={1.35} rayColor1="#ffffff" rayColor2="#ffffff" intensity={1.4} spread={1.7} origin="top-right" opacity={0.72} /></span>
             <span className="module-card-content"><Wordmark name="NAYLA" /><span className="module-caption">{naylaNotice ? 'coming soon' : 'coming soon'}</span><span className="module-arrow" aria-hidden="true">—</span></span>
           </button>
         </div>
