@@ -11,6 +11,7 @@ const WebThreads = dynamic(() => import('@/components/WebThreads'), { ssr: false
 const MagicRings = dynamic(() => import('@/components/MagicRings'), { ssr: false })
 
 export type BackgroundType = 'floatingLines' | 'ghostFibers' | 'rippleDistortion' | 'webThreads' | 'magicRings'
+export type BubbleEffectType = 'none' | 'tiltedCard' | 'glareHover' | 'borderGlow' | 'splashCursor' | 'rippleDistortion'
 
 export interface BackgroundSettings {
   type: BackgroundType
@@ -18,6 +19,7 @@ export interface BackgroundSettings {
   rippleDistortion: { tint: string }
   webThreads: { color1: string; color2: string; color3: string }
   magicRings: { color: string; colorTwo: string }
+  bubbleEffect: BubbleEffectType
 }
 
 const defaultSettings: BackgroundSettings = {
@@ -25,7 +27,8 @@ const defaultSettings: BackgroundSettings = {
   ghostFibers: { lineColor: '#140E35', glowColor: '#3437A0' },
   rippleDistortion: { tint: '#a855f7' },
   webThreads: { color1: '#5227FF', color2: '#FF9FFC', color3: '#FFFFFF' },
-  magicRings: { color: '#fc42ff', colorTwo: '#42fcff' }
+  magicRings: { color: '#fc42ff', colorTwo: '#42fcff' },
+  bubbleEffect: 'none'
 }
 
 interface BackgroundContextType {

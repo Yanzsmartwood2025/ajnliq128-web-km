@@ -7,6 +7,7 @@ import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BackgroundSettings } from './BackgroundSettings'
 import { mediaUrl } from '@/lib/media-urls'
+import { BubbleWrapper } from './BubbleWrapper'
 
 export function FuegoHome() {
   const router = useRouter()
@@ -126,102 +127,99 @@ export function FuegoHome() {
         <div style={{ position: 'relative', width: '100%', height: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <AnimatePresence>
             {(!selectedModule || selectedModule === 'ARIA') && (
-              <motion.button
+              <motion.div
                 key="aria"
-                className="floating-bubble"
+                className="floating-bubble-container"
                 initial={{ opacity: 0, scale: 0, marginLeft: '-25vw', marginTop: '-10vh' }}
                 animate={selectedModule === 'ARIA'
                   ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
                   : { opacity: 1, scale: 1, marginLeft: '-25vw', marginTop: '-10vh', ...floatingAnimation(0, 6, 7) }
                 }
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'ARIA')}
-                style={{
-                  position: 'absolute',
-                }}
+                style={{ position: 'absolute' }}
               >
-                <div className="bubble-video-container" style={{ opacity: selectedModule === 'ARIA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video
-                    src={mediaUrl('fuego/botones/aria-preview.mp4')}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="bubble-video"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/placeholder-video-1.mp4";
-                    }}
-                  />
-                </div>
-                <span className="bubble-label">ARIA</span>
-              </motion.button>
+                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'ARIA')}>
+                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'ARIA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                    <video
+                      src={mediaUrl('fuego/botones/aria-preview.mp4')}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="bubble-video"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/placeholder-video-1.mp4";
+                      }}
+                    />
+                  </div>
+                  <span className="bubble-label">ARIA</span>
+                </BubbleWrapper>
+              </motion.div>
             )}
 
             {(!selectedModule || selectedModule === 'JOZIEL') && (
-              <motion.button
+              <motion.div
                 key="joziel"
-                className="floating-bubble"
+                className="floating-bubble-container"
                 initial={{ opacity: 0, scale: 0, marginLeft: '25vw', marginTop: '15vh' }}
                 animate={selectedModule === 'JOZIEL'
                   ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
                   : { opacity: 1, scale: 1, marginLeft: '25vw', marginTop: '15vh', ...floatingAnimation(1.5, 7, 5) }
                 }
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'JOZIEL')}
-                style={{
-                  position: 'absolute',
-                }}
+                style={{ position: 'absolute' }}
               >
-                <div className="bubble-video-container" style={{ opacity: selectedModule === 'JOZIEL' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video
-                    src={mediaUrl('fuego/botones/joziel-preview.mp4')}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="bubble-video"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/placeholder-video-2.mp4";
-                    }}
-                  />
-                </div>
-                <span className="bubble-label">JOZIEL</span>
-              </motion.button>
+                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'JOZIEL')}>
+                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'JOZIEL' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                    <video
+                      src={mediaUrl('fuego/botones/joziel-preview.mp4')}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="bubble-video"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/placeholder-video-2.mp4";
+                      }}
+                    />
+                  </div>
+                  <span className="bubble-label">JOZIEL</span>
+                </BubbleWrapper>
+              </motion.div>
             )}
 
             {(!selectedModule || selectedModule === 'NAYLA') && (
-              <motion.button
+              <motion.div
                 key="nayla"
-                className="floating-bubble"
+                className="floating-bubble-container"
                 initial={{ opacity: 0, scale: 0, marginLeft: '0vw', marginTop: '-25vh' }}
                 animate={selectedModule === 'NAYLA'
                   ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
                   : { opacity: 1, scale: 1, marginLeft: '0vw', marginTop: '-25vh', ...floatingAnimation(3, 5, 8) }
                 }
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={(e: React.MouseEvent) => handleBubbleClick(e, 'NAYLA')}
-                style={{
-                  position: 'absolute',
-                }}
+                style={{ position: 'absolute' }}
               >
-                <div className="bubble-video-container" style={{ opacity: selectedModule === 'NAYLA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
-                  <video
-                    src={mediaUrl('fuego/botones/nayla-preview.mp4')}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="bubble-video"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/placeholder-video-3.mp4";
-                    }}
-                  />
-                </div>
-                <span className="bubble-label">NAYLA</span>
-              </motion.button>
+                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'NAYLA')}>
+                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'NAYLA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                    <video
+                      src={mediaUrl('fuego/botones/nayla-preview.mp4')}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="bubble-video"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/placeholder-video-3.mp4";
+                      }}
+                    />
+                  </div>
+                  <span className="bubble-label">NAYLA</span>
+                </BubbleWrapper>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
