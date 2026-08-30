@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BackgroundSettings } from './BackgroundSettings'
 import { mediaUrl } from '@/lib/media-urls'
 import { BubbleWrapper } from './BubbleWrapper'
+import dynamic from 'next/dynamic'
+const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
+
 
 export function FuegoHome() {
   const router = useRouter()
@@ -125,21 +128,19 @@ export function FuegoHome() {
           />
         )}
         <div style={{ position: 'relative', width: '100%', height: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {/* If a module is selected, show the full screen focused view */}
           <AnimatePresence>
-            {(!selectedModule || selectedModule === 'ARIA') && (
+            {selectedModule === 'ARIA' && (
               <motion.div
-                key="aria"
+                key="aria-focused"
                 className="floating-bubble-container"
-                initial={{ opacity: 0, scale: 0, marginLeft: '-25vw', marginTop: '-10vh' }}
-                animate={selectedModule === 'ARIA'
-                  ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
-                  : { opacity: 1, scale: 1, marginLeft: '-25vw', marginTop: '-10vh', ...floatingAnimation(0, 6, 7) }
-                }
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'ARIA')}>
-                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'ARIA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/aria-preview.mp4')}
                       autoPlay
@@ -158,20 +159,17 @@ export function FuegoHome() {
               </motion.div>
             )}
 
-            {(!selectedModule || selectedModule === 'JOZIEL') && (
+            {selectedModule === 'JOZIEL' && (
               <motion.div
-                key="joziel"
+                key="joziel-focused"
                 className="floating-bubble-container"
-                initial={{ opacity: 0, scale: 0, marginLeft: '25vw', marginTop: '15vh' }}
-                animate={selectedModule === 'JOZIEL'
-                  ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
-                  : { opacity: 1, scale: 1, marginLeft: '25vw', marginTop: '15vh', ...floatingAnimation(1.5, 7, 5) }
-                }
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'JOZIEL')}>
-                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'JOZIEL' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/joziel-preview.mp4')}
                       autoPlay
@@ -190,20 +188,17 @@ export function FuegoHome() {
               </motion.div>
             )}
 
-            {(!selectedModule || selectedModule === 'NAYLA') && (
+            {selectedModule === 'NAYLA' && (
               <motion.div
-                key="nayla"
+                key="nayla-focused"
                 className="floating-bubble-container"
-                initial={{ opacity: 0, scale: 0, marginLeft: '0vw', marginTop: '-25vh' }}
-                animate={selectedModule === 'NAYLA'
-                  ? { scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }
-                  : { opacity: 1, scale: 1, marginLeft: '0vw', marginTop: '-25vh', ...floatingAnimation(3, 5, 8) }
-                }
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ scale: 1.5, opacity: 1, x: 0, y: 0, zIndex: 10, marginLeft: 0, marginTop: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'NAYLA')}>
-                  <div className="bubble-video-container" style={{ opacity: selectedModule === 'NAYLA' ? 0.6 : 0, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/nayla-preview.mp4')}
                       autoPlay
@@ -222,6 +217,17 @@ export function FuegoHome() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* If NO module is selected, render Physics system */}
+          {!selectedModule && (
+            <PhysicsBubbles
+              onSelectModule={(module) => {
+                // Synthesize an event object or pass null if possible,
+                // handleBubbleClick expects React.MouseEvent but we can make it optional or cast it.
+                handleBubbleClick({ stopPropagation: () => {} } as any, module);
+              }}
+            />
+          )}
         </div>
 
         <p className="home-footer" style={{ marginTop: 'auto' }}>FUEGO / 001</p>
