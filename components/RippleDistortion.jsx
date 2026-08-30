@@ -431,4 +431,6 @@ const RippleDistortion = ({
   return <div ref={mountRef} className={`ripple-distortion ${className}`.trim()} style={style} />;
 };
 
+
+export { RippleDistortion };
 export default RippleDistortion;

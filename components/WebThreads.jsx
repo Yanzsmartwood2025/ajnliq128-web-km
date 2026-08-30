@@ -397,4 +397,6 @@ const WebThreads = ({
   return <div ref={containerRef} className={`web-threads-container ${className}`.trim()} />;
 };
 
+
+export { WebThreads };
 export default WebThreads;

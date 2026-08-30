@@ -409,4 +409,6 @@ const GhostFibers = ({
   return <div ref={containerRef} className={`ghost-fibers-container ${className}`.trim()} />;
 };
 
+
+export { GhostFibers };
 export default GhostFibers;
