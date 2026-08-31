@@ -123,7 +123,7 @@ export function FuegoHome() {
           muted
           playsInline
           onEnded={handleSplashVideoEnded}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', maxWidth: '400px', height: 'auto', objectFit: 'contain' }}
         />
       </section>
 
@@ -244,8 +244,6 @@ export function FuegoHome() {
             />
           )}
         </div>
-
-        <p className="home-footer" style={{ marginTop: 'auto' }}>FUEGO / 001</p>
       </section>
     </main>
   )
