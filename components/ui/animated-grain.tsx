@@ -15,8 +15,14 @@ export function AnimatedGrain() {
     let timeoutId: NodeJS.Timeout
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      // For grain, generating physical pixels per dpr is computationally heavy.
+      // However, to keep it crisp we should scale it.
+      // Instead of huge image data loops, keeping a smaller resolution and scaling with CSS
+      // creates a "blocky" grain, which isn't true white noise.
+      // Alternatively, we use full resolution, but it's heavier. Given typical devices, let's just do standard dpr.
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
     }
 
     window.addEventListener('resize', resize)
@@ -26,6 +32,7 @@ export function AnimatedGrain() {
       // Create grain effect
       const w = canvas.width
       const h = canvas.height
+
       const imageData = ctx.createImageData(w, h)
       const data = imageData.data
 

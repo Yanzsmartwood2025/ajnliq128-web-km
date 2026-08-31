@@ -11,10 +11,11 @@ const RippleDistortion = dynamic(() => import('@/components/RippleDistortion'), 
 interface BubbleWrapperProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent<any>) => void;
 }
 
-export function BubbleWrapper({ children, className = "", onClick }: BubbleWrapperProps) {
+export function BubbleWrapper({ children, className = "", style, onClick }: BubbleWrapperProps) {
   const { settings } = useBackground();
   const effect = settings.bubbleEffect;
 
@@ -32,7 +33,7 @@ export function BubbleWrapper({ children, className = "", onClick }: BubbleWrapp
   // Asumimos que children es un componente que acepta onClick, o envolvemos en div.
 
   return (
-    <div className={`relative ${className}`} onClick={handleWrapperClick} style={{ width: '100%', height: '100%' }}>
+    <div className={`relative ${className}`} onClick={handleWrapperClick} style={{ width: '100%', height: '100%', ...style }}>
       {effect === 'none' && (
          <div className={innerClasses}>{children}</div>
       )}
