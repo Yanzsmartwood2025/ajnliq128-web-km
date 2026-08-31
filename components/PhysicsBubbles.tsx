@@ -354,8 +354,8 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                  }
                }}
              >
-                <BubbleWrapper className="floating-bubble">
-                  <div className="bubble-video-container" style={{ opacity: 0 }}>
+                <BubbleWrapper className="floating-bubble" style={{ width: '100%', height: '100%' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0, width: '100%', height: '100%' }}>
                     <video
                       src={getVideoSrc(module)}
                       autoPlay

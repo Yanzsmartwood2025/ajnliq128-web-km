@@ -24,25 +24,39 @@ export function FloatingLines() {
     }))
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
+
+      // We don't necessarily need to scale the context with ctx.scale(dpr, dpr) here
+      // if we are keeping the logic pixel-based and mapping to canvas.width,
+      // but to keep math in CSS pixels, it's easier.
+      // Wait, the lines logic generates random positions based on window.innerWidth!
+      // If we scale the canvas width, the bounds logic uses canvas.width.
+      // Let's adjust bounds to be based on window.innerWidth instead of canvas.width,
+      // and use ctx.scale to scale all drawing commands.
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
     window.addEventListener('resize', resize)
     resize()
 
     const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const w = window.innerWidth
+      const h = window.innerHeight
+
+      // Clear scaled space
+      ctx.clearRect(0, 0, w, h)
 
       lines.forEach(line => {
         line.x += line.vx
         line.y += line.vy
 
-        if (line.x < -200) line.x = canvas.width + 200
-        else if (line.x > canvas.width + 200) line.x = -200
+        if (line.x < -200) line.x = w + 200
+        else if (line.x > w + 200) line.x = -200
 
-        if (line.y < -200) line.y = canvas.height + 200
-        else if (line.y > canvas.height + 200) line.y = -200
+        if (line.y < -200) line.y = h + 200
+        else if (line.y > h + 200) line.y = -200
 
         ctx.beginPath()
         ctx.moveTo(line.x, line.y)
