@@ -30,9 +30,13 @@ export const metadata: Metadata = {
         sizes: '32x32',
       },
       {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: '/icon-192x192.png',
+        sizes: '192x192',
       },
+      {
+        url: '/icon-512x512.png',
+        sizes: '512x512',
+      }
     ],
     apple: '/apple-icon.png',
   },
