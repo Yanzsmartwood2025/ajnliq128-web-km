@@ -14,7 +14,7 @@ import { useToastManager } from '@/components/ui/toast'
 import { FirebaseError } from 'firebase/app'
 import { useRouter } from 'next/navigation'
 
-export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
+export function AuthForm({ mode, onClose, onSwitchMode }: { mode: 'login' | 'register', onClose?: () => void, onSwitchMode?: (mode: 'login' | 'register') => void }) {
   const isRegister = mode === 'register'
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -126,22 +126,30 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   // Si ya está logueado, podríamos mostrar un mensaje diferente en este componente
   if (user) {
     return (
-      <main className="auth-page">
+      <div className={onClose ? '' : 'auth-page'}>
         <section className="auth-panel" aria-labelledby="auth-title" style={{ background: 'transparent', textAlign: 'center' }}>
           <h1 id="auth-title" style={{ marginBottom: '1rem' }}>Ya estás conectado</h1>
           <p className="auth-lede" style={{ marginBottom: '2rem' }}>Has iniciado sesión como {user.email}</p>
-          <Link href="/" className="auth-submit" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Ir al inicio</Link>
+          {onClose ? (
+            <button type="button" onClick={onClose} className="auth-submit" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Cerrar</button>
+          ) : (
+            <Link href="/" className="auth-submit" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Ir al inicio</Link>
+          )}
         </section>
-      </main>
+      </div>
     )
   }
 
   return (
-    <main className="auth-page">
+    <div className={onClose ? '' : 'auth-page'}>
       <section className="auth-panel" aria-labelledby="auth-title" style={{ background: 'transparent' }}>
         <div className="auth-panel-topline">
           <p className="auth-kicker">AJNLIQ128 / FUEGO</p>
-          <Link href="/" className="auth-back" aria-label="Volver a FUEGO">← Volver</Link>
+          {onClose ? (
+            <button type="button" onClick={onClose} className="auth-back" aria-label="Volver a FUEGO" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>← Volver</button>
+          ) : (
+            <Link href="/" className="auth-back" aria-label="Volver a FUEGO">← Volver</Link>
+          )}
         </div>
         <h1 id="auth-title">{isRegister ? 'Crear cuenta' : 'Iniciar sesión'}</h1>
         <p className="auth-lede">{isRegister ? 'Entrá a la constelación.' : 'Volvé a tu frecuencia.'}</p>
@@ -158,13 +166,37 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           {error && <p className="auth-error" role="alert">{error}</p>}
           <button className="auth-submit" type="submit" disabled={loading}>{loading ? 'Cargando...' : (isRegister ? 'Crear cuenta' : 'Entrar')}</button>
         </form>
-        {!isRegister ? <div className="auth-links"><Link href="/login?forgot=1">¿Olvidaste tu contraseña?</Link><Link href="/registro">Crear cuenta</Link></div> : <p className="auth-switch">¿Ya tenés una cuenta? <Link href="/login">Iniciar sesión</Link></p>}
+        {!isRegister ? (
+          <div className="auth-links">
+            {onSwitchMode ? (
+              <button type="button" onClick={() => {
+                toast.add({ title: 'Recuperar contraseña', description: 'Función no implementada en la demo todavía.', type: 'info' })
+              }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', textDecoration: 'underline' }}>¿Olvidaste tu contraseña?</button>
+            ) : (
+              <Link href="/login?forgot=1">¿Olvidaste tu contraseña?</Link>
+            )}
+            {onSwitchMode ? (
+              <button type="button" onClick={() => onSwitchMode('register')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', textDecoration: 'underline' }}>Crear cuenta</button>
+            ) : (
+              <Link href="/registro">Crear cuenta</Link>
+            )}
+          </div>
+        ) : (
+          <p className="auth-switch">
+            ¿Ya tenés una cuenta?{' '}
+            {onSwitchMode ? (
+              <button type="button" onClick={() => onSwitchMode('login')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', textDecoration: 'underline' }}>Iniciar sesión</button>
+            ) : (
+              <Link href="/login">Iniciar sesión</Link>
+            )}
+          </p>
+        )}
       </section>
-    </main>
+    </div>
   )
 }
 
-export function LoginHeader() {
+export function LoginHeader({ onLoginClick }: { onLoginClick?: () => void }) {
   const { user, signOut, loading } = useAuth()
   const router = useRouter()
 
@@ -203,6 +235,17 @@ export function LoginHeader() {
           </svg>
         </button>
       </div>
+    )
+  }
+
+  if (onLoginClick) {
+    return (
+      <button onClick={onLoginClick} className="login-button" aria-label="Iniciar sesión" title="Iniciar sesión" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.25)' }}>
+        <svg className="login-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="3.25" />
+          <path d="M5.5 20c.65-3.15 2.85-5 6.5-5s5.85 1.85 6.5 5" />
+        </svg>
+      </button>
     )
   }
 
