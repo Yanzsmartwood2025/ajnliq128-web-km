@@ -18,7 +18,7 @@ export function BubbleWrapper({ children, className = "", onClick }: BubbleWrapp
   const { settings } = useBackground();
   const effect = settings.bubbleEffect;
 
-  const innerClasses = "w-full h-full rounded-full";
+  const innerClasses = "w-full h-full rounded-full absolute inset-0";
 
   const handleWrapperClick = (e: React.MouseEvent<any>) => {
     // Para splashCursor el efecto captura el click interno
@@ -32,7 +32,7 @@ export function BubbleWrapper({ children, className = "", onClick }: BubbleWrapp
   // Asumimos que children es un componente que acepta onClick, o envolvemos en div.
 
   return (
-    <div className={`relative ${className}`} onClick={handleWrapperClick} style={{ display: 'inline-block' }}>
+    <div className={`relative ${className}`} onClick={handleWrapperClick} style={{ width: '100%', height: '100%' }}>
       {effect === 'none' && (
          <div className={innerClasses}>{children}</div>
       )}
@@ -40,21 +40,25 @@ export function BubbleWrapper({ children, className = "", onClick }: BubbleWrapp
         <TiltedCard className={innerClasses}>{children}</TiltedCard>
       )}
       {effect === 'glareHover' && (
-        <GlareHover className={`${innerClasses} rounded-full`}>{children}</GlareHover>
+        <GlareHover className={innerClasses}>{children}</GlareHover>
       )}
       {effect === 'borderGlow' && (
         <BorderGlow className={innerClasses} glowColor="#a855f7">{children}</BorderGlow>
       )}
       {effect === 'splashCursor' && (
-        <SplashCursor className={`${innerClasses} rounded-full`}>{children}</SplashCursor>
+        <SplashCursor className={innerClasses}>{children}</SplashCursor>
       )}
       {effect === 'rippleDistortion' && (
-        <div className={`${innerClasses} relative overflow-hidden rounded-full`}>
+        <div className={`${innerClasses} overflow-hidden`}>
            <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
              <RippleDistortion tint="#ffffff" />
            </div>
            {children}
         </div>
+      )}
+      {/* Fallback to ensure children are always rendered at full size if wrapper fails */}
+      {effect !== 'none' && effect !== 'tiltedCard' && effect !== 'glareHover' && effect !== 'borderGlow' && effect !== 'splashCursor' && effect !== 'rippleDistortion' && (
+        <div className={innerClasses}>{children}</div>
       )}
     </div>
   )

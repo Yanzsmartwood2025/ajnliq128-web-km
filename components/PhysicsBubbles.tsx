@@ -46,12 +46,12 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
       density: 0.001
     }
 
-    // AJN starting positions relative to center
+    // AJN starting positions (all spawn near the center now)
     const center = { x: width / 2, y: height / 2 }
     const initialPositions = {
-      ARIA: { x: center.x - width * 0.25, y: center.y - height * 0.1 },
-      JOZIEL: { x: center.x + width * 0.25, y: center.y + height * 0.15 },
-      NAYLA: { x: center.x, y: center.y - height * 0.25 }
+      ARIA: { x: center.x - radius * 2, y: center.y },
+      JOZIEL: { x: center.x + radius * 2, y: center.y },
+      NAYLA: { x: center.x, y: center.y - radius * 2 }
     }
 
     const ariaBody = Matter.Bodies.circle(initialPositions.ARIA.x, initialPositions.ARIA.y, radius, { ...options, label: 'ARIA' })
@@ -171,24 +171,50 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
         })
       })
 
-      if (timeSinceInteraction > 7000 && !mouseConstraint.body) {
-        // Apply force towards initial positions
-        ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
+      // Apply active repulsion between bubbles to keep them separated
+      const repulsionStrength = 0.00003;
+      const labels = ['ARIA', 'JOZIEL', 'NAYLA'] as const;
+
+      for (let i = 0; i < labels.length; i++) {
+        for (let j = i + 1; j < labels.length; j++) {
+          const bodyA = bodiesMap[labels[i]];
+          const bodyB = bodiesMap[labels[j]];
+
+          const dx = bodyA.position.x - bodyB.position.x;
+          const dy = bodyA.position.y - bodyB.position.y;
+          const distance = Math.hypot(dx, dy);
+
+          // Repel if they get closer than 3.5x their radius
+          const minDistance = radius * 3.5;
+          if (distance > 0 && distance < minDistance) {
+             const force = (minDistance - distance) / minDistance * repulsionStrength;
+             const forceX = (dx / distance) * force;
+             const forceY = (dy / distance) * force;
+
+             Matter.Body.applyForce(bodyA, bodyA.position, { x: forceX, y: forceY });
+             Matter.Body.applyForce(bodyB, bodyB.position, { x: -forceX, y: -forceY });
+          }
+        }
+      }
+
+      if (timeSinceInteraction > 5000 && !mouseConstraint.body) {
+        // Apply soft attractive force towards the center of the screen
+        const screenCenter = { x: currentWidth / 2, y: currentHeight / 2 };
+        labels.forEach((label) => {
           const body = bodiesMap[label]
-          const target = initialPositions[label as keyof typeof initialPositions]
+          const target = screenCenter
 
           const dx = target.x - body.position.x
           const dy = target.y - body.position.y
 
-          // Spring force proportional to distance
-          // Slightly reduced from 0.000015 to allow a softer pull back to anchor
-          const forceMagnitude = 0.000008
+          // Very gentle pull towards exact center
+          const forceMagnitude = 0.000005
           Matter.Body.applyForce(body, body.position, {
             x: dx * forceMagnitude,
             y: dy * forceMagnitude
           })
 
-          // Reduce damping from 0.95 to 0.99 to keep them "alive" and floating near the anchor
+          // Maintain momentum slightly to keep alive
           Matter.Body.setVelocity(body, {
              x: body.velocity.x * 0.99,
              y: body.velocity.y * 0.99
@@ -229,9 +255,9 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
 
        // Initial positions update
        const newCenter = { x: newWidth / 2, y: newHeight / 2 }
-       initialPositions.ARIA = { x: newCenter.x - newWidth * 0.25, y: newCenter.y - newHeight * 0.1 }
-       initialPositions.JOZIEL = { x: newCenter.x + newWidth * 0.25, y: newCenter.y + newHeight * 0.15 }
-       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - newHeight * 0.25 }
+       initialPositions.ARIA = { x: newCenter.x - radius * 2, y: newCenter.y }
+       initialPositions.JOZIEL = { x: newCenter.x + radius * 2, y: newCenter.y }
+       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 2 }
     }
     window.addEventListener('resize', handleResize)
 
@@ -350,7 +376,8 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                         height: '100%',
                         objectFit: 'contain',
                         pointerEvents: 'none',
-                        userSelect: 'none'
+                        userSelect: 'none',
+                        paddingBottom: module === 'JOZIEL' ? '12%' : '0'
                       }}
                     />
                   </div>
