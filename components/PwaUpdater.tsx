@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export function PwaUpdater() {
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !isProduction) return;
 
     const initSerwist = async () => {
       try {
