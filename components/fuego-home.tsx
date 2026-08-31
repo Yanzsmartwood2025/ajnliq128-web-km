@@ -22,9 +22,15 @@ export function FuegoHome() {
   const jozielAudioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSplash(false), 3000)
+    const timer = window.setTimeout(() => {
+      setSplash(false)
+    }, 6000) // 6 second max fallback if video onEnded doesn't fire
     return () => window.clearTimeout(timer)
   }, [])
+
+  const handleSplashVideoEnded = () => {
+    setSplash(false)
+  }
 
   const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
     e.stopPropagation() // Prevent click from triggering "touch outside"
@@ -110,7 +116,16 @@ export function FuegoHome() {
       <audio ref={ariaAudioRef} src="/audio/aria.mp3" preload="auto" />
       <audio ref={jozielAudioRef} src="/audio/joziel.mp3" preload="auto" />
 
-      <section className="splash" aria-label="Fuego"><FlameMark /><span>FUEGO</span></section>
+      <section className="splash" aria-label="Fuego" style={{ backgroundColor: 'black', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <video
+          src={mediaUrl('fuego/videos/fuego-intro.mp4')}
+          autoPlay
+          muted
+          playsInline
+          onEnded={handleSplashVideoEnded}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </section>
 
       <section className="home-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
         {!splash && (

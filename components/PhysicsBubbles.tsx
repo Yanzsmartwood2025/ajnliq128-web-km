@@ -136,6 +136,30 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
       ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
         const body = bodiesMap[label]
 
+        // Self-correcting torque (Roly-Poly / Tentetieso effect)
+        // Spring-like force pulling the angle back to 0
+        const torqueSpring = 0.001; // Adjust for stiffness
+        const torqueDamping = 0.9;  // Adjust for bounce/elasticity
+
+        // Calculate torque to pull towards angle 0
+        // We normalize the angle to stay within -PI and PI to prevent crazy spinning
+        const currentAngle = body.angle % (Math.PI * 2);
+        let targetAngle = 0;
+
+        // Find shortest path to 0
+        if (currentAngle > Math.PI) targetAngle = Math.PI * 2;
+        if (currentAngle < -Math.PI) targetAngle = -Math.PI * 2;
+
+        const angularDiff = targetAngle - currentAngle;
+
+        // Apply torque proportional to the difference
+        body.torque = angularDiff * torqueSpring;
+        // Apply damping ONLY to the angular velocity added by the spring, not globally.
+        // We do this by applying an angular friction that is only strong when the angle is small,
+        // or by making torqueDamping much closer to 1 (e.g. 0.98) so it doesn't kill collision spins instantly.
+        // Let's use 0.98 so it still spins wildly on collision but settles eventually.
+        Matter.Body.setAngularVelocity(body, body.angularVelocity * 0.98);
+
         // Add random gentle noise force so they constantly float
         // Using a tiny random force updated every frame
         const noiseX = (Math.random() - 0.5) * 0.00005
@@ -262,6 +286,15 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     }
   }
 
+  const getLogoSrc = (module: string) => {
+    switch (module) {
+      case 'ARIA': return mediaUrl('aria/imagenes/aria-logo.png')
+      case 'JOZIEL': return mediaUrl('joziel/imagenes/joziel-logo.png')
+      case 'NAYLA': return mediaUrl('nayla/imagenes/nayla-logo.png')
+      default: return ''
+    }
+  }
+
   return (
     <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 2 }}>
        {isReady && ['ARIA', 'JOZIEL', 'NAYLA'].map(module => {
@@ -275,7 +308,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                  top: pos.y - bubbleRadius,
                  width: bubbleRadius * 2,
                  height: bubbleRadius * 2,
-                 // Removed transform: rotate() to keep UI strictly horizontal
+                 transform: `rotate(${pos.angle}rad)`,
                  pointerEvents: 'auto' // React to DOM events, matter.js will still track mouse on background
                }}
                onPointerDown={(e) => {
@@ -308,7 +341,19 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                       }}
                     />
                   </div>
-                  <span className="bubble-label" style={{ pointerEvents: 'none' }}>{module}</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%' }}>
+                    <img
+                      src={getLogoSrc(module)}
+                      alt={`${module} logo`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        pointerEvents: 'none',
+                        userSelect: 'none'
+                      }}
+                    />
+                  </div>
                 </BubbleWrapper>
              </div>
           )
