@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BackgroundSettings } from './BackgroundSettings'
 import { mediaUrl } from '@/lib/media-urls'
 import { BubbleWrapper } from './BubbleWrapper'
+import { AuthForm } from './auth-form'
 import dynamic from 'next/dynamic'
 const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
 
@@ -16,6 +17,7 @@ export function FuegoHome() {
   const router = useRouter()
   const [splash, setSplash] = useState(true)
   const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
 
   // Audio refs
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
@@ -131,10 +133,39 @@ export function FuegoHome() {
         {!splash && (
           <div className="home-login" style={{ display: 'flex', alignItems: 'center' }}>
             <BackgroundSettings />
-            <LoginHeader />
+            <LoginHeader onLoginClick={() => setShowAuthModal('login')} />
           </div>
         )}
         <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
+
+        <AnimatePresence>
+          {showAuthModal && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 50,
+                display: 'grid',
+                placeItems: 'center',
+                background: 'rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(4px)',
+                padding: '1.25rem'
+              }}
+            >
+              <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
+                <AuthForm
+                  mode={showAuthModal}
+                  onClose={() => setShowAuthModal(null)}
+                  onSwitchMode={(mode) => setShowAuthModal(mode)}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {selectedModule && (
           <div
