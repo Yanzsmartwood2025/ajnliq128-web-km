@@ -40,10 +40,10 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     // Create bodies
     const radius = window.innerWidth < 768 ? 40 : 60 // responsive radius roughly matching original
     const options = {
-      restitution: 0.8, // Bounciness
+      restitution: 0.9, // Higher restitution for stronger bounce when hitting other bodies
       friction: 0.05,
       frictionAir: 0.02,
-      density: 0.001
+      density: 0.005 // Higher density to make them less squishy when colliding
     }
 
     // AJN starting positions (all spawn near the center now)
@@ -187,7 +187,9 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
           // Repel if they get closer than 3.5x their radius
           const minDistance = radius * 3.5;
           if (distance > 0 && distance < minDistance) {
-             const force = (minDistance - distance) / minDistance * repulsionStrength;
+             // Increase force significantly when they actually intersect (distance < radius * 2)
+             const intersectMultiplier = distance < radius * 2 ? 5 : 1;
+             const force = ((minDistance - distance) / minDistance * repulsionStrength) * intersectMultiplier;
              const forceX = (dx / distance) * force;
              const forceY = (dy / distance) * force;
 
