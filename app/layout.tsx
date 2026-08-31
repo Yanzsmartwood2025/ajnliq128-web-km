@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toast'
 import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ajnliq128.com'),
   title: 'AJNLIQ128 — FUEGO',
   description: 'Enter the AJNLIQ128 constellation.',
   generator: 'FUEGO',
@@ -14,6 +15,13 @@ export const metadata: Metadata = {
     capable: true,
     title: 'AJNLIQ128',
     statusBarStyle: 'black-translucent',
+  },
+  openGraph: {
+    images: ['/opengraph-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/twitter-image.png'],
   },
   icons: {
     icon: [

@@ -404,7 +404,7 @@ a { color: inherit; text-decoration: none; }
   justify-content: center;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.27);
-  background: linear-gradient(145deg, rgba(103,88,170,.28), rgba(8,8,11,.46));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.1));
   backdrop-filter: blur(15px) saturate(145%);
   -webkit-backdrop-filter: blur(15px) saturate(145%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 16px 36px rgba(0,0,0,.28), 0 -8px 28px rgba(255,255,255,.05);
@@ -419,13 +419,13 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: linear-gradient(115deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 32%, rgba(90,75,160,.14) 72%, rgba(8,8,11,.12));
+  background: linear-gradient(115deg, rgba(255,255,255,.18), rgba(255,255,255,.04) 32%, rgba(255, 255, 255, 0.05) 72%, rgba(0, 0, 0, 0.1));
   pointer-events: none;
 }
 
 .floating-bubble:hover:not(.is-disabled) {
   border-color: rgba(255, 255, 255, 0.58);
-  background: linear-gradient(145deg, rgba(116,99,194,.34), rgba(20,18,38,.54));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.15));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 20px 42px rgba(0,0,0,.34), 0 -8px 25px rgba(255,255,255,.08);
 }
 
