@@ -27,8 +27,9 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     if (!sceneRef.current) return
 
     const sceneEl = sceneRef.current
-    const width = sceneEl.clientWidth || window.innerWidth
-    const height = sceneEl.clientHeight || window.innerHeight
+    // Force use of window bounds to avoid relative container clipping issues
+    const width = window.innerWidth
+    const height = window.innerHeight
 
     // Initialize Engine
     const engine = Matter.Engine.create({
@@ -65,11 +66,14 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
 
     // Walls
     const wallOptions = { isStatic: true, restitution: 1.0, friction: 0 }
+    // Make walls 1000px thick to prevent high-velocity tunneling.
+    // Center them based on width/height, placing the inner edge exactly on the screen bounds.
+    const wallThickness = 1000;
     const walls = [
-      Matter.Bodies.rectangle(width / 2, -50, width * 2, 100, wallOptions), // Top
-      Matter.Bodies.rectangle(width / 2, height + 50, width * 2, 100, wallOptions), // Bottom
-      Matter.Bodies.rectangle(-50, height / 2, 100, height * 2, wallOptions), // Left
-      Matter.Bodies.rectangle(width + 50, height / 2, 100, height * 2, wallOptions) // Right
+      Matter.Bodies.rectangle(width / 2, -wallThickness / 2, width * 2, wallThickness, wallOptions), // Top
+      Matter.Bodies.rectangle(width / 2, height + wallThickness / 2, width * 2, wallThickness, wallOptions), // Bottom
+      Matter.Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height * 2, wallOptions), // Left
+      Matter.Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height * 2, wallOptions) // Right
     ]
 
     Matter.Composite.add(engine.world, [ariaBody, jozielBody, naylaBody, ...walls])
@@ -111,10 +115,41 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     })
 
     Matter.Events.on(engine, 'beforeUpdate', () => {
+      const currentWidth = window.innerWidth
+      const currentHeight = window.innerHeight
       const timeSinceInteraction = Date.now() - lastInteractionTime
-      if (timeSinceInteraction > 3000 && !mouseConstraint.body) {
+
+      // Rescue logic: Teleport bodies back to center if they escape the bounds
+      ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
+        const body = bodiesMap[label]
+        if (
+          body.position.x < -100 ||
+          body.position.x > currentWidth + 100 ||
+          body.position.y < -100 ||
+          body.position.y > currentHeight + 100
+        ) {
+          Matter.Body.setPosition(body, { x: currentWidth / 2, y: currentHeight / 2 })
+          Matter.Body.setVelocity(body, { x: 0, y: 0 })
+        }
+      })
+
+      ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
+        const body = bodiesMap[label]
+
+        // Add random gentle noise force so they constantly float
+        // Using a tiny random force updated every frame
+        const noiseX = (Math.random() - 0.5) * 0.00005
+        const noiseY = (Math.random() - 0.5) * 0.00005
+
+        Matter.Body.applyForce(body, body.position, {
+          x: noiseX,
+          y: noiseY
+        })
+      })
+
+      if (timeSinceInteraction > 7000 && !mouseConstraint.body) {
         // Apply force towards initial positions
-        ['ARIA', 'JOZIEL', 'NAYLA'].forEach(label => {
+        ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
           const body = bodiesMap[label]
           const target = initialPositions[label as keyof typeof initialPositions]
 
@@ -122,16 +157,17 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
           const dy = target.y - body.position.y
 
           // Spring force proportional to distance
-          const forceMagnitude = 0.000015 // Tweak this for strength
+          // Slightly reduced from 0.000015 to allow a softer pull back to anchor
+          const forceMagnitude = 0.000008
           Matter.Body.applyForce(body, body.position, {
             x: dx * forceMagnitude,
             y: dy * forceMagnitude
           })
 
-          // Add some damping to prevent infinite orbiting
+          // Reduce damping from 0.95 to 0.99 to keep them "alive" and floating near the anchor
           Matter.Body.setVelocity(body, {
-             x: body.velocity.x * 0.95,
-             y: body.velocity.y * 0.95
+             x: body.velocity.x * 0.99,
+             y: body.velocity.y * 0.99
           })
         })
       }
@@ -164,13 +200,30 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
 
     // Update dimensions on resize
     const handleResize = () => {
-       const newWidth = sceneEl.clientWidth || window.innerWidth
-       const newHeight = sceneEl.clientHeight || window.innerHeight
-       // Update walls
-       Matter.Body.setPosition(walls[0], { x: newWidth / 2, y: -50 })
-       Matter.Body.setPosition(walls[1], { x: newWidth / 2, y: newHeight + 50 })
-       Matter.Body.setPosition(walls[2], { x: -50, y: newHeight / 2 })
-       Matter.Body.setPosition(walls[3], { x: newWidth + 50, y: newHeight / 2 })
+       const newWidth = window.innerWidth
+       const newHeight = window.innerHeight
+       // Ensure walls span massive lengths to cover all resizing edge cases
+       // Since they were created with width * 2, scaling them on every resize is tricky.
+       // Instead, we just position them exactly at the new screen boundaries.
+       // Their length is technically set at load to `window.innerWidth * 2`,
+       // but to be perfectly safe, we update their vertices dynamically using Matter.Body.setVertices
+
+       // Create fresh rectangles of the correct updated bounds and copy their vertices
+       const newTop = Matter.Bodies.rectangle(newWidth / 2, -wallThickness / 2, newWidth * 5, wallThickness)
+       const newBottom = Matter.Bodies.rectangle(newWidth / 2, newHeight + wallThickness / 2, newWidth * 5, wallThickness)
+       const newLeft = Matter.Bodies.rectangle(-wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
+       const newRight = Matter.Bodies.rectangle(newWidth + wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
+
+       Matter.Body.setVertices(walls[0], newTop.vertices)
+       Matter.Body.setVertices(walls[1], newBottom.vertices)
+       Matter.Body.setVertices(walls[2], newLeft.vertices)
+       Matter.Body.setVertices(walls[3], newRight.vertices)
+
+       // Reposition them just in case setVertices drifts the center of mass
+       Matter.Body.setPosition(walls[0], { x: newWidth / 2, y: -wallThickness / 2 })
+       Matter.Body.setPosition(walls[1], { x: newWidth / 2, y: newHeight + wallThickness / 2 })
+       Matter.Body.setPosition(walls[2], { x: -wallThickness / 2, y: newHeight / 2 })
+       Matter.Body.setPosition(walls[3], { x: newWidth + wallThickness / 2, y: newHeight / 2 })
 
        // Initial positions update
        const newCenter = { x: newWidth / 2, y: newHeight / 2 }
@@ -232,7 +285,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
   }
 
   return (
-    <div ref={sceneRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 10 }}>
+    <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 10 }}>
        {isReady && ['ARIA', 'JOZIEL', 'NAYLA'].map(module => {
           const pos = positions[module as keyof typeof positions]
           return (
@@ -244,7 +297,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                  top: pos.y - bubbleRadius,
                  width: bubbleRadius * 2,
                  height: bubbleRadius * 2,
-                 transform: `rotate(${pos.angle}rad)`,
+                 // Removed transform: rotate() to keep UI strictly horizontal
                  pointerEvents: 'none' // The scene div handles mouse events via Matter.Mouse
                }}
              >
