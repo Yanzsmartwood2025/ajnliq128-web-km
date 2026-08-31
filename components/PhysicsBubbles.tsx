@@ -27,8 +27,9 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     if (!sceneRef.current) return
 
     const sceneEl = sceneRef.current
-    const width = sceneEl.clientWidth || window.innerWidth
-    const height = sceneEl.clientHeight || window.innerHeight
+    // Force use of window bounds to avoid relative container clipping issues
+    const width = window.innerWidth
+    const height = window.innerHeight
 
     // Initialize Engine
     const engine = Matter.Engine.create({
@@ -114,8 +115,8 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     })
 
     Matter.Events.on(engine, 'beforeUpdate', () => {
-      const currentWidth = sceneEl.clientWidth || window.innerWidth
-      const currentHeight = sceneEl.clientHeight || window.innerHeight
+      const currentWidth = window.innerWidth
+      const currentHeight = window.innerHeight
       const timeSinceInteraction = Date.now() - lastInteractionTime
 
       // Rescue logic: Teleport bodies back to center if they escape the bounds
@@ -199,13 +200,26 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
 
     // Update dimensions on resize
     const handleResize = () => {
-       const newWidth = sceneEl.clientWidth || window.innerWidth
-       const newHeight = sceneEl.clientHeight || window.innerHeight
-       // Update walls length and position dynamically
-       // We recreate the walls' vertices by scaling them or directly replacing them would be harder.
-       // The simplest way to perfectly resize walls is to set their position,
-       // but since window width can change drastically, let's also update their scale.
-       // However, since they are static and huge (width*2), we just update positions.
+       const newWidth = window.innerWidth
+       const newHeight = window.innerHeight
+       // Ensure walls span massive lengths to cover all resizing edge cases
+       // Since they were created with width * 2, scaling them on every resize is tricky.
+       // Instead, we just position them exactly at the new screen boundaries.
+       // Their length is technically set at load to `window.innerWidth * 2`,
+       // but to be perfectly safe, we update their vertices dynamically using Matter.Body.setVertices
+
+       // Create fresh rectangles of the correct updated bounds and copy their vertices
+       const newTop = Matter.Bodies.rectangle(newWidth / 2, -wallThickness / 2, newWidth * 5, wallThickness)
+       const newBottom = Matter.Bodies.rectangle(newWidth / 2, newHeight + wallThickness / 2, newWidth * 5, wallThickness)
+       const newLeft = Matter.Bodies.rectangle(-wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
+       const newRight = Matter.Bodies.rectangle(newWidth + wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
+
+       Matter.Body.setVertices(walls[0], newTop.vertices)
+       Matter.Body.setVertices(walls[1], newBottom.vertices)
+       Matter.Body.setVertices(walls[2], newLeft.vertices)
+       Matter.Body.setVertices(walls[3], newRight.vertices)
+
+       // Reposition them just in case setVertices drifts the center of mass
        Matter.Body.setPosition(walls[0], { x: newWidth / 2, y: -wallThickness / 2 })
        Matter.Body.setPosition(walls[1], { x: newWidth / 2, y: newHeight + wallThickness / 2 })
        Matter.Body.setPosition(walls[2], { x: -wallThickness / 2, y: newHeight / 2 })
@@ -271,7 +285,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
   }
 
   return (
-    <div ref={sceneRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 10 }}>
+    <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 10 }}>
        {isReady && ['ARIA', 'JOZIEL', 'NAYLA'].map(module => {
           const pos = positions[module as keyof typeof positions]
           return (
