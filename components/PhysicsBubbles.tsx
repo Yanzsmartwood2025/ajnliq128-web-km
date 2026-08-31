@@ -173,30 +173,8 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
       }
     })
 
-    // Click logic vs drag logic
-    Matter.Events.on(mouseConstraint, 'mousedown', (e) => {
-       const body = Matter.Query.point(engine.world.bodies, mouse.position)[0]
-       if (body && ['ARIA', 'JOZIEL', 'NAYLA'].includes(body.label)) {
-          clickPosRef.current = { x: mouse.position.x, y: mouse.position.y, time: Date.now() }
-       }
-    })
-
-    Matter.Events.on(mouseConstraint, 'mouseup', (e) => {
-       if (clickPosRef.current) {
-         const { x, y, time } = clickPosRef.current
-         const dist = Math.hypot(mouse.position.x - x, mouse.position.y - y)
-         const duration = Date.now() - time
-
-         if (dist < 10 && duration < 300) {
-            // It's a click
-            const body = Matter.Query.point(engine.world.bodies, mouse.position)[0]
-            if (body && ['ARIA', 'JOZIEL', 'NAYLA'].includes(body.label)) {
-               onSelectModule(body.label as 'ARIA' | 'JOZIEL' | 'NAYLA')
-            }
-         }
-         clickPosRef.current = null
-       }
-    })
+    // Native React onClick will handle selection now to improve sensitivity
+    // Removed Matter.js custom click logic based on mousedown/up duration
 
     // Update dimensions on resize
     const handleResize = () => {
@@ -285,7 +263,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
   }
 
   return (
-    <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 10 }}>
+    <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 2 }}>
        {isReady && ['ARIA', 'JOZIEL', 'NAYLA'].map(module => {
           const pos = positions[module as keyof typeof positions]
           return (
@@ -298,10 +276,24 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                  width: bubbleRadius * 2,
                  height: bubbleRadius * 2,
                  // Removed transform: rotate() to keep UI strictly horizontal
-                 pointerEvents: 'none' // The scene div handles mouse events via Matter.Mouse
+                 pointerEvents: 'auto' // React to DOM events, matter.js will still track mouse on background
+               }}
+               onPointerDown={(e) => {
+                 clickPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+               }}
+               onPointerUp={(e) => {
+                 if (clickPosRef.current) {
+                   const { x, y, time } = clickPosRef.current
+                   const dist = Math.hypot(e.clientX - x, e.clientY - y)
+                   const duration = Date.now() - time
+                   if (dist < 10 && duration < 300) {
+                     onSelectModule(module as 'ARIA' | 'JOZIEL' | 'NAYLA')
+                   }
+                   clickPosRef.current = null
+                 }
                }}
              >
-                <BubbleWrapper className="floating-bubble" onClick={() => {}}>
+                <BubbleWrapper className="floating-bubble">
                   <div className="bubble-video-container" style={{ opacity: 0 }}>
                     <video
                       src={getVideoSrc(module)}
