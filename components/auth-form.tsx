@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -199,13 +200,35 @@ export function AuthForm({ mode, onClose, onSwitchMode }: { mode: 'login' | 'reg
 export function LoginHeader({ onLoginClick }: { onLoginClick?: () => void }) {
   const { user, signOut, loading } = useAuth()
   const router = useRouter()
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      setIsExpanded(true)
+      const timer = setTimeout(() => setIsExpanded(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [user])
 
   if (loading) return null
 
   if (user) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(35, 30, 72, 0.28)', padding: '0.2rem 0.6rem 0.2rem 0.2rem', borderRadius: '999px', border: '1px solid rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(14px)' }}>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(35, 30, 72, 0.28)',
+            padding: isExpanded ? '0.2rem 0.6rem 0.2rem 0.2rem' : '0.2rem',
+            borderRadius: '999px',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            backdropFilter: 'blur(14px)',
+            cursor: 'pointer',
+            transition: 'padding 0.3s ease'
+          }}
+        >
           {user.photoURL ? (
             <img src={user.photoURL} alt="Perfil" style={{ width: '1.75rem', height: '1.75rem', borderRadius: '50%', objectFit: 'cover' }} />
           ) : (
@@ -216,24 +239,43 @@ export function LoginHeader({ onLoginClick }: { onLoginClick?: () => void }) {
               </svg>
             </div>
           )}
-          <span style={{ fontSize: '0.75rem', color: 'var(--foreground)' }}>{user.email}</span>
-        </div>
-        <button
-          onClick={async () => {
-            await signOut()
-            router.push('/')
-          }}
-          className="login-button"
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-          style={{ width: '2.35rem', height: '2.35rem' }}
-        >
-          <svg className="login-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
+          <span style={{
+            fontSize: '0.75rem',
+            color: 'var(--foreground)',
+            maxWidth: isExpanded ? '200px' : '0px',
+            opacity: isExpanded ? 1 : 0,
+            overflow: 'hidden',
+            marginLeft: isExpanded ? '0.5rem' : '0px',
+            transition: 'max-width 0.3s ease, opacity 0.3s ease, margin-left 0.3s ease',
+            whiteSpace: 'nowrap'
+          }}>
+            {user.email}
+          </span>
         </button>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8, width: 0, marginLeft: 0 }}
+              animate={{ opacity: 1, scale: 1, width: '2.35rem', marginLeft: '0.75rem' }}
+              exit={{ opacity: 0, scale: 0.8, width: 0, marginLeft: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={async () => {
+                await signOut()
+                router.push('/')
+              }}
+              className="login-button"
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              style={{ height: '2.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <svg className="login-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     )
   }

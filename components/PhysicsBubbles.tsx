@@ -47,7 +47,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
     }
 
     // AJN starting positions (all spawn near the center now)
-    const center = { x: width / 2, y: height / 2 }
+    const center = { x: width / 2, y: height * 0.35 }
     const initialPositions = {
       ARIA: { x: center.x - radius * 2, y: center.y },
       JOZIEL: { x: center.x + radius * 2, y: center.y },
@@ -201,7 +201,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
 
       if (timeSinceInteraction > 5000 && !mouseConstraint.body) {
         // Apply soft attractive force towards the center of the screen
-        const screenCenter = { x: currentWidth / 2, y: currentHeight / 2 };
+        const screenCenter = { x: currentWidth / 2, y: currentHeight * 0.35 };
         labels.forEach((label) => {
           const body = bodiesMap[label]
           const target = screenCenter
@@ -256,7 +256,7 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
        Matter.Body.setPosition(walls[3], { x: newWidth + wallThickness / 2, y: newHeight / 2 })
 
        // Initial positions update
-       const newCenter = { x: newWidth / 2, y: newHeight / 2 }
+       const newCenter = { x: newWidth / 2, y: newHeight * 0.35 }
        initialPositions.ARIA = { x: newCenter.x - radius * 2, y: newCenter.y }
        initialPositions.JOZIEL = { x: newCenter.x + radius * 2, y: newCenter.y }
        initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 2 }

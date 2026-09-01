@@ -173,7 +173,7 @@ export function FuegoHome() {
             style={{ position: 'fixed', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
           />
         )}
-        <div style={{ position: 'relative', width: '100%', height: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           {/* If a module is selected, show the full screen focused view */}
           <AnimatePresence>
             {selectedModule === 'ARIA' && (
@@ -200,7 +200,13 @@ export function FuegoHome() {
                       }}
                     />
                   </div>
-                  <span className="bubble-label">ARIA</span>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
+                    <img
+                      src={mediaUrl('aria/imagenes/aria-logo.png')}
+                      alt="Aria logo"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
+                    />
+                  </div>
                 </BubbleWrapper>
               </motion.div>
             )}
@@ -229,7 +235,13 @@ export function FuegoHome() {
                       }}
                     />
                   </div>
-                  <span className="bubble-label">JOZIEL</span>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', paddingBottom: '28%', zIndex: 20 }}>
+                    <img
+                      src={mediaUrl('joziel/imagenes/joziel-logo.png')}
+                      alt="Joziel logo"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
+                    />
+                  </div>
                 </BubbleWrapper>
               </motion.div>
             )}
@@ -258,7 +270,13 @@ export function FuegoHome() {
                       }}
                     />
                   </div>
-                  <span className="bubble-label">NAYLA</span>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
+                    <img
+                      src={mediaUrl('nayla/imagenes/nayla-logo.png')}
+                      alt="Nayla logo"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
+                    />
+                  </div>
                 </BubbleWrapper>
               </motion.div>
             )}
