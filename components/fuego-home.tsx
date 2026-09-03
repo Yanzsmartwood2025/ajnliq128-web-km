@@ -61,10 +61,15 @@ export function FuegoHome() {
               if (data.customToken) {
                 const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app';
                 window.location.href = `${editorUrl}/#authToken=${data.customToken}`;
+              } else {
+                alert('Fallo al generar el token de sesión para el editor.')
               }
+            } else {
+              alert('Error de autorización al conectar con el editor.')
             }
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error in pending redirect:', e);
+            alert(`Error inesperado al redirigir al editor: ${e.message || 'Error desconocido'}`);
           }
         };
 
@@ -209,7 +214,11 @@ export function FuegoHome() {
               <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
                 <AuthForm
                   mode={showAuthModal}
-                  onClose={() => setShowAuthModal(null)}
+                  onClose={() => {
+                    setShowAuthModal(null)
+                    // If user closes modal without logging in, clean up the pending redirect
+                    localStorage.removeItem('pendingEditorRedirect')
+                  }}
                   onSwitchMode={(mode) => setShowAuthModal(mode)}
                 />
               </div>

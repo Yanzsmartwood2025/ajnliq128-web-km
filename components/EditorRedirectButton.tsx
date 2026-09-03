@@ -39,10 +39,11 @@ export function EditorRedirectButton() {
       } else {
         throw new Error('Token generation failed')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error redirecting to editor:', err)
-      // On error, revert loading state
+      // On error, revert loading state and show alert
       setLoading(false)
+      alert(`Error al redirigir al editor: ${err.message || 'Error desconocido'}`)
     }
   }
 
