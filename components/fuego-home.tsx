@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,8 +21,57 @@ export function FuegoHome() {
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
 
   // Audio refs
+  const searchParams = useSearchParams()
+  const { user } = useAuth()
+
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
   const jozielAudioRef = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    if (searchParams.get('login') === 'true' && !user) {
+      setShowAuthModal('login')
+
+      // Clean up the URL so it doesn't stay stuck on ?login=true
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('login')
+        window.history.replaceState({}, '', url)
+      }
+    }
+  }, [searchParams, user])
+
+  useEffect(() => {
+    if (user && typeof window !== 'undefined') {
+      const pendingRedirect = localStorage.getItem('pendingEditorRedirect')
+      if (pendingRedirect) {
+        localStorage.removeItem('pendingEditorRedirect')
+
+        // Function to get the token and redirect
+        const getAuthTokenAndRedirect = async () => {
+          try {
+            const idToken = await user.getIdToken();
+            const res = await fetch('/api/auth/token', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${idToken}`
+              }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.customToken) {
+                const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app';
+                window.location.href = `${editorUrl}/#authToken=${data.customToken}`;
+              }
+            }
+          } catch (e) {
+            console.error('Error in pending redirect:', e);
+          }
+        };
+
+        getAuthTokenAndRedirect();
+      }
+    }
+  }, [user])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

@@ -2,6 +2,7 @@ import SideRays from '@/components/SideRays'
 import { Wordmark } from '@/components/galaxy-background'
 import Link from 'next/link'
 import { FlameMark } from '@/components/galaxy-background'
+import { EditorRedirectButton } from '@/components/EditorRedirectButton'
 
 export default function NaylaPage() {
   return (
@@ -35,6 +36,7 @@ export default function NaylaPage() {
         <div style={{ position: 'relative', zIndex: 5, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <section className="hub-intro" style={{ padding: 0, margin: 0, textAlign: 'center', marginTop: '-10vh' }}>
             <Wordmark name="NAYLA" />
+            <EditorRedirectButton />
           </section>
         </div>
       </main>
