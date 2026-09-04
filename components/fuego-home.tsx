@@ -209,7 +209,10 @@ export function FuegoHome() {
               <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
                 <AuthForm
                   mode={showAuthModal}
-                  onClose={() => setShowAuthModal(null)}
+                  onClose={() => {
+                    setShowAuthModal(null)
+                    localStorage.removeItem('pendingEditorRedirect')
+                  }}
                   onSwitchMode={(mode) => setShowAuthModal(mode)}
                 />
               </div>
