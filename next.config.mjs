@@ -16,6 +16,7 @@ const nextConfig = {
     unoptimized: true,
   },
   turbopack: {},
+  serverExternalPackages: ['firebase-admin'],
 }
 
 export default withSerwist(nextConfig)
