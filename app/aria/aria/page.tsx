@@ -65,12 +65,12 @@ export default function AriaLLMBridgePage() {
       try {
         const token = await user.getIdToken(Boolean(event.data?.forceRefresh))
         iframeRef.current?.contentWindow?.postMessage(
-          { type: 'AJN_ARIA_TOKEN_RESPONSE', token },
+          { type: 'AJN_ARIA_TOKEN_RESPONSE', token, requestId: event.data?.requestId },
           ariaOrigin,
         )
       } catch {
         iframeRef.current?.contentWindow?.postMessage(
-          { type: 'AJN_ARIA_TOKEN_RESPONSE', error: 'token_refresh_failed' },
+          { type: 'AJN_ARIA_TOKEN_RESPONSE', error: 'token_refresh_failed', requestId: event.data?.requestId },
           ariaOrigin,
         )
       }
