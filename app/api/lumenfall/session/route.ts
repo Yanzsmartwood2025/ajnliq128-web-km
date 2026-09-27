@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomInt } from 'crypto';
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
 import { supabaseAdminRest } from '@/lib/supabase-admin';
@@ -42,7 +42,7 @@ async function getProfile(uid: string) {
 
 async function generateGameCode() {
   for (let i = 0; i < 20; i++) {
-    const code = String(crypto.randomInt(100000, 1000000));
+    const code = String(randomInt(100000, 1000000));
     const rows = await supabaseAdminRest<any[]>(
       `lumenfall_perfiles?select=user_id&game_code=eq.${code}&limit=1`,
     );
