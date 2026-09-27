@@ -98,11 +98,6 @@ export default function AriaLLMBridgePage() {
 
   return (
     <main className="fixed inset-0 bg-black text-white">
-      <div className="absolute left-3 top-3 z-50 flex items-center gap-2">
-        <Link href="/aria" className="rounded-full border border-white/20 bg-black/70 px-4 py-2 text-sm backdrop-blur hover:bg-white hover:text-black transition">← Aria</Link>
-        <span className="hidden sm:inline rounded-full border border-white/10 bg-black/50 px-3 py-2 text-xs text-white/60">AJNLIQ128 / Aria / arIA</span>
-      </div>
-
       {error ? (
         <div className="h-full grid place-items-center px-6 text-center">
           <div className="max-w-md space-y-3">
