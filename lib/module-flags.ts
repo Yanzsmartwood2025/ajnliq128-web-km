@@ -10,6 +10,7 @@ export const moduleFlags: Record<Character, { enabled: boolean; programs: Record
       'code-and-conscience': true,
       'real-world-quests': true,
       'lyrical-resonance': true,
+      'aria': true,
     },
   },
   joziel: {
@@ -40,6 +41,7 @@ export const programLabels: Record<string, string> = {
   'code-and-conscience': 'Code & Conscience',
   'real-world-quests': 'Real World Quests',
   'lyrical-resonance': 'Lyrical Resonance',
+  'aria': 'arIA',
   'midnight-mantras': 'Midnight Mantras',
   'dark-siren': 'Dark Siren',
   'night-strategy': 'Night Strategy',
