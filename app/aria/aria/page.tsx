@@ -1,31 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
-function buildAriaUrl(customToken: string) {
-  const target = new URL(process.env.NEXT_PUBLIC_ARIA_LLM_URL || 'https://aria-llm.vercel.app/')
+const ARIA_MODULE_URL = process.env.NEXT_PUBLIC_ARIA_LLM_URL || 'https://aria-llm.vercel.app/'
+
+function buildAriaUrl(idToken: string) {
+  const target = new URL(ARIA_MODULE_URL)
   const params = new URLSearchParams()
-
-  const firebaseConfig: Record<string, string | undefined> = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  }
-
-  Object.entries(firebaseConfig).forEach(([key, value]) => {
-    if (value) params.set(`firebase_${key}`, value)
-  })
 
   params.set('source', 'ajnliq128')
   params.set('returnTo', `${window.location.origin}/aria`)
   params.set('loginUrl', `${window.location.origin}/?login=true`)
   target.search = params.toString()
-  target.hash = `authToken=${encodeURIComponent(customToken)}`
+
+  // Fragment data never reaches Vercel/server logs. arIA consumes it in the browser
+  // and immediately removes it from the visible URL.
+  target.hash = `idToken=${encodeURIComponent(idToken)}`
   return target.toString()
 }
 
@@ -33,6 +25,7 @@ export default function AriaLLMBridgePage() {
   const { user, loading } = useAuth()
   const [moduleUrl, setModuleUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const ready = useMemo(() => !loading && Boolean(user), [loading, user])
 
   useEffect(() => {
@@ -42,15 +35,16 @@ export default function AriaLLMBridgePage() {
 
     async function openModule() {
       try {
-        const idToken = await currentUser.getIdToken()
+        const currentToken = await currentUser.getIdToken()
         const response = await fetch('/api/auth/token', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${idToken}` },
+          headers: { Authorization: `Bearer ${currentToken}` },
         })
-        if (!response.ok) throw new Error('No se pudo crear el puente seguro con arIA.')
-        const data = await response.json()
-        if (!data.customToken) throw new Error('El puente de autenticación no devolvió un token válido.')
-        if (!cancelled) setModuleUrl(buildAriaUrl(data.customToken))
+        if (!response.ok) throw new Error('No se pudo preparar la sesión central de arIA.')
+
+        // Force refresh so the JWT includes role=authenticated for Supabase.
+        const refreshedToken = await currentUser.getIdToken(true)
+        if (!cancelled) setModuleUrl(buildAriaUrl(refreshedToken))
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'No se pudo abrir arIA.')
       }
@@ -59,6 +53,32 @@ export default function AriaLLMBridgePage() {
     openModule()
     return () => { cancelled = true }
   }, [ready, user])
+
+  useEffect(() => {
+    if (!user) return
+    const ariaOrigin = new URL(ARIA_MODULE_URL).origin
+
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== ariaOrigin) return
+      if (event.data?.type !== 'AJN_ARIA_TOKEN_REQUEST') return
+
+      try {
+        const token = await user.getIdToken(Boolean(event.data?.forceRefresh))
+        iframeRef.current?.contentWindow?.postMessage(
+          { type: 'AJN_ARIA_TOKEN_RESPONSE', token, requestId: event.data?.requestId },
+          ariaOrigin,
+        )
+      } catch {
+        iframeRef.current?.contentWindow?.postMessage(
+          { type: 'AJN_ARIA_TOKEN_RESPONSE', error: 'token_refresh_failed', requestId: event.data?.requestId },
+          ariaOrigin,
+        )
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [user])
 
   if (loading) {
     return <main className="min-h-[100svh] bg-black text-white grid place-items-center">Conectando con arIA…</main>
@@ -92,6 +112,7 @@ export default function AriaLLMBridgePage() {
         </div>
       ) : moduleUrl ? (
         <iframe
+          ref={iframeRef}
           title="arIA"
           src={moduleUrl}
           className="h-full w-full border-0 bg-black"

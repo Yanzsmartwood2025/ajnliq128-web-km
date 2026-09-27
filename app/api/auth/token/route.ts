@@ -8,20 +8,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
-
-    // Verify the ID token to ensure the request comes from an authenticated user
+    const idToken = authHeader.slice('Bearer '.length);
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    // Generate a custom token for the user
-    const customToken = await adminAuth.createCustomToken(uid, { role: 'authenticated' });
+    // Supabase Third-Party Auth expects Firebase JWTs to carry role=authenticated.
+    // Persist it on the real Firebase user so a forced token refresh receives it.
+    const userRecord = await adminAuth.getUser(uid);
+    const currentClaims = userRecord.customClaims || {};
 
-    return NextResponse.json({ customToken });
-  } catch (error: any) {
-    console.error('Error generating custom token:', error);
+    if (currentClaims.role !== 'authenticated') {
+      await adminAuth.setCustomUserClaims(uid, {
+        ...currentClaims,
+        role: 'authenticated',
+      });
+    }
+
+    return NextResponse.json({ ok: true, uid });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error preparing Firebase/Supabase session:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: message },
       { status: 500 }
     );
   }
