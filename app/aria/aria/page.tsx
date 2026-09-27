@@ -37,11 +37,12 @@ export default function AriaLLMBridgePage() {
 
   useEffect(() => {
     if (!ready || !user) return
+    const currentUser = user
     let cancelled = false
 
     async function openModule() {
       try {
-        const idToken = await user.getIdToken()
+        const idToken = await currentUser.getIdToken()
         const response = await fetch('/api/auth/token', {
           method: 'POST',
           headers: { Authorization: `Bearer ${idToken}` },
