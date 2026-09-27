@@ -8,11 +8,16 @@ import { mediaUrl } from '@/lib/media-urls'
 import { slugifyProgram } from '@/lib/module-flags'
 
 const programs = {
-  aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance'],
+  aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance', 'arIA'],
   joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire"],
 }
 
 const placeholderVideoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
+
+function programMediaPath(character: 'aria' | 'joziel', programSlug: string, filename: 'fondo.mp4' | 'fondo.png') {
+  if (character === 'aria' && programSlug === 'aria') return `aria/aria/ui/${filename}`
+  return `${character}/programas/${programSlug}/${filename}`
+}
 
 function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel', programSlug: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -41,7 +46,7 @@ function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel'
   }, [])
 
   const videoUrl = programSlug && !hasError
-    ? mediaUrl(`${character}/programas/${programSlug}/fondo.mp4`)
+    ? mediaUrl(programMediaPath(character, programSlug, 'fondo.mp4'))
     : placeholderVideoUrl;
 
   return (
@@ -138,7 +143,7 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
 
   const name = isAria ? 'ARIA' : 'JOZIEL'
   const backgroundImage = focusedProgramSlug && !bgImageError
-    ? `url(${mediaUrl(`${character}/programas/${focusedProgramSlug}/fondo.png`)})`
+    ? `url(${mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))})`
     : `url(${backgrounds[backgroundIndex]})`;
 
   return (
@@ -154,7 +159,7 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       {/* Hidden image to trigger onError for background fallback */}
       {focusedProgramSlug && !bgImageError && (
         <img
-          src={mediaUrl(`${character}/programas/${focusedProgramSlug}/fondo.png`)}
+          src={mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))}
           style={{ display: 'none' }}
           onError={() => setBgImageError(true)}
           alt=""
@@ -178,7 +183,7 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
             program={program}
             index={index}
             key={program}
-            destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : undefined}
+            destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : isAria && program === 'arIA' ? '/aria/aria' : undefined}
             onActivate={(el) => changeBackgroundAndCenter(index, el)}
           />
         ))}
