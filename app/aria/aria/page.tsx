@@ -22,6 +22,8 @@ function buildAriaUrl(customToken: string) {
   })
 
   params.set('source', 'ajnliq128')
+  params.set('returnTo', `${window.location.origin}/aria`)
+  params.set('loginUrl', `${window.location.origin}/?login=true`)
   target.search = params.toString()
   target.hash = `authToken=${encodeURIComponent(customToken)}`
   return target.toString()
