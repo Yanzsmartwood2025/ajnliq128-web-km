@@ -1,26 +1,32 @@
 const getSupabaseConfig = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '');
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+  )?.replace(/\/$/, '');
 
-  if (!url || !serviceRoleKey) {
+  const secretKey =
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !secretKey) {
     throw new Error(
-      'AJN Supabase central no está configurado. Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.'
+      'AJN Supabase central no está configurado. Faltan SUPABASE_URL o SUPABASE_SECRET_KEY.'
     );
   }
 
-  return { url, serviceRoleKey };
+  return { url, secretKey };
 };
 
 export async function supabaseAdminRest<T = unknown>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const { url, serviceRoleKey } = getSupabaseConfig();
+  const { url, secretKey } = getSupabaseConfig();
   const response = await fetch(`${url}/rest/v1/${path.replace(/^\//, '')}`, {
     ...init,
     headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: secretKey,
+      Authorization: `Bearer ${secretKey}`,
       'Content-Type': 'application/json',
       ...(init.headers || {}),
     },
