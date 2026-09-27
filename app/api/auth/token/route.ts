@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const uid = decodedToken.uid;
 
     // Generate a custom token for the user
-    const customToken = await adminAuth.createCustomToken(uid);
+    const customToken = await adminAuth.createCustomToken(uid, { role: 'authenticated' });
 
     return NextResponse.json({ customToken });
   } catch (error: any) {
