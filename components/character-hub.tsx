@@ -9,13 +9,14 @@ import { slugifyProgram } from '@/lib/module-flags'
 
 const programs = {
   aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance', 'arIA'],
-  joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire"],
+  joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire", 'Lumenfall'],
 }
 
 const placeholderVideoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
 
 function programMediaPath(character: 'aria' | 'joziel', programSlug: string, filename: 'fondo.mp4' | 'fondo.png') {
   if (character === 'aria' && programSlug === 'aria') return `aria/aria/ui/${filename}`
+  if (character === 'joziel' && programSlug === 'lumenfall') return `joziel/lumenfall/ui/${filename}`
   return `${character}/programas/${programSlug}/${filename}`
 }
 
@@ -183,7 +184,15 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
             program={program}
             index={index}
             key={program}
-            destination={isAria && program === 'Starlight Log' ? '/aria/starlight-log' : isAria && program === 'arIA' ? '/aria/aria' : undefined}
+            destination={
+              isAria && program === 'Starlight Log'
+                ? '/aria/starlight-log'
+                : isAria && program === 'arIA'
+                  ? '/aria/aria'
+                  : !isAria && program === 'Lumenfall'
+                    ? '/joziel/lumenfall'
+                    : undefined
+            }
             onActivate={(el) => changeBackgroundAndCenter(index, el)}
           />
         ))}

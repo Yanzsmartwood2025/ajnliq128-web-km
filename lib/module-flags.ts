@@ -22,6 +22,7 @@ export const moduleFlags: Record<Character, { enabled: boolean; programs: Record
       'sonic-autopsy': true,
       'shadow-files': true,
       'joziels-grimoire': true,
+      'lumenfall': true,
     },
   },
 }
@@ -48,6 +49,7 @@ export const programLabels: Record<string, string> = {
   'sonic-autopsy': 'Sonic Autopsy',
   'shadow-files': 'Shadow Files',
   'joziels-grimoire': "Joziel's Grimoire",
+  'lumenfall': 'Lumenfall',
 }
 
 export const characterLabels: Record<Character, string> = { aria: 'ARIA', joziel: 'JOZIEL' }
