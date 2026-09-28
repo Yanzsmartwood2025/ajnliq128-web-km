@@ -174,14 +174,14 @@ export function StarlightBook() {
           useMouseEvents
           usePortrait
           flippingTime={300}
-          maxShadowOpacity={0.86}
+          maxShadowOpacity={0.68}
           className="starlight-flipbook starlight-runa-turn"
           style={{}}
           startPage={0}
           startZIndex={0}
           autoSize={false}
           clickEventForward
-          swipeDistance={12}
+          swipeDistance={4}
           disableFlipByClick={false}
           onFlip={() => setHasTurnedPage(true)}
         >
@@ -189,7 +189,7 @@ export function StarlightBook() {
             <div
               key={index}
               className="book-page-wrapper"
-              data-density={index === 0 || index === pages.length - 1 ? 'hard' : 'soft'}
+              data-density="soft"
             >
               {page}
             </div>
