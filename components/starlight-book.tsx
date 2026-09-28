@@ -168,7 +168,7 @@ export function StarlightBook() {
           minHeight={400}
           maxHeight={700}
           drawShadow
-          showCover
+          showCover={false}
           showPageCorners
           mobileScrollSupport={false}
           useMouseEvents
@@ -181,7 +181,7 @@ export function StarlightBook() {
           startZIndex={0}
           autoSize={false}
           clickEventForward
-          swipeDistance={4}
+          swipeDistance={8}
           disableFlipByClick={false}
           onFlip={() => setHasTurnedPage(true)}
         >
