@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     if (action === 'list_conversations') {
       const data = await supabaseAdminRest(
-        `aria_conversaciones?select=id,titulo,updated_at&user_id=eq.${enc(uid)}&order=updated_at.desc`
+        `aria_conversaciones?select=id,titulo,updated_at,metadata&user_id=eq.${enc(uid)}&order=updated_at.desc`
       );
       return json(request, { data });
     }
@@ -151,6 +151,44 @@ export async function POST(request: Request) {
         }
       );
       return json(request, { data });
+    }
+
+    if (action === 'update_conversation_settings') {
+      const conversationId = String(body?.conversationId || '');
+      if (!conversationId || !(await ownsConversation(uid, conversationId))) {
+        return json(request, { error: 'Conversation not found' }, 404);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        `aria_conversaciones?select=metadata&id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&limit=1`
+      );
+      const currentMetadata =
+        rows[0]?.metadata && typeof rows[0].metadata === 'object'
+          ? rows[0].metadata
+          : {};
+      const incoming =
+        body?.settings && typeof body.settings === 'object'
+          ? body.settings
+          : {};
+
+      const metadata = {
+        ...currentMetadata,
+        ...incoming,
+      };
+
+      const data = await supabaseAdminRest<any[]>(
+        `aria_conversaciones?id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&select=*`,
+        {
+          method: 'PATCH',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({
+            metadata,
+            updated_at: new Date().toISOString(),
+          }),
+        }
+      );
+
+      return json(request, { data: data[0] || null });
     }
 
     if (action === 'delete_conversation') {
@@ -266,6 +304,33 @@ export async function POST(request: Request) {
       }
 
       const vector = `[${rawEmbedding.map((value: unknown) => Number(value)).join(',')}]`;
+      const existing = await supabaseAdminRest<any[]>(
+        `aria_memory_items?select=id&user_id=eq.${enc(uid)}&content=eq.${enc(content)}&limit=1`
+      );
+
+      if (existing[0]?.id) {
+        const rows = await supabaseAdminRest<any[]>(
+          `aria_memory_items?id=eq.${enc(existing[0].id)}&user_id=eq.${enc(uid)}&select=*`,
+          {
+            method: 'PATCH',
+            headers: { Prefer: 'return=representation' },
+            body: JSON.stringify({
+              scope,
+              project_key: body?.projectKey ? String(body.projectKey).slice(0, 160) : null,
+              conversation_id: conversationId,
+              kind,
+              importance,
+              confidence,
+              embedding: vector,
+              source: body?.source ? String(body.source).slice(0, 80) : 'assistant',
+              metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
+              updated_at: new Date().toISOString(),
+            }),
+          }
+        );
+        return json(request, { data: rows[0] || null, deduplicated: true });
+      }
+
       const rows = await supabaseAdminRest<any[]>('aria_memory_items?select=*', {
         method: 'POST',
         headers: { Prefer: 'return=representation' },
@@ -300,6 +365,8 @@ export async function POST(request: Request) {
           p_user_id: uid,
           p_query_embedding: vector,
           p_match_count: Math.min(12, Math.max(1, Number(body?.limit || 8))),
+          p_conversation_id: body?.conversationId ? String(body.conversationId) : null,
+          p_project_key: body?.projectKey ? String(body.projectKey).slice(0, 160) : null,
         }),
       });
 
@@ -333,17 +400,23 @@ export async function POST(request: Request) {
       const query = String(body?.query || '').trim().toLowerCase();
       if (!query) return json(request, { data: [] });
 
+      const excludeConversationId = body?.excludeConversationId
+        ? String(body.excludeConversationId)
+        : '';
       const conversations = await supabaseAdminRest<any[]>(
         `aria_conversaciones?select=id,titulo&user_id=eq.${enc(uid)}&order=updated_at.desc&limit=50`
       );
-      const ids = conversations.map((item) => item.id).filter(Boolean);
+      const filteredConversations = excludeConversationId
+        ? conversations.filter((item) => item.id !== excludeConversationId)
+        : conversations;
+      const ids = filteredConversations.map((item) => item.id).filter(Boolean);
       if (!ids.length) return json(request, { data: [] });
 
       const messages = await supabaseAdminRest<any[]>(
         `aria_mensajes?select=conversacion_id,rol,contenido,engine,fecha&conversacion_id=in.(${ids.join(',')})&order=fecha.desc&limit=500`
       );
 
-      const titleById = new Map(conversations.map((item) => [item.id, item.titulo]));
+      const titleById = new Map(filteredConversations.map((item) => [item.id, item.titulo]));
       const normalizedTerms = query
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
