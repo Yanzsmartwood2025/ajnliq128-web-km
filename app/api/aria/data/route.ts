@@ -166,9 +166,14 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete_profile') {
-      await supabaseAdminRest(`aria_perfil_usuario?user_id=eq.${enc(uid)}`, {
-        method: 'DELETE',
-      });
+      await Promise.all([
+        supabaseAdminRest(`aria_perfil_usuario?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+        supabaseAdminRest(`aria_memory_items?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+      ]);
       return json(request, { ok: true });
     }
 
