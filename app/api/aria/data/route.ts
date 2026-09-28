@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     if (action === 'list_conversations') {
       const data = await supabaseAdminRest(
-        `aria_conversaciones?select=id,titulo&user_id=eq.${enc(uid)}&order=fecha_creacion.desc`
+        `aria_conversaciones?select=id,titulo,updated_at,metadata&user_id=eq.${enc(uid)}&order=updated_at.desc`
       );
       return json(request, { data });
     }
@@ -68,10 +68,32 @@ export async function POST(request: Request) {
 
     if (action === 'create_conversation') {
       const title = String(body?.title || 'Nueva conversación').trim().slice(0, 160);
+      const clientConversationId = body?.clientConversationId
+        ? String(body.clientConversationId)
+        : '';
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        clientConversationId
+      );
+
+      if (clientConversationId && !isUuid) {
+        return json(request, { error: 'Invalid conversation id' }, 400);
+      }
+
+      if (isUuid) {
+        const existing = await supabaseAdminRest<any[]>(
+          `aria_conversaciones?select=*&id=eq.${enc(clientConversationId)}&user_id=eq.${enc(uid)}&limit=1`
+        );
+        if (existing[0]) return json(request, { data: existing[0], idempotent: true });
+      }
+
       const rows = await supabaseAdminRest<any[]>('aria_conversaciones?select=*', {
         method: 'POST',
         headers: { Prefer: 'return=representation' },
-        body: JSON.stringify([{ user_id: uid, titulo: title || 'Nueva conversación' }]),
+        body: JSON.stringify([{
+          ...(isUuid ? { id: clientConversationId } : {}),
+          user_id: uid,
+          titulo: title || 'Nueva conversación',
+        }]),
       });
       return json(request, { data: rows[0] || null });
     }
@@ -82,7 +104,7 @@ export async function POST(request: Request) {
         return json(request, { error: 'Conversation not found' }, 404);
       }
       const data = await supabaseAdminRest(
-        `aria_mensajes?select=rol,contenido,engine&conversacion_id=eq.${enc(conversationId)}&order=fecha.asc`
+        `aria_mensajes?select=rol,contenido,engine,metadata&conversacion_id=eq.${enc(conversationId)}&order=fecha.asc`
       );
       return json(request, { data });
     }
@@ -98,17 +120,41 @@ export async function POST(request: Request) {
         return json(request, { error: 'Invalid role' }, 400);
       }
 
-      const rows = await supabaseAdminRest<any[]>('aria_mensajes?select=*', {
-        method: 'POST',
-        headers: { Prefer: 'return=representation' },
-        body: JSON.stringify([{
-          conversacion_id: conversationId,
-          rol: role,
-          contenido: String(body?.content || ''),
-          engine: body?.engine ? String(body.engine) : null,
-          metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
-        }]),
-      });
+      const clientMessageId = body?.clientMessageId
+        ? String(body.clientMessageId).slice(0, 120)
+        : null;
+
+      const rows = await supabaseAdminRest<any[]>(
+        clientMessageId
+          ? 'aria_mensajes?on_conflict=client_message_id&select=*'
+          : 'aria_mensajes?select=*',
+        {
+          method: 'POST',
+          headers: {
+            Prefer: clientMessageId
+              ? 'resolution=merge-duplicates,return=representation'
+              : 'return=representation',
+          },
+          body: JSON.stringify([{
+            conversacion_id: conversationId,
+            rol: role,
+            contenido: String(body?.content || ''),
+            engine: body?.engine ? String(body.engine) : null,
+            client_message_id: clientMessageId,
+            metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
+          }]),
+        }
+      );
+
+      await supabaseAdminRest(
+        `aria_conversaciones?id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}`,
+        {
+          method: 'PATCH',
+          headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify({ updated_at: new Date().toISOString() }),
+        }
+      );
+
       return json(request, { data: rows[0] || null });
     }
 
@@ -129,6 +175,44 @@ export async function POST(request: Request) {
       return json(request, { data });
     }
 
+    if (action === 'update_conversation_settings') {
+      const conversationId = String(body?.conversationId || '');
+      if (!conversationId || !(await ownsConversation(uid, conversationId))) {
+        return json(request, { error: 'Conversation not found' }, 404);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        `aria_conversaciones?select=metadata&id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&limit=1`
+      );
+      const currentMetadata =
+        rows[0]?.metadata && typeof rows[0].metadata === 'object'
+          ? rows[0].metadata
+          : {};
+      const incoming =
+        body?.settings && typeof body.settings === 'object'
+          ? body.settings
+          : {};
+
+      const metadata = {
+        ...currentMetadata,
+        ...incoming,
+      };
+
+      const data = await supabaseAdminRest<any[]>(
+        `aria_conversaciones?id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&select=*`,
+        {
+          method: 'PATCH',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({
+            metadata,
+            updated_at: new Date().toISOString(),
+          }),
+        }
+      );
+
+      return json(request, { data: data[0] || null });
+    }
+
     if (action === 'delete_conversation') {
       const conversationId = String(body?.conversationId || '');
       if (!conversationId || !(await ownsConversation(uid, conversationId))) {
@@ -142,9 +226,14 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete_profile') {
-      await supabaseAdminRest(`aria_perfil_usuario?user_id=eq.${enc(uid)}`, {
-        method: 'DELETE',
-      });
+      await Promise.all([
+        supabaseAdminRest(`aria_perfil_usuario?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+        supabaseAdminRest(`aria_memory_items?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+      ]);
       return json(request, { ok: true });
     }
 
@@ -202,6 +291,181 @@ export async function POST(request: Request) {
               .includes(query)
           ).slice(0, 20)
         : all.slice(0, 20);
+
+      return json(request, { data });
+    }
+
+    if (action === 'list_memory') {
+      const data = await supabaseAdminRest<any[]>(
+        `aria_memory_items?select=id,scope,project_key,conversation_id,kind,content,importance,confidence,metadata,created_at,updated_at,last_used_at&user_id=eq.${enc(uid)}&order=updated_at.desc&limit=120`
+      );
+      return json(request, { data });
+    }
+
+    if (action === 'save_memory') {
+      const content = String(body?.content || '').trim().slice(0, 2400);
+      if (!content) return json(request, { error: 'Memory content is required' }, 400);
+
+      const rawEmbedding = Array.isArray(body?.embedding) ? body.embedding : [];
+      if (rawEmbedding.length !== 1024 || rawEmbedding.some((value: unknown) => !Number.isFinite(Number(value)))) {
+        return json(request, { error: 'Invalid memory embedding' }, 400);
+      }
+
+      const scope = ['global', 'chat', 'project'].includes(String(body?.scope))
+        ? String(body.scope)
+        : 'global';
+      const kind = ['fact', 'preference', 'decision', 'project', 'relationship', 'instruction', 'other'].includes(String(body?.kind))
+        ? String(body.kind)
+        : 'fact';
+      const importance = Math.min(5, Math.max(1, Number(body?.importance || 3)));
+      const confidence = Math.min(1, Math.max(0, Number(body?.confidence ?? 1)));
+      const conversationId = body?.conversationId ? String(body.conversationId) : null;
+
+      if (conversationId && !(await ownsConversation(uid, conversationId))) {
+        return json(request, { error: 'Conversation not found' }, 404);
+      }
+
+      const vector = `[${rawEmbedding.map((value: unknown) => Number(value)).join(',')}]`;
+      const existing = await supabaseAdminRest<any[]>(
+        `aria_memory_items?select=id&user_id=eq.${enc(uid)}&content=eq.${enc(content)}&limit=1`
+      );
+
+      if (existing[0]?.id) {
+        const rows = await supabaseAdminRest<any[]>(
+          `aria_memory_items?id=eq.${enc(existing[0].id)}&user_id=eq.${enc(uid)}&select=*`,
+          {
+            method: 'PATCH',
+            headers: { Prefer: 'return=representation' },
+            body: JSON.stringify({
+              scope,
+              project_key: body?.projectKey ? String(body.projectKey).slice(0, 160) : null,
+              conversation_id: conversationId,
+              kind,
+              importance,
+              confidence,
+              embedding: vector,
+              source: body?.source ? String(body.source).slice(0, 80) : 'assistant',
+              metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
+              updated_at: new Date().toISOString(),
+            }),
+          }
+        );
+        return json(request, { data: rows[0] || null, deduplicated: true });
+      }
+
+      const rows = await supabaseAdminRest<any[]>('aria_memory_items?select=*', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify([{
+          user_id: uid,
+          scope,
+          project_key: body?.projectKey ? String(body.projectKey).slice(0, 160) : null,
+          conversation_id: conversationId,
+          kind,
+          content,
+          importance,
+          confidence,
+          embedding: vector,
+          source: body?.source ? String(body.source).slice(0, 80) : 'assistant',
+          metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
+        }]),
+      });
+
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'search_memory') {
+      const rawEmbedding = Array.isArray(body?.embedding) ? body.embedding : [];
+      if (rawEmbedding.length !== 1024 || rawEmbedding.some((value: unknown) => !Number.isFinite(Number(value)))) {
+        return json(request, { error: 'Invalid memory embedding' }, 400);
+      }
+
+      const vector = `[${rawEmbedding.map((value: unknown) => Number(value)).join(',')}]`;
+      const data = await supabaseAdminRest<any[]>('rpc/match_aria_memories', {
+        method: 'POST',
+        body: JSON.stringify({
+          p_user_id: uid,
+          p_query_embedding: vector,
+          p_match_count: Math.min(12, Math.max(1, Number(body?.limit || 8))),
+          p_conversation_id: body?.conversationId ? String(body.conversationId) : null,
+          p_project_key: body?.projectKey ? String(body.projectKey).slice(0, 160) : null,
+        }),
+      });
+
+      const ids = data.map((item) => item.id).filter(Boolean);
+      if (ids.length) {
+        await supabaseAdminRest(
+          `aria_memory_items?id=in.(${ids.join(',')})&user_id=eq.${enc(uid)}`,
+          {
+            method: 'PATCH',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ last_used_at: new Date().toISOString() }),
+          }
+        ).catch(() => undefined);
+      }
+
+      return json(request, { data });
+    }
+
+    if (action === 'delete_memory') {
+      const memoryId = String(body?.memoryId || '');
+      if (!memoryId) return json(request, { error: 'Memory id is required' }, 400);
+
+      await supabaseAdminRest(
+        `aria_memory_items?id=eq.${enc(memoryId)}&user_id=eq.${enc(uid)}`,
+        { method: 'DELETE' }
+      );
+      return json(request, { ok: true });
+    }
+
+    if (action === 'search_history') {
+      const query = String(body?.query || '').trim().toLowerCase();
+      if (!query) return json(request, { data: [] });
+
+      const excludeConversationId = body?.excludeConversationId
+        ? String(body.excludeConversationId)
+        : '';
+      const conversations = await supabaseAdminRest<any[]>(
+        `aria_conversaciones?select=id,titulo&user_id=eq.${enc(uid)}&order=updated_at.desc&limit=50`
+      );
+      const filteredConversations = excludeConversationId
+        ? conversations.filter((item) => item.id !== excludeConversationId)
+        : conversations;
+      const ids = filteredConversations.map((item) => item.id).filter(Boolean);
+      if (!ids.length) return json(request, { data: [] });
+
+      const messages = await supabaseAdminRest<any[]>(
+        `aria_mensajes?select=conversacion_id,rol,contenido,engine,fecha&conversacion_id=in.(${ids.join(',')})&order=fecha.desc&limit=500`
+      );
+
+      const titleById = new Map(filteredConversations.map((item) => [item.id, item.titulo]));
+      const normalizedTerms = query
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .split(/\s+/)
+        .map((term) => term.trim())
+        .filter((term) => term.length >= 3)
+        .slice(0, 12);
+
+      const data = messages
+        .map((message) => {
+          const haystack = String(message.contenido || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+          const score = normalizedTerms.reduce(
+            (total, term) => total + (haystack.includes(term) ? 1 : 0),
+            0
+          );
+          return {
+            ...message,
+            titulo: titleById.get(message.conversacion_id) || 'Conversación',
+            score,
+          };
+        })
+        .filter((message) => message.score > 0)
+        .sort((a, b) => b.score - a.score || String(b.fecha).localeCompare(String(a.fecha)))
+        .slice(0, Math.min(12, Math.max(1, Number(body?.limit || 8))));
 
       return json(request, { data });
     }
