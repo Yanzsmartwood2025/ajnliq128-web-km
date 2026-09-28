@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         return json(request, { error: 'Conversation not found' }, 404);
       }
       const data = await supabaseAdminRest(
-        `aria_mensajes?select=rol,contenido,engine&conversacion_id=eq.${enc(conversationId)}&order=fecha.asc`
+        `aria_mensajes?select=rol,contenido,engine,metadata&conversacion_id=eq.${enc(conversationId)}&order=fecha.asc`
       );
       return json(request, { data });
     }
