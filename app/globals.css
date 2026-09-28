@@ -484,8 +484,8 @@ a { color: inherit; text-decoration: none; }
 .starlight-runa-turn .page-content,
 .starlight-runa-turn .book-page-wrapper {
   transform-style: preserve-3d;
-  backface-visibility: visible;
-  -webkit-backface-visibility: visible;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .starlight-runa-turn .book-page-wrapper {
