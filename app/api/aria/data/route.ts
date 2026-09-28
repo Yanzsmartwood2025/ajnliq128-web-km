@@ -98,17 +98,31 @@ export async function POST(request: Request) {
         return json(request, { error: 'Invalid role' }, 400);
       }
 
-      const rows = await supabaseAdminRest<any[]>('aria_mensajes?select=*', {
-        method: 'POST',
-        headers: { Prefer: 'return=representation' },
-        body: JSON.stringify([{
-          conversacion_id: conversationId,
-          rol: role,
-          contenido: String(body?.content || ''),
-          engine: body?.engine ? String(body.engine) : null,
-          metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
-        }]),
-      });
+      const clientMessageId = body?.clientMessageId
+        ? String(body.clientMessageId).slice(0, 120)
+        : null;
+
+      const rows = await supabaseAdminRest<any[]>(
+        clientMessageId
+          ? 'aria_mensajes?on_conflict=client_message_id&select=*'
+          : 'aria_mensajes?select=*',
+        {
+          method: 'POST',
+          headers: {
+            Prefer: clientMessageId
+              ? 'resolution=merge-duplicates,return=representation'
+              : 'return=representation',
+          },
+          body: JSON.stringify([{
+            conversacion_id: conversationId,
+            rol: role,
+            contenido: String(body?.content || ''),
+            engine: body?.engine ? String(body.engine) : null,
+            client_message_id: clientMessageId,
+            metadata: body?.metadata && typeof body.metadata === 'object' ? body.metadata : {},
+          }]),
+        }
+      );
 
       await supabaseAdminRest(
         `aria_conversaciones?id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}`,
