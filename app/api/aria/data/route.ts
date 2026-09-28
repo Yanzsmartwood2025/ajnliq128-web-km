@@ -68,10 +68,32 @@ export async function POST(request: Request) {
 
     if (action === 'create_conversation') {
       const title = String(body?.title || 'Nueva conversación').trim().slice(0, 160);
+      const clientConversationId = body?.clientConversationId
+        ? String(body.clientConversationId)
+        : '';
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        clientConversationId
+      );
+
+      if (clientConversationId && !isUuid) {
+        return json(request, { error: 'Invalid conversation id' }, 400);
+      }
+
+      if (isUuid) {
+        const existing = await supabaseAdminRest<any[]>(
+          `aria_conversaciones?select=*&id=eq.${enc(clientConversationId)}&user_id=eq.${enc(uid)}&limit=1`
+        );
+        if (existing[0]) return json(request, { data: existing[0], idempotent: true });
+      }
+
       const rows = await supabaseAdminRest<any[]>('aria_conversaciones?select=*', {
         method: 'POST',
         headers: { Prefer: 'return=representation' },
-        body: JSON.stringify([{ user_id: uid, titulo: title || 'Nueva conversación' }]),
+        body: JSON.stringify([{
+          ...(isUuid ? { id: clientConversationId } : {}),
+          user_id: uid,
+          titulo: title || 'Nueva conversación',
+        }]),
       });
       return json(request, { data: rows[0] || null });
     }
