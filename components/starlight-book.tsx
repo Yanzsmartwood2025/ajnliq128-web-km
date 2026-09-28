@@ -47,6 +47,7 @@ export function StarlightBook() {
   const [isMobile, setIsMobile] = useState(true)
   const [viewport, setViewport] = useState({ width: 360, height: 640 })
   const [showGifts, setShowGifts] = useState(false)
+  const [hasTurnedPage, setHasTurnedPage] = useState(false)
 
   const pages = useMemo(() => [
     <Cover key="cover" />,
@@ -67,8 +68,17 @@ export function StarlightBook() {
     return () => window.removeEventListener('resize', updateLayout)
   }, [])
 
-  const width = isMobile ? Math.max(280, Math.min(viewport.width - 32, 430)) : Math.min(560, Math.max(420, Math.floor((viewport.width - 120) / 2)))
-  const height = isMobile ? Math.max(400, Math.min(viewport.height - 88, 610)) : Math.min(720, Math.max(560, viewport.height - 150))
+  // Runa Coffee uses a single-page book at every breakpoint. Keep the same
+  // physical-book behavior here: one centered page, compact proportions,
+  // quick corner turn and a strong fold shadow.
+  const width = Math.max(
+    280,
+    Math.min(isMobile ? viewport.width - 24 : viewport.width - 120, 500),
+  )
+  const height = Math.max(
+    400,
+    Math.min(isMobile ? viewport.height - 94 : viewport.height - 150, 700),
+  )
 
   return (
     <main className="book-shell">
@@ -148,12 +158,48 @@ export function StarlightBook() {
       )}
 
       <section className="book-stage">
-        <HTMLFlipBook key={isMobile ? 'single' : 'double'} width={width} height={height} size="fixed" minWidth={280} maxWidth={560} minHeight={400} maxHeight={720} drawShadow showCover showPageCorners mobileScrollSupport={false} useMouseEvents={true} usePortrait={isMobile} flippingTime={650} maxShadowOpacity={0.72} className="starlight-flipbook" style={{}} startPage={0} startZIndex={0} autoSize={false} clickEventForward={true} swipeDistance={12} disableFlipByClick={false}>
-          {pages.map((page, index) => <div key={index} className="book-page-wrapper" data-density={index === 0 || index === pages.length - 1 ? 'hard' : 'soft'}>{page}</div>)}
+        <HTMLFlipBook
+          key={isMobile ? 'runa-single-mobile' : 'runa-single-desktop'}
+          width={width}
+          height={height}
+          size="fixed"
+          minWidth={280}
+          maxWidth={500}
+          minHeight={400}
+          maxHeight={700}
+          drawShadow
+          showCover
+          showPageCorners
+          mobileScrollSupport={false}
+          useMouseEvents
+          usePortrait
+          flippingTime={300}
+          maxShadowOpacity={0.86}
+          className="starlight-flipbook starlight-runa-turn"
+          style={{}}
+          startPage={0}
+          startZIndex={0}
+          autoSize={false}
+          clickEventForward
+          swipeDistance={12}
+          disableFlipByClick={false}
+          onFlip={() => setHasTurnedPage(true)}
+        >
+          {pages.map((page, index) => (
+            <div
+              key={index}
+              className="book-page-wrapper"
+              data-density={index === 0 || index === pages.length - 1 ? 'hard' : 'soft'}
+            >
+              {page}
+            </div>
+          ))}
         </HTMLFlipBook>
       </section>
 
-      <p className="book-instruction">Desliza o arrastra cualquier esquina para pasar la hoja</p>
+      <p className={`book-instruction ${hasTurnedPage ? 'is-hidden' : ''}`}>
+        Desliza o arrastra una esquina para pasar la hoja
+      </p>
     </main>
   )
 }
