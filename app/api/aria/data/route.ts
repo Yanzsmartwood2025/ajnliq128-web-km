@@ -233,6 +233,12 @@ export async function POST(request: Request) {
         supabaseAdminRest(`aria_memory_items?user_id=eq.${enc(uid)}`, {
           method: 'DELETE',
         }),
+        supabaseAdminRest(`aria_game_sessions?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+        supabaseAdminRest(`aria_music_sessions?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
       ]);
       return json(request, { ok: true });
     }
@@ -268,6 +274,118 @@ export async function POST(request: Request) {
         }
       );
       return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'get_game_session') {
+      const gameKey = String(body?.gameKey || '').trim().toLowerCase();
+      if (!/^[a-z0-9_-]{1,40}$/.test(gameKey)) {
+        return json(request, { error: 'Invalid game key' }, 400);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        `aria_game_sessions?select=id,game_key,status,state,settings,started_at,updated_at&user_id=eq.${enc(uid)}&game_key=eq.${enc(gameKey)}&limit=1`
+      );
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'save_game_session') {
+      const gameKey = String(body?.gameKey || '').trim().toLowerCase();
+      if (!/^[a-z0-9_-]{1,40}$/.test(gameKey)) {
+        return json(request, { error: 'Invalid game key' }, 400);
+      }
+
+      const status = ['active', 'finished', 'abandoned'].includes(String(body?.status))
+        ? String(body.status)
+        : 'active';
+      const state = body?.state && typeof body.state === 'object' && !Array.isArray(body.state)
+        ? body.state
+        : {};
+      const settings = body?.settings && typeof body.settings === 'object' && !Array.isArray(body.settings)
+        ? body.settings
+        : {};
+
+      if (JSON.stringify(state).length > 80000 || JSON.stringify(settings).length > 20000) {
+        return json(request, { error: 'Game session is too large' }, 413);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        'aria_game_sessions?on_conflict=user_id,game_key&select=id,game_key,status,state,settings,started_at,updated_at',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            game_key: gameKey,
+            status,
+            state,
+            settings,
+            updated_at: new Date().toISOString(),
+          }]),
+        }
+      );
+
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'get_music_session') {
+      const rows = await supabaseAdminRest<any[]>(
+        `aria_music_sessions?select=id,current_track_id,playback_seconds,is_minimized,queue,chat_history,settings,updated_at&user_id=eq.${enc(uid)}&limit=1`
+      );
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'save_music_session') {
+      const currentTrackId = body?.currentTrackId
+        ? String(body.currentTrackId).trim().slice(0, 140)
+        : null;
+      const playbackSeconds = Math.min(
+        86400,
+        Math.max(0, Number(body?.playbackSeconds || 0))
+      );
+      const isMinimized = Boolean(body?.isMinimized);
+      const queue = Array.isArray(body?.queue)
+        ? body.queue.slice(0, 200).map((value: unknown) => String(value).slice(0, 140))
+        : [];
+      const chatHistory = Array.isArray(body?.chatHistory)
+        ? body.chatHistory.slice(-80)
+        : [];
+      const settings = body?.settings && typeof body.settings === 'object' && !Array.isArray(body.settings)
+        ? body.settings
+        : {};
+
+      if (
+        JSON.stringify(chatHistory).length > 100000 ||
+        JSON.stringify(settings).length > 20000
+      ) {
+        return json(request, { error: 'Music session is too large' }, 413);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        'aria_music_sessions?on_conflict=user_id&select=id,current_track_id,playback_seconds,is_minimized,queue,chat_history,settings,updated_at',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            current_track_id: currentTrackId,
+            playback_seconds: Number.isFinite(playbackSeconds) ? playbackSeconds : 0,
+            is_minimized: isMinimized,
+            queue,
+            chat_history: chatHistory,
+            settings,
+            updated_at: new Date().toISOString(),
+          }]),
+        }
+      );
+
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'list_music_catalog') {
+      const data = await supabaseAdminRest<any[]>(
+        'aria_music_catalog?select=id,artist,title,youtube_video_id,sort_order,metadata&active=eq.true&order=sort_order.asc,created_at.asc'
+      );
+      return json(request, { data });
     }
 
     if (action === 'search_knowledge') {
