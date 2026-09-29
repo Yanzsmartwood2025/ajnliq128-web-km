@@ -153,6 +153,43 @@ async function unlockChessWinGifts(uid: string, wins: number) {
   return newRewards;
 }
 
+async function ownsMusicPlaylist(uid: string, playlistId: string) {
+  const rows = await supabaseAdminRest<Array<{ id: string }>>(
+    `aria_music_playlists?select=id&id=eq.${enc(playlistId)}&user_id=eq.${enc(uid)}&limit=1`
+  );
+  return rows.length > 0;
+}
+
+async function musicLibraryState(uid: string) {
+  const [playlists, favorites, requests] = await Promise.all([
+    supabaseAdminRest<any[]>(
+      `aria_music_playlists?select=id,name,description,is_default,created_at,updated_at&user_id=eq.${enc(uid)}&order=is_default.desc,updated_at.desc`
+    ),
+    supabaseAdminRest<any[]>(
+      `aria_music_favorites?select=track_id,created_at&user_id=eq.${enc(uid)}&order=created_at.desc`
+    ),
+    supabaseAdminRest<any[]>(
+      `aria_music_requests?select=id,artist,title,note,status,created_at,updated_at&user_id=eq.${enc(uid)}&order=created_at.desc&limit=30`
+    ),
+  ]);
+
+  const playlistIds = playlists.map((playlist) => playlist.id).filter(Boolean);
+  const items = playlistIds.length
+    ? await supabaseAdminRest<any[]>(
+        `aria_music_playlist_items?select=playlist_id,track_id,position,added_at&user_id=eq.${enc(uid)}&playlist_id=in.(${playlistIds.join(',')})&order=position.asc,added_at.asc`
+      )
+    : [];
+
+  return {
+    playlists: playlists.map((playlist) => ({
+      ...playlist,
+      items: items.filter((item) => item.playlist_id === playlist.id),
+    })),
+    favorites: favorites.map((row) => row.track_id),
+    requests,
+  };
+}
+
 async function ownsConversation(uid: string, conversationId: string) {
   const rows = await supabaseAdminRest<Array<{ id: string }>>(
     `aria_conversaciones?select=id&id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&limit=1`
@@ -716,9 +753,180 @@ export async function POST(request: Request) {
 
     if (action === 'list_music_catalog') {
       const data = await supabaseAdminRest<any[]>(
-        'aria_music_catalog?select=id,artist,title,youtube_video_id,sort_order,metadata&active=eq.true&order=sort_order.asc,created_at.asc'
+        'aria_music_catalog?select=id,artist,title,youtube_video_id,source_type,audio_url,album_title,album_slug,track_number,cover_url,duration_seconds,narrative_es,narrative_en,narrative_de,featured,sort_order,metadata&active=eq.true&order=sort_order.asc,created_at.asc'
       );
       return json(request, { data });
+    }
+
+    if (action === 'get_music_library') {
+      return json(request, { data: await musicLibraryState(uid) });
+    }
+
+    if (action === 'create_music_playlist') {
+      const name = String(body?.name || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+      if (!name) return json(request, { error: 'Playlist name is required' }, 400);
+
+      const rows = await supabaseAdminRest<any[]>(
+        'aria_music_playlists?select=id,name,description,is_default,created_at,updated_at',
+        {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            name,
+            description: body?.description ? String(body.description).trim().slice(0, 240) : null,
+            is_default: false,
+          }]),
+        }
+      );
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'delete_music_playlist') {
+      const playlistId = String(body?.playlistId || '');
+      if (!playlistId || !(await ownsMusicPlaylist(uid, playlistId))) {
+        return json(request, { error: 'Playlist not found' }, 404);
+      }
+
+      await supabaseAdminRest(
+        `aria_music_playlists?id=eq.${enc(playlistId)}&user_id=eq.${enc(uid)}&is_default=eq.false`,
+        { method: 'DELETE' }
+      );
+      return json(request, { ok: true });
+    }
+
+    if (action === 'add_music_playlist_track') {
+      const playlistId = String(body?.playlistId || '');
+      const trackId = String(body?.trackId || '').trim().slice(0, 140);
+      if (!playlistId || !(await ownsMusicPlaylist(uid, playlistId))) {
+        return json(request, { error: 'Playlist not found' }, 404);
+      }
+      const tracks = await supabaseAdminRest<any[]>(
+        `aria_music_catalog?select=id&id=eq.${enc(trackId)}&active=eq.true&limit=1`
+      );
+      if (!tracks[0]) return json(request, { error: 'Track not found' }, 404);
+
+      const countRows = await supabaseAdminRest<any[]>(
+        `aria_music_playlist_items?select=track_id&user_id=eq.${enc(uid)}&playlist_id=eq.${enc(playlistId)}`
+      );
+
+      await supabaseAdminRest(
+        'aria_music_playlist_items?on_conflict=playlist_id,track_id',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+          body: JSON.stringify([{
+            playlist_id: playlistId,
+            user_id: uid,
+            track_id: trackId,
+            position: countRows.length,
+          }]),
+        }
+      );
+
+      await supabaseAdminRest(
+        `aria_music_playlists?id=eq.${enc(playlistId)}&user_id=eq.${enc(uid)}`,
+        {
+          method: 'PATCH',
+          headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify({ updated_at: new Date().toISOString() }),
+        }
+      );
+
+      return json(request, { ok: true });
+    }
+
+    if (action === 'remove_music_playlist_track') {
+      const playlistId = String(body?.playlistId || '');
+      const trackId = String(body?.trackId || '').trim().slice(0, 140);
+      if (!playlistId || !(await ownsMusicPlaylist(uid, playlistId))) {
+        return json(request, { error: 'Playlist not found' }, 404);
+      }
+
+      await supabaseAdminRest(
+        `aria_music_playlist_items?playlist_id=eq.${enc(playlistId)}&track_id=eq.${enc(trackId)}&user_id=eq.${enc(uid)}`,
+        { method: 'DELETE' }
+      );
+      return json(request, { ok: true });
+    }
+
+    if (action === 'toggle_music_favorite') {
+      const trackId = String(body?.trackId || '').trim().slice(0, 140);
+      const tracks = await supabaseAdminRest<any[]>(
+        `aria_music_catalog?select=id&id=eq.${enc(trackId)}&active=eq.true&limit=1`
+      );
+      if (!tracks[0]) return json(request, { error: 'Track not found' }, 404);
+
+      const existing = await supabaseAdminRest<any[]>(
+        `aria_music_favorites?select=track_id&user_id=eq.${enc(uid)}&track_id=eq.${enc(trackId)}&limit=1`
+      );
+
+      if (existing[0]) {
+        await supabaseAdminRest(
+          `aria_music_favorites?user_id=eq.${enc(uid)}&track_id=eq.${enc(trackId)}`,
+          { method: 'DELETE' }
+        );
+        return json(request, { favorite: false });
+      }
+
+      await supabaseAdminRest(
+        'aria_music_favorites?on_conflict=user_id,track_id',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+          body: JSON.stringify([{ user_id: uid, track_id: trackId }]),
+        }
+      );
+      return json(request, { favorite: true });
+    }
+
+    if (action === 'submit_music_request') {
+      const artist = String(body?.artist || '').trim().replace(/\s+/g, ' ').slice(0, 100);
+      const title = String(body?.title || '').trim().replace(/\s+/g, ' ').slice(0, 140);
+      const note = body?.note ? String(body.note).trim().slice(0, 400) : null;
+      if (!artist || !title) {
+        return json(request, { error: 'Artist and title are required' }, 400);
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        'aria_music_requests?select=id,artist,title,note,status,created_at',
+        {
+          method: 'POST',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            artist,
+            title,
+            note,
+            status: 'requested',
+          }]),
+        }
+      );
+      return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'get_music_rhythm_profile') {
+      const existing = await supabaseAdminRest<any[]>(
+        `aria_music_rhythm_profiles?select=*&user_id=eq.${enc(uid)}&limit=1`
+      );
+      if (existing[0]) return json(request, { data: existing[0] });
+
+      const rows = await supabaseAdminRest<any[]>(
+        'aria_music_rhythm_profiles?on_conflict=user_id&select=*',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            calibration_ms: 0,
+            best_score: 0,
+            total_sessions: 0,
+            unlocked_modes: ['preview'],
+            settings: {},
+          }]),
+        }
+      );
+      return json(request, { data: rows[0] || null });
     }
 
     if (action === 'search_knowledge') {
