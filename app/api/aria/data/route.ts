@@ -758,6 +758,13 @@ export async function POST(request: Request) {
       return json(request, { data });
     }
 
+    if (action === 'list_music_discography') {
+      const data = await supabaseAdminRest<any[]>(
+        'aria_music_albums?select=id,artist,title,slug,release_year,kind,cover_url,sort_order,metadata&active=eq.true&order=sort_order.asc,release_year.asc'
+      );
+      return json(request, { data });
+    }
+
     if (action === 'get_music_library') {
       return json(request, { data: await musicLibraryState(uid) });
     }
