@@ -35,6 +35,124 @@ function enc(value: string) {
   return encodeURIComponent(value);
 }
 
+function clampChessNumber(value: unknown, min: number, max: number, fallback: number) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.min(max, Math.max(min, numeric));
+}
+
+async function chessDisplayName(uid: string) {
+  const rows = await supabaseAdminRest<Array<{ nombre_preferido?: string | null }>>(
+    `aria_perfil_usuario?select=nombre_preferido&user_id=eq.${enc(uid)}&limit=1`
+  );
+  const raw = String(rows[0]?.nombre_preferido || '').trim().replace(/\s+/g, ' ');
+  return raw ? raw.slice(0, 40) : 'Jugador';
+}
+
+async function ensureChessProfile(uid: string) {
+  const existing = await supabaseAdminRest<any[]>(
+    `aria_chess_profiles?select=*&user_id=eq.${enc(uid)}&limit=1`
+  );
+  if (existing[0]) return existing[0];
+
+  const displayName = await chessDisplayName(uid);
+  const rows = await supabaseAdminRest<any[]>(
+    'aria_chess_profiles?on_conflict=user_id&select=*',
+    {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify([{
+        user_id: uid,
+        display_name: displayName,
+        rating: 800,
+        skill_estimate: 2,
+        aria_difficulty: 1.5,
+        avg_move_quality: 0.5,
+      }]),
+    }
+  );
+
+  const defaults = await supabaseAdminRest<any[]>(
+    'aria_game_gift_catalog?select=id&game_key=eq.chess&active=eq.true&acquisition_type=eq.default'
+  );
+  if (defaults.length) {
+    await supabaseAdminRest(
+      'aria_game_user_gifts?on_conflict=user_id,gift_id',
+      {
+        method: 'POST',
+        headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+        body: JSON.stringify(defaults.map((gift) => ({
+          user_id: uid,
+          gift_id: gift.id,
+          source: 'default',
+        }))),
+      }
+    ).catch(() => undefined);
+  }
+
+  return rows[0] || {
+    user_id: uid,
+    display_name: displayName,
+    rating: 800,
+    skill_estimate: 2,
+    aria_difficulty: 1.5,
+    avg_move_quality: 0.5,
+    games_played: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    current_streak: 0,
+    best_win_streak: 0,
+  };
+}
+
+async function chessGiftRows(uid: string) {
+  const [catalog, owned] = await Promise.all([
+    supabaseAdminRest<any[]>(
+      'aria_game_gift_catalog?select=id,game_key,name_es,name_en,name_de,description_es,description_en,description_de,acquisition_type,unlock_wins,price_cents,currency,purchase_enabled,asset_type,asset_config,sort_order&game_key=eq.chess&active=eq.true&order=sort_order.asc'
+    ),
+    supabaseAdminRest<any[]>(
+      `aria_game_user_gifts?select=gift_id,source,equipped,unlocked_at&user_id=eq.${enc(uid)}`
+    ),
+  ]);
+  const ownership = new Map(owned.map((row) => [row.gift_id, row]));
+  return catalog.map((gift) => ({
+    ...gift,
+    owned: ownership.has(gift.id),
+    ownership: ownership.get(gift.id) || null,
+  }));
+}
+
+async function unlockChessWinGifts(uid: string, wins: number) {
+  const catalog = await supabaseAdminRest<any[]>(
+    `aria_game_gift_catalog?select=id,name_es,name_en,name_de,unlock_wins,asset_type,asset_config&game_key=eq.chess&active=eq.true&acquisition_type=eq.unlock&unlock_wins=lte.${Math.max(0, wins)}&order=unlock_wins.asc`
+  );
+  if (!catalog.length) return [];
+
+  const owned = await supabaseAdminRest<any[]>(
+    `aria_game_user_gifts?select=gift_id&user_id=eq.${enc(uid)}`
+  );
+  const ownedSet = new Set(owned.map((row) => row.gift_id));
+  const newRewards = catalog.filter((gift) => !ownedSet.has(gift.id));
+
+  if (newRewards.length) {
+    await supabaseAdminRest(
+      'aria_game_user_gifts?on_conflict=user_id,gift_id',
+      {
+        method: 'POST',
+        headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+        body: JSON.stringify(newRewards.map((gift) => ({
+          user_id: uid,
+          gift_id: gift.id,
+          source: 'unlock',
+        }))),
+      }
+    );
+  }
+
+  return newRewards;
+}
+
 async function ownsConversation(uid: string, conversationId: string) {
   const rows = await supabaseAdminRest<Array<{ id: string }>>(
     `aria_conversaciones?select=id&id=eq.${enc(conversationId)}&user_id=eq.${enc(uid)}&limit=1`
@@ -239,6 +357,15 @@ export async function POST(request: Request) {
         supabaseAdminRest(`aria_music_sessions?user_id=eq.${enc(uid)}`, {
           method: 'DELETE',
         }),
+        supabaseAdminRest(`aria_game_user_gifts?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+        supabaseAdminRest(`aria_chess_matches?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
+        supabaseAdminRest(`aria_chess_profiles?user_id=eq.${enc(uid)}`, {
+          method: 'DELETE',
+        }),
       ]);
       return json(request, { ok: true });
     }
@@ -274,6 +401,212 @@ export async function POST(request: Request) {
         }
       );
       return json(request, { data: rows[0] || null });
+    }
+
+    if (action === 'get_chess_profile') {
+      const profile = await ensureChessProfile(uid);
+      const latestName = await chessDisplayName(uid);
+      if (latestName !== profile.display_name) {
+        await supabaseAdminRest(
+          `aria_chess_profiles?user_id=eq.${enc(uid)}`,
+          {
+            method: 'PATCH',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ display_name: latestName, updated_at: new Date().toISOString() }),
+          }
+        );
+        profile.display_name = latestName;
+      }
+      return json(request, { data: profile });
+    }
+
+    if (action === 'get_chess_leaderboard') {
+      const [top, me] = await Promise.all([
+        supabaseAdminRest<any[]>(
+          'aria_chess_profiles?select=display_name,rating,skill_estimate,wins,losses,draws,games_played,best_win_streak&games_played=gt.0&order=rating.desc,wins.desc,games_played.asc&limit=10'
+        ),
+        ensureChessProfile(uid),
+      ]);
+
+      return json(request, {
+        data: top.map((row, index) => ({
+          rank: index + 1,
+          displayName: row.display_name || 'Jugador',
+          rating: Number(row.rating || 800),
+          level: Number(row.skill_estimate || 2),
+          wins: Number(row.wins || 0),
+          losses: Number(row.losses || 0),
+          draws: Number(row.draws || 0),
+          gamesPlayed: Number(row.games_played || 0),
+          bestWinStreak: Number(row.best_win_streak || 0),
+        })),
+        me: {
+          displayName: me.display_name || 'Jugador',
+          rating: Number(me.rating || 800),
+          level: Number(me.skill_estimate || 2),
+          difficulty: Number(me.aria_difficulty || 1.5),
+          wins: Number(me.wins || 0),
+          losses: Number(me.losses || 0),
+          draws: Number(me.draws || 0),
+          gamesPlayed: Number(me.games_played || 0),
+          bestWinStreak: Number(me.best_win_streak || 0),
+        },
+      });
+    }
+
+    if (action === 'list_chess_gifts') {
+      await ensureChessProfile(uid);
+      return json(request, { data: await chessGiftRows(uid) });
+    }
+
+    if (action === 'record_chess_result') {
+      const clientMatchId = String(body?.clientMatchId || '').trim().slice(0, 80);
+      if (!/^[a-zA-Z0-9_-]{8,80}$/.test(clientMatchId)) {
+        return json(request, { error: 'Invalid match id' }, 400);
+      }
+
+      const result = String(body?.result || '');
+      if (!['win', 'loss', 'draw'].includes(result)) {
+        return json(request, { error: 'Invalid result' }, 400);
+      }
+
+      const moveCount = Math.round(clampChessNumber(body?.moveCount, 2, 500, 2));
+      const quality = clampChessNumber(body?.avgMoveQuality, 0, 1, 0.5);
+
+      const duplicate = await supabaseAdminRest<any[]>(
+        `aria_chess_matches?select=id&user_id=eq.${enc(uid)}&client_match_id=eq.${enc(clientMatchId)}&limit=1`
+      );
+      if (duplicate[0]) {
+        const profile = await ensureChessProfile(uid);
+        return json(request, {
+          data: profile,
+          rewards: await chessGiftRows(uid),
+          idempotent: true,
+        });
+      }
+
+      const profile = await ensureChessProfile(uid);
+      const gamesBefore = Math.max(0, Number(profile.games_played || 0));
+      const ratingBefore = Math.max(100, Number(profile.rating || 800));
+      const skillBefore = clampChessNumber(profile.skill_estimate, 1, 10, 2);
+      const difficultyBefore = clampChessNumber(profile.aria_difficulty, 1, 10, 1.5);
+      const previousQuality = clampChessNumber(profile.avg_move_quality, 0, 1, 0.5);
+      const previousStreak = Number(profile.current_streak || 0);
+
+      const score = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
+      const ariaEquivalentRating = 550 + difficultyBefore * 110;
+      const expected = 1 / (1 + Math.pow(10, (ariaEquivalentRating - ratingBefore) / 400));
+      const k = gamesBefore < 10 ? 48 : 28;
+      const ratingAfter = Math.round(
+        clampChessNumber(ratingBefore + k * (score - expected), 100, 4000, ratingBefore)
+      );
+
+      const resultSkillAdjustment = result === 'win' ? 0.8 : result === 'loss' ? -0.35 : 0.15;
+      const targetSkill = clampChessNumber(1 + quality * 8.2 + resultSkillAdjustment, 1, 10, skillBefore);
+      const learningRate = gamesBefore < 3 ? 0.50 : gamesBefore < 10 ? 0.32 : 0.18;
+      const skillAfter = Number(
+        clampChessNumber(
+          skillBefore * (1 - learningRate) + targetSkill * learningRate,
+          1,
+          10,
+          skillBefore
+        ).toFixed(2)
+      );
+
+      let currentStreak = 0;
+      if (result === 'win') currentStreak = previousStreak >= 0 ? previousStreak + 1 : 1;
+      if (result === 'loss') currentStreak = previousStreak <= 0 ? previousStreak - 1 : -1;
+
+      const difficultyOffset = gamesBefore < 3 ? -0.8 : -0.25;
+      const streakAdjustment = currentStreak >= 3 ? 0.45 : currentStreak <= -2 ? -0.55 : 0;
+      const desiredDifficulty = clampChessNumber(
+        skillAfter + difficultyOffset + streakAdjustment,
+        1,
+        10,
+        skillAfter
+      );
+      const difficultyAfter = Number(
+        clampChessNumber(
+          difficultyBefore * 0.55 + desiredDifficulty * 0.45,
+          1,
+          10,
+          difficultyBefore
+        ).toFixed(2)
+      );
+
+      const gamesAfter = gamesBefore + 1;
+      const winsAfter = Number(profile.wins || 0) + (result === 'win' ? 1 : 0);
+      const lossesAfter = Number(profile.losses || 0) + (result === 'loss' ? 1 : 0);
+      const drawsAfter = Number(profile.draws || 0) + (result === 'draw' ? 1 : 0);
+      const bestWinStreak = Math.max(Number(profile.best_win_streak || 0), Math.max(0, currentStreak));
+      const avgMoveQuality = Number(
+        (((previousQuality * gamesBefore) + quality) / gamesAfter).toFixed(4)
+      );
+
+      const displayName = await chessDisplayName(uid);
+
+      const inserted = await supabaseAdminRest<any[]>(
+        'aria_chess_matches?on_conflict=user_id,client_match_id&select=id',
+        {
+          method: 'POST',
+          headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+          body: JSON.stringify([{
+            user_id: uid,
+            client_match_id: clientMatchId,
+            result,
+            move_count: moveCount,
+            avg_move_quality: quality,
+            difficulty_before: difficultyBefore,
+            difficulty_after: difficultyAfter,
+            skill_before: skillBefore,
+            skill_after: skillAfter,
+            rating_before: ratingBefore,
+            rating_after: ratingAfter,
+            metadata: { version: 1 },
+          }]),
+        }
+      );
+
+      if (!inserted[0]) {
+        const current = await ensureChessProfile(uid);
+        return json(request, {
+          data: current,
+          rewards: await chessGiftRows(uid),
+          idempotent: true,
+        });
+      }
+
+      const rows = await supabaseAdminRest<any[]>(
+        `aria_chess_profiles?user_id=eq.${enc(uid)}&select=*`,
+        {
+          method: 'PATCH',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify({
+            display_name: displayName,
+            rating: ratingAfter,
+            skill_estimate: skillAfter,
+            aria_difficulty: difficultyAfter,
+            avg_move_quality: avgMoveQuality,
+            games_played: gamesAfter,
+            wins: winsAfter,
+            losses: lossesAfter,
+            draws: drawsAfter,
+            current_streak: currentStreak,
+            best_win_streak: bestWinStreak,
+            updated_at: new Date().toISOString(),
+          }),
+        }
+      );
+
+      const newRewards = result === 'win'
+        ? await unlockChessWinGifts(uid, winsAfter)
+        : [];
+
+      return json(request, {
+        data: rows[0] || null,
+        newRewards,
+        gifts: await chessGiftRows(uid),
+      });
     }
 
     if (action === 'get_game_session') {
