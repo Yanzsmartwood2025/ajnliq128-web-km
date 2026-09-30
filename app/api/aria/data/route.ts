@@ -765,6 +765,41 @@ export async function POST(request: Request) {
       return json(request, { data });
     }
 
+    if (action === 'report_music_playback_event') {
+      const trackId = String(body?.trackId || '').trim().slice(0, 160);
+      const videoId = body?.videoId ? String(body.videoId).trim().slice(0, 24) : null;
+      const eventType = body?.eventType === 'recovery' ? 'recovery' : 'error';
+      const errorCodeRaw = Number(body?.errorCode);
+      const errorCode = Number.isFinite(errorCodeRaw) ? Math.trunc(errorCodeRaw) : null;
+      const mode = ['full', 'mini'].includes(String(body?.mode)) ? String(body.mode) : null;
+      const metadata = body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata)
+        ? body.metadata
+        : {};
+
+      if (!trackId) return json(request, { error: 'Track id is required' }, 400);
+      if (JSON.stringify(metadata).length > 4000) {
+        return json(request, { error: 'Playback metadata is too large' }, 413);
+      }
+
+      await supabaseAdminRest(
+        'aria_music_playback_events',
+        {
+          method: 'POST',
+          headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify([{
+            track_id: trackId,
+            video_id: videoId,
+            event_type: eventType,
+            error_code: errorCode,
+            mode,
+            metadata,
+          }]),
+        }
+      );
+
+      return json(request, { ok: true });
+    }
+
     if (action === 'get_music_library') {
       return json(request, { data: await musicLibraryState(uid) });
     }
