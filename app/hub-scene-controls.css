@@ -4,6 +4,15 @@
   bottom: calc(var(--hub-social-lift, 18px) + env(safe-area-inset-bottom)) !important;
 }
 
+/* Aria's Anthem has typography close to the artwork edge. Keep that card at its
+ * native crop when centered so the leading A retains a little breathing room. */
+.hub-aria .program-card[aria-label="Abrir Aria's Anthem"] .program-card-photo img,
+.hub-aria .program-card[aria-label="Abrir Aria's Anthem"].is-swipe-focus .program-card-photo img,
+.hub-aria .program-card[aria-label="Aria's Anthem"] .program-card-photo img,
+.hub-aria .program-card[aria-label="Aria's Anthem"].is-swipe-focus .program-card-photo img {
+  transform: scale(1) !important;
+}
+
 /*
  * Keep the fog stage fixed to the full viewport. The height control moves the
  * oversized smoke layers inside the stage instead of translating the clipped

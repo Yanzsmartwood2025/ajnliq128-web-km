@@ -119,8 +119,6 @@ export function CharacterMenu({
             {!loading && user && (
               <button type="button" onClick={handleSignOut}>Cerrar sesión</button>
             )}
-
-            <button type="button" onClick={() => setOpen(false)}>Cerrar menú</button>
           </aside>
         </>
       )}
