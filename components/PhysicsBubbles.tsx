@@ -46,8 +46,13 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
     })
     engineRef.current = engine
 
-    // Create bodies
-    const radius = window.innerWidth < 768 ? 40 : 60 // responsive radius roughly matching original
+    // Create bodies. Mobile uses a lower simulation rate and a slightly
+    // wider/lower constellation so it stays light and the bubbles keep air
+    // between them.
+    const isMobile = window.innerWidth < 768
+    const radius = isMobile ? 40 : 60
+    const centerYRatio = isMobile ? 0.56 : 0.52
+    const anchorSpread = radius * (isMobile ? 3.05 : 3.15)
     const options = {
       restitution: 0.9, // Higher restitution for stronger bounce when hitting other bodies
       friction: 0.05,
@@ -58,12 +63,11 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
     // Keep the constellation a little lower and give each bubble its own
     // resting anchor. They are attracted to one group, but never to the exact
     // same point, so they do not stack on top of each other.
-    const center = { x: width / 2, y: height * 0.48 }
-    const anchorSpread = radius * 2.75
+    const center = { x: width / 2, y: height * centerYRatio }
     const initialPositions = {
-      ARIA: { x: center.x - anchorSpread, y: center.y + radius * 0.28 },
-      JOZIEL: { x: center.x + anchorSpread, y: center.y + radius * 0.28 },
-      NAYLA: { x: center.x, y: center.y - radius * 1.75 }
+      ARIA: { x: center.x - anchorSpread, y: center.y + radius * 0.30 },
+      JOZIEL: { x: center.x + anchorSpread, y: center.y + radius * 0.30 },
+      NAYLA: { x: center.x, y: center.y - radius * 1.85 }
     }
 
     const ariaBody = Matter.Bodies.circle(initialPositions.ARIA.x, initialPositions.ARIA.y, radius, { ...options, label: 'ARIA' })
@@ -140,13 +144,12 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
           body.position.y < -100 ||
           body.position.y > currentHeight + 100
         ) {
-          const rescueCenter = { x: currentWidth / 2, y: currentHeight * 0.48 }
-          const spread = radius * 2.75
+          const rescueCenter = { x: currentWidth / 2, y: currentHeight * centerYRatio }
           const rescueTarget = label === 'ARIA'
-            ? { x: rescueCenter.x - spread, y: rescueCenter.y + radius * 0.28 }
+            ? { x: rescueCenter.x - anchorSpread, y: rescueCenter.y + radius * 0.30 }
             : label === 'JOZIEL'
-              ? { x: rescueCenter.x + spread, y: rescueCenter.y + radius * 0.28 }
-              : { x: rescueCenter.x, y: rescueCenter.y - radius * 1.75 }
+              ? { x: rescueCenter.x + anchorSpread, y: rescueCenter.y + radius * 0.30 }
+              : { x: rescueCenter.x, y: rescueCenter.y - radius * 1.85 }
           Matter.Body.setPosition(body, rescueTarget)
           Matter.Body.setVelocity(body, { x: 0, y: 0 })
         }
@@ -192,7 +195,7 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
 
       // Active repulsion creates a visible cushion before a real collision.
       // This keeps the bubbles playful without letting them glue together.
-      const repulsionStrength = 0.00005;
+      const repulsionStrength = isMobile ? 0.000085 : 0.00007;
       const labels = ['ARIA', 'JOZIEL', 'NAYLA'] as const;
 
       for (let i = 0; i < labels.length; i++) {
@@ -204,28 +207,51 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
           const dy = bodyA.position.y - bodyB.position.y;
           const distance = Math.hypot(dx, dy);
 
-          // Begin separating before the circles touch.
-          const minDistance = radius * 3.25;
+          // Begin separating well before the visible circles touch.
+          const minDistance = radius * 3.65;
           if (distance > 0 && distance < minDistance) {
-             // Strong emergency separation if they physically touch.
-             const intersectMultiplier = distance < radius * 2.15 ? 8 : 1;
-             const force = ((minDistance - distance) / minDistance * repulsionStrength) * intersectMultiplier;
-             const forceX = (dx / distance) * force;
-             const forceY = (dy / distance) * force;
+             const cushionDistance = radius * 2.85
+             const intersectMultiplier = distance < cushionDistance ? 10 : 1
+             const force = ((minDistance - distance) / minDistance * repulsionStrength) * intersectMultiplier
+             const forceX = (dx / distance) * force
+             const forceY = (dy / distance) * force
 
-             Matter.Body.applyForce(bodyA, bodyA.position, { x: forceX, y: forceY });
-             Matter.Body.applyForce(bodyB, bodyB.position, { x: -forceX, y: -forceY });
+             Matter.Body.applyForce(bodyA, bodyA.position, { x: forceX, y: forceY })
+             Matter.Body.applyForce(bodyB, bodyB.position, { x: -forceX, y: -forceY })
+
+             // A small positional cushion guarantees a visible gap even after
+             // a fast drag/collision. It is intentionally gentle so the
+             // movement still feels elastic instead of snapping.
+             if (distance < cushionDistance) {
+               const correction = (cushionDistance - distance) * 0.10
+               const offsetX = (dx / distance) * correction
+               const offsetY = (dy / distance) * correction
+               const draggingA = mouseConstraint.body === bodyA
+               const draggingB = mouseConstraint.body === bodyB
+
+               if (!draggingA) {
+                 Matter.Body.translate(bodyA, {
+                   x: draggingB ? offsetX * 1.7 : offsetX,
+                   y: draggingB ? offsetY * 1.7 : offsetY,
+                 })
+               }
+               if (!draggingB) {
+                 Matter.Body.translate(bodyB, {
+                   x: draggingA ? -offsetX * 1.7 : -offsetX,
+                   y: draggingA ? -offsetY * 1.7 : -offsetY,
+                 })
+               }
+             }
           }
         }
       }
 
       if (timeSinceInteraction > 3200 && !mouseConstraint.body) {
-        const screenCenter = { x: currentWidth / 2, y: currentHeight * 0.48 }
-        const spread = radius * 2.75
+        const screenCenter = { x: currentWidth / 2, y: currentHeight * centerYRatio }
         const anchors: Record<BubbleModule, { x: number; y: number }> = {
-          ARIA: { x: screenCenter.x - spread, y: screenCenter.y + radius * 0.28 },
-          JOZIEL: { x: screenCenter.x + spread, y: screenCenter.y + radius * 0.28 },
-          NAYLA: { x: screenCenter.x, y: screenCenter.y - radius * 1.75 },
+          ARIA: { x: screenCenter.x - anchorSpread, y: screenCenter.y + radius * 0.30 },
+          JOZIEL: { x: screenCenter.x + anchorSpread, y: screenCenter.y + radius * 0.30 },
+          NAYLA: { x: screenCenter.x, y: screenCenter.y - radius * 1.85 },
         }
         const focused = focusModuleRef.current
 
@@ -283,23 +309,26 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
        Matter.Body.setPosition(walls[3], { x: newWidth + wallThickness / 2, y: newHeight / 2 })
 
        // Initial positions update
-       const newCenter = { x: newWidth / 2, y: newHeight * 0.48 }
-       const newSpread = radius * 2.75
-       initialPositions.ARIA = { x: newCenter.x - newSpread, y: newCenter.y + radius * 0.28 }
-       initialPositions.JOZIEL = { x: newCenter.x + newSpread, y: newCenter.y + radius * 0.28 }
-       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 1.75 }
+       const newCenter = { x: newWidth / 2, y: newHeight * centerYRatio }
+       initialPositions.ARIA = { x: newCenter.x - anchorSpread, y: newCenter.y + radius * 0.30 }
+       initialPositions.JOZIEL = { x: newCenter.x + anchorSpread, y: newCenter.y + radius * 0.30 }
+       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 1.85 }
     }
     window.addEventListener('resize', handleResize)
 
     // Animation Loop
     let animationFrame: number
     let lastTime = performance.now()
+    const targetFrameMs = isMobile ? 1000 / 30 : 1000 / 60
     const update = (time: number) => {
       const delta = time - lastTime
+      if (delta < targetFrameMs) {
+        animationFrame = requestAnimationFrame(update)
+        return
+      }
       lastTime = time
 
-      // Cap delta at 50ms to prevent huge jumps if tab is inactive
-      Matter.Engine.update(engine, Math.min(delta, 50))
+      Matter.Engine.update(engine, Math.min(delta, isMobile ? 36 : 50))
 
       setPositions({
         ARIA: { x: ariaBody.position.x, y: ariaBody.position.y, angle: ariaBody.angle },
@@ -323,24 +352,6 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
   }, [onSelectModule])
 
   const bubbleRadius = typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 60 // Roughly half of standard 80-120px
-
-  const getVideoSrc = (module: string) => {
-    switch (module) {
-      case 'ARIA': return mediaUrl('fuego/botones/aria-preview.mp4')
-      case 'JOZIEL': return mediaUrl('fuego/botones/joziel-preview.mp4')
-      case 'NAYLA': return mediaUrl('fuego/botones/nayla-preview.mp4')
-      default: return ''
-    }
-  }
-
-  const getFallbackSrc = (module: string) => {
-    switch (module) {
-      case 'ARIA': return '/placeholder-video-1.mp4'
-      case 'JOZIEL': return '/placeholder-video-2.mp4'
-      case 'NAYLA': return '/placeholder-video-3.mp4'
-      default: return ''
-    }
-  }
 
   const getLogoSrc = (module: string) => {
     switch (module) {
@@ -368,7 +379,9 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
                  opacity: focusModule && focusModule !== module ? 0.34 : 1,
                  filter: focusModule === module ? 'drop-shadow(0 0 28px rgba(255,255,255,.34))' : 'none',
                  transition: 'transform 1.6s cubic-bezier(.2,.8,.2,1), opacity 1s ease, filter 1s ease',
-                 pointerEvents: interactive ? 'auto' : 'none'
+                 pointerEvents: interactive ? 'auto' : 'none',
+                 willChange: 'transform',
+                 contain: 'layout paint style'
                }}
                onPointerDown={(e) => {
                  if (!interactive) return
@@ -387,21 +400,11 @@ export default function PhysicsBubbles({ onSelectModule, focusModule = null, int
                  }
                }}
              >
-                <BubbleWrapper className="floating-bubble" style={{ width: '100%', height: '100%' }}>
-                  <div className="bubble-video-container" style={{ opacity: 0, width: '100%', height: '100%' }}>
-                    <video
-                      src={getVideoSrc(module)}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="bubble-video"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = getFallbackSrc(module);
-                      }}
-                    />
-                  </div>
+                <BubbleWrapper
+                  className="floating-bubble"
+                  simple={!interactive}
+                  style={{ width: '100%', height: '100%' }}
+                >
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%' }}>
                     <img
                       src={getLogoSrc(module)}
