@@ -85,7 +85,7 @@ export function ShowTour() {
             className="show-intro-stage"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.08, filter: 'blur(5px)' }}
+            exit={{ opacity: 0, scale: 1.08 }}
             transition={{ duration: 1.1 }}
           >
             <video
@@ -103,9 +103,9 @@ export function ShowTour() {
           <motion.section
             key={phase}
             className="show-home-stage"
-            initial={{ opacity: 0, scale: 1.08, filter: 'blur(5px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.18, filter: 'blur(8px)' }}
+            initial={{ opacity: 0, scale: 1.06 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.14 }}
             transition={{ duration: 1.7, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <div className="show-home-wordmark">AJNLIQ128</div>
@@ -140,9 +140,9 @@ export function ShowTour() {
           <motion.section
             key="aria-tour"
             className="show-character-stage"
-            initial={{ opacity: 0, scale: 1.16, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 0.9, filter: 'blur(7px)' }}
+            initial={{ opacity: 0, scale: 1.10 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.94 }}
             transition={{ duration: 1.6, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <CharacterHub
@@ -158,9 +158,9 @@ export function ShowTour() {
           <motion.section
             key="joziel-tour"
             className="show-character-stage"
-            initial={{ opacity: 0, scale: 1.16, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 0.9, filter: 'blur(7px)' }}
+            initial={{ opacity: 0, scale: 1.10 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.94 }}
             transition={{ duration: 1.6, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <CharacterHub
