@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Wordmark } from './galaxy-background'
 import { ProgramLauncher } from './program-launcher'
-import { mediaUrl } from '@/lib/media-urls'
 import { slugifyProgram } from '@/lib/module-flags'
 
 const programs = {
@@ -60,70 +58,6 @@ const characterBackgrounds: Record<'aria' | 'joziel', string[]> = {
   ],
 }
 
-const placeholderVideoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
-
-function programMediaPath(
-  character: 'aria' | 'joziel',
-  programSlug: string,
-  filename: 'fondo.mp4' | 'fondo.png' | 'tarjeta.webp',
-) {
-  if (character === 'aria' && programSlug === 'aria') return `aria/aria/ui/${filename}`
-  if (character === 'joziel' && programSlug === 'lumenfall') return `joziel/lumenfall/ui/${filename}`
-  return `${character}/programas/${programSlug}/${filename}`
-}
-
-function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel', programSlug: string | null }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [shouldLoad, setShouldLoad] = useState(false)
-  const [hasError, setHasError] = useState(false)
-  const poster = character === 'aria' ? '/aria-card.png' : '/joziel-card.png'
-
-  useEffect(() => {
-    setHasError(false)
-  }, [programSlug])
-
-  useEffect(() => {
-    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches
-    if (reducedData) return
-    const node = videoRef.current
-    if (!node) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setShouldLoad(true)
-        observer.disconnect()
-      }
-    }, { rootMargin: '200px' })
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [])
-
-  const videoUrl = programSlug && !hasError
-    ? mediaUrl(programMediaPath(character, programSlug, 'fondo.mp4'))
-    : placeholderVideoUrl
-
-  return (
-    <video
-      key={videoUrl}
-      ref={videoRef}
-      className="hub-video"
-      autoPlay={shouldLoad}
-      muted
-      loop
-      playsInline
-      preload="none"
-      poster={poster}
-      aria-hidden="true"
-      onError={() => {
-        if (!hasError && programSlug) setHasError(true)
-      }}
-    >
-      {shouldLoad ? <source src={videoUrl} type="video/mp4" onError={() => {
-        if (!hasError && programSlug) setHasError(true)
-      }} /> : null}
-    </video>
-  )
-}
-
 export function CharacterHub({
   character,
   showMode = false,
@@ -136,19 +70,32 @@ export function CharacterHub({
   onShowComplete?: () => void
 }) {
   const isAria = character === 'aria'
+  const backgrounds = characterBackgrounds[character]
   const [backgroundIndex, setBackgroundIndex] = useState(0)
-  const [focusedProgramSlug, setFocusedProgramSlug] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
-  const activeCardIndexRef = useRef(-1)
-  const backgrounds = characterBackgrounds[character]
+
+  useEffect(() => {
+    setBackgroundIndex(0)
+  }, [character])
+
+  useEffect(() => {
+    if (backgrounds.length < 2) return
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) return
+
+    const interval = window.setInterval(() => {
+      setBackgroundIndex((current) => (current + 1) % backgrounds.length)
+    }, 5_000)
+
+    return () => window.clearInterval(interval)
+  }, [backgrounds.length, character])
 
   useEffect(() => {
     if (showMode) return
     const grid = gridRef.current
     if (!grid) return
 
-    activeCardIndexRef.current = -1
     let frame = 0
 
     const updateDepth = () => {
@@ -156,10 +103,8 @@ export function CharacterHub({
       const gridRect = grid.getBoundingClientRect()
       const center = gridRect.left + gridRect.width / 2
       const cards = Array.from(grid.querySelectorAll<HTMLElement>('.program-card'))
-      let closestIndex = 0
-      let closestDistance = Number.POSITIVE_INFINITY
 
-      cards.forEach((card, index) => {
+      cards.forEach((card) => {
         const rect = card.getBoundingClientRect()
         const cardCenter = rect.left + rect.width / 2
         const distancePx = cardCenter - center
@@ -169,20 +114,7 @@ export function CharacterHub({
         card.style.setProperty('--card-offset', normalized.toFixed(4))
         card.style.setProperty('--card-depth', absolute.toFixed(4))
         card.classList.toggle('is-swipe-focus', absolute < 0.22)
-
-        const rawDistance = Math.abs(distancePx)
-        if (rawDistance < closestDistance) {
-          closestDistance = rawDistance
-          closestIndex = index
-        }
       })
-
-      if (closestIndex !== activeCardIndexRef.current) {
-        activeCardIndexRef.current = closestIndex
-        const programName = programs[character][closestIndex]
-        if (programName) setFocusedProgramSlug(slugifyProgram(programName))
-        setBackgroundIndex(closestIndex % backgrounds.length)
-      }
     }
 
     const requestDepthUpdate = () => {
@@ -211,21 +143,16 @@ export function CharacterHub({
       grid.removeEventListener('pointercancel', stopDrag)
       window.removeEventListener('resize', requestDepthUpdate)
     }
-  }, [backgrounds.length, character, showMode])
+  }, [character, showMode])
 
-  const changeBackgroundAndCenter = (programIndex: number, el: HTMLElement) => {
-    const programName = programs[character][programIndex]
-    if (programName) setFocusedProgramSlug(slugifyProgram(programName))
-    const nextIndex = programIndex % backgrounds.length
-    setBackgroundIndex(prev => prev === nextIndex ? prev : nextIndex)
-
+  const centerProgram = (el: HTMLElement) => {
     const grid = gridRef.current
-    if (grid) {
-      const elRect = el.getBoundingClientRect()
-      const gridRect = grid.getBoundingClientRect()
-      const centerOffset = elRect.left - gridRect.left - (gridRect.width / 2) + (elRect.width / 2)
-      grid.scrollBy({ left: centerOffset, behavior: 'smooth' })
-    }
+    if (!grid) return
+
+    const elRect = el.getBoundingClientRect()
+    const gridRect = grid.getBoundingClientRect()
+    const centerOffset = elRect.left - gridRect.left - (gridRect.width / 2) + (elRect.width / 2)
+    grid.scrollBy({ left: centerOffset, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -247,13 +174,10 @@ export function CharacterHub({
     const focusCard = (nextIndex: number) => {
       const card = cards[nextIndex]
       if (!card) return
+
       cards.forEach((item, itemIndex) => {
         item.classList.toggle('is-show-focus', itemIndex === nextIndex)
       })
-
-      const programName = programs[character][nextIndex]
-      if (programName) setFocusedProgramSlug(slugifyProgram(programName))
-      setBackgroundIndex(nextIndex % backgrounds.length)
 
       const left = card.offsetLeft - (grid.clientWidth - card.clientWidth) / 2
       grid.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
@@ -283,9 +207,8 @@ export function CharacterHub({
       if (interval) window.clearInterval(interval)
       cards.forEach((item) => item.classList.remove('is-show-focus'))
     }
-  }, [backgrounds.length, character, onShowComplete, showDurationMs, showMode])
+  }, [character, onShowComplete, showDurationMs, showMode])
 
-  const name = isAria ? 'ARIA' : 'JOZIEL'
   const activeBackgroundUrl = backgrounds[backgroundIndex % backgrounds.length]
   const [backgroundLayers, setBackgroundLayers] = useState({
     previous: backgrounds[0],
@@ -304,6 +227,10 @@ export function CharacterHub({
     })
   }, [activeBackgroundUrl])
 
+  const fallbackPhoto = isAria
+    ? '/assets/characters/aria/cards/aria-main.jpg'
+    : '/assets/characters/joziel/cards/lumenfall.jpg'
+
   return (
     <main className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}>
       <div
@@ -313,34 +240,46 @@ export function CharacterHub({
       />
       <div
         key={`${backgroundLayers.version}:${backgroundLayers.current}`}
-        className="hub-carousel-bg is-current"
+        className={`hub-carousel-bg is-current hub-bg-effect-${backgroundLayers.version % 3}`}
         aria-hidden="true"
         style={{ backgroundImage: `url(${backgroundLayers.current})` }}
       />
-      <LazyHubVideo character={character} programSlug={focusedProgramSlug} />
       <div className="hub-video-wash" aria-hidden="true" />
-      {!showMode && <header className="hub-header">
-        <Link href="/" className="back-link">
-          <img
-            src="/fuego-logo.png"
-            alt=""
-            aria-hidden="true"
-            style={{ width: '1.45rem', height: '1.45rem', objectFit: 'contain', flex: '0 0 auto' }}
-          />
-          <span>FUEGO</span>
-        </Link>
-        <div className="hub-actions">
-          <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">▣</button>
-          <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
-        </div>
-      </header>}
-      {!showMode && menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
-      <section className="hub-intro"><Wordmark name={name} /></section>
+
+      {!showMode && (
+        <header className="hub-header hub-header-clean">
+          <button
+            type="button"
+            className="fuego-menu-button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-label="Abrir opciones"
+          >
+            <img src="/assets/home/fuego.png" alt="" aria-hidden="true" />
+          </button>
+        </header>
+      )}
+
+      {!showMode && menuOpen && (
+        <>
+          <button className="hub-menu-scrim" type="button" aria-label="Cerrar opciones" onClick={() => setMenuOpen(false)} />
+          <aside className="hub-menu hub-menu-crystal" aria-label="Opciones">
+            <div className="hub-menu-brand" aria-hidden="true">
+              <img src="/assets/home/fuego.png" alt="" />
+            </div>
+            <Link href="/">Inicio</Link>
+            <Link href={isAria ? '/joziel' : '/aria'}>{isAria ? 'Abrir JOZIEL' : 'Abrir ARIA'}</Link>
+            <Link href="/?login=true">Iniciar sesión</Link>
+            <button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button>
+          </aside>
+        </>
+      )}
+
       {showMode && <div className="show-camera-vignette" aria-hidden="true" />}
+
       <div className={`program-grid${showMode ? ' is-show-tour' : ''}`} ref={gridRef}>
         {programs[character].map((program, index) => {
           const slug = slugifyProgram(program)
-          const fallbackPhoto = isAria ? '/aria-card.png' : '/joziel-card.png'
           const photoUrl = programCardImages[character][slug] ?? fallbackPhoto
 
           return (
@@ -361,7 +300,7 @@ export function CharacterHub({
                       ? '/joziel/lumenfall'
                       : undefined
               }
-              onActivate={(el) => changeBackgroundAndCenter(index, el)}
+              onActivate={centerProgram}
             />
           )
         })}

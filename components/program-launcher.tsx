@@ -41,34 +41,49 @@ export function ProgramLauncher({
     window.setTimeout(() => router.push(destination ?? `/${character}/${slug}`), 1200)
   }
 
-  return <button type="button" data-index={index} className={`program-card program-card-button${launching ? ' is-launching' : ''}${showMode ? ' is-show-card' : ''}`} onClick={openProgram} disabled={!enabled || launching || showMode} aria-label={showMode ? program : `Abrir ${program}`}>
-    <span className="program-card-photo" aria-hidden="true">
-      {visiblePhoto ? (
-        <img
-          src={visiblePhoto}
-          alt=""
-          loading={showMode ? 'eager' : 'lazy'}
-          decoding="async"
-          onError={() => {
-            if (!photoFailed && fallbackPhoto) setPhotoFailed(true)
-          }}
-        />
-      ) : null}
-    </span>
-    <span className="program-card-ambient" aria-hidden="true" />
-    <span className="program-card-glass" aria-hidden="true">
-      <span className="program-card-clip" />
-    </span>
-    <span className="program-card-content">
-      <span className="program-number">0{index + 1}</span>
-      <span className="program-card-copy">
-        <h2>{program}</h2>
-        <span className="program-status">
-          {showMode ? 'ON AIR / PROGRAM' : enabled ? 'Enter frequency' : 'Temporarily unavailable'}
-          {!showMode && <span aria-hidden="true">↗</span>}
+  return (
+    <button
+      type="button"
+      data-index={index}
+      className={`program-card program-card-button${launching ? ' is-launching' : ''}${showMode ? ' is-show-card' : ''}`}
+      onClick={openProgram}
+      disabled={!enabled || launching || showMode}
+      aria-label={showMode ? program : `Abrir ${program}`}
+    >
+      <span className="program-card-photo" aria-hidden="true">
+        {visiblePhoto ? (
+          <img
+            src={visiblePhoto}
+            alt=""
+            loading={showMode ? 'eager' : 'lazy'}
+            decoding="async"
+            onError={() => {
+              if (!photoFailed && fallbackPhoto) setPhotoFailed(true)
+            }}
+          />
+        ) : null}
+      </span>
+
+      <span className="program-card-glass" aria-hidden="true">
+        <span className="program-card-clip" />
+      </span>
+
+      <span className="program-card-content">
+        <span className="program-card-copy">
+          <h2>{program}</h2>
+          <span className="program-status">
+            {showMode ? 'ON AIR / PROGRAM' : enabled ? 'Enter frequency' : 'Temporarily unavailable'}
+            {!showMode && <span aria-hidden="true">↗</span>}
+          </span>
         </span>
       </span>
-    </span>
-    {launching && <span className="program-launch" aria-live="polite"><strong>{program}</strong><small>Loading module</small></span>}
-  </button>
+
+      {launching && (
+        <span className="program-launch" aria-live="polite">
+          <strong>{program}</strong>
+          <small>Loading module</small>
+        </span>
+      )}
+    </button>
+  )
 }

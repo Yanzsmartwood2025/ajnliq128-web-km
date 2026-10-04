@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import './hub-clean.css'
 import { PwaUpdater } from '@/components/PwaUpdater'
 import { Toaster } from '@/components/ui/toast'
 import { AuthProvider } from '@/lib/auth-context'
