@@ -3,12 +3,24 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import type { Character } from '@/lib/character-assets'
+import type { CharacterSceneSettings } from '@/lib/character-scene-settings'
 import { AuthForm } from './auth-form'
 import { BackgroundSettings } from './BackgroundSettings'
+import { CharacterSceneSettingsDialog } from './character-scene-settings'
 
-export function CharacterMenu() {
+export function CharacterMenu({
+  character,
+  sceneSettings,
+  onSceneSettingsChange,
+}: {
+  character: Character
+  sceneSettings: CharacterSceneSettings
+  onSceneSettingsChange: (settings: CharacterSceneSettings) => void
+}) {
   const [open, setOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [sceneOpen, setSceneOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null)
   const { user, loading, signOut } = useAuth()
   const usesGoogle = Boolean(user?.providerData?.some((provider) => provider.providerId === 'google.com'))
@@ -23,6 +35,11 @@ export function CharacterMenu() {
     setSettingsOpen(true)
   }
 
+  const openSceneSettings = () => {
+    setOpen(false)
+    setSceneOpen(true)
+  }
+
   const openLogin = () => {
     setOpen(false)
     setAuthMode('login')
@@ -31,6 +48,13 @@ export function CharacterMenu() {
   return (
     <>
       <BackgroundSettings open={settingsOpen} onOpenChange={setSettingsOpen} hideTrigger />
+      <CharacterSceneSettingsDialog
+        character={character}
+        open={sceneOpen}
+        onOpenChange={setSceneOpen}
+        settings={sceneSettings}
+        onChange={onSceneSettingsChange}
+      />
 
       <header className="hub-header hub-header-clean">
         <button
@@ -93,6 +117,7 @@ export function CharacterMenu() {
               </span>
             </div>
 
+            <button type="button" onClick={openSceneSettings}>Escena</button>
             <button type="button" onClick={openSettings}>Fondo y botones</button>
             <Link href="/?skipIntro=1" onClick={() => setOpen(false)}>Inicio</Link>
 

@@ -1,0 +1,65 @@
+/* Runtime-tunable scene controls for ARIA / JOZIEL. Loaded after hub-final.css. */
+
+.hub-with-video:not(.hub-show-tour) .social-dock {
+  bottom: calc(var(--hub-social-lift, 18px) + env(safe-area-inset-bottom)) !important;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash {
+  transform: translate3d(0, var(--hub-fog-offset, 10dvh), 0) !important;
+  opacity: var(--hub-fog-opacity, .84) !important;
+  will-change: transform, opacity;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before {
+  animation:
+    finalFogDriftA var(--hub-fog-drift-a, 13s) ease-in-out infinite alternate,
+    finalFogColorA var(--hub-fog-color-a, 17s) ease-in-out infinite alternate !important;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  animation:
+    finalFogDriftB var(--hub-fog-drift-b, 17s) ease-in-out infinite alternate-reverse,
+    finalFogColorB var(--hub-fog-color-b, 21s) ease-in-out infinite alternate !important;
+}
+
+.hub-with-video[data-fog-color-cycle='off']:not(.hub-show-tour) .hub-video-wash::before {
+  animation: finalFogDriftA var(--hub-fog-drift-a, 13s) ease-in-out infinite alternate !important;
+  filter: blur(50px) saturate(132%) brightness(1.08) !important;
+}
+
+.hub-with-video[data-fog-color-cycle='off']:not(.hub-show-tour) .hub-video-wash::after {
+  animation: finalFogDriftB var(--hub-fog-drift-b, 17s) ease-in-out infinite alternate-reverse !important;
+  filter: blur(64px) saturate(138%) brightness(1.05) !important;
+}
+
+.hub-bg-effect-zoom {
+  animation: hubBgSoftZoom var(--hub-bg-transition-duration, 1.25s) cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.hub-bg-effect-drift {
+  animation: hubBgSoftDrift var(--hub-bg-transition-duration, 1.25s) cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.hub-bg-effect-focus {
+  animation: hubBgSoftFocus var(--hub-bg-transition-duration, 1.25s) cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.hub-bg-effect-fade {
+  animation: hubBgSceneFade var(--hub-bg-transition-duration, 1.25s) ease-out both !important;
+}
+
+@keyframes hubBgSceneFade {
+  from { opacity: 0; transform: scale(1.045); filter: saturate(.98) contrast(1.01) brightness(.77); }
+  to { opacity: .94; transform: scale(1.035); filter: saturate(1.04) contrast(1.025) brightness(.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-with-video:not(.hub-show-tour) .hub-carousel-bg.is-current,
+  .hub-with-video:not(.hub-show-tour) .hub-video-wash::before,
+  .hub-with-video:not(.hub-show-tour) .hub-video-wash::after {
+    animation: none !important;
+  }
+}
