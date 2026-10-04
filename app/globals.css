@@ -1002,7 +1002,7 @@ a { color: inherit; text-decoration: none; }
   gap: clamp(1.2rem, 4vw, 2rem);
   margin-inline: 0;
   padding-block: 2rem 3.5rem;
-  padding-inline: max(12vw, calc(50vw - 170px));
+  padding-inline: max(12vw, calc(50vw - 125px));
   overflow-x: auto;
   overflow-y: visible;
   scroll-behavior: smooth;
@@ -1013,9 +1013,9 @@ a { color: inherit; text-decoration: none; }
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 90%, transparent 100%);
 }
 .program-grid.is-show-tour .program-card.is-show-card {
-  flex: 0 0 min(78vw, 340px);
-  min-height: clamp(180px, 31vh, 260px);
-  opacity: .52;
+  flex: 0 0 clamp(190px, 55vw, 250px);
+  min-height: 0;
+  opacity: .58;
   filter: brightness(.96);
   transform: translateZ(-110px) scale(.90);
   transition:
@@ -1026,14 +1026,22 @@ a { color: inherit; text-decoration: none; }
 .program-grid.is-show-tour .program-card.is-show-card.is-show-focus {
   opacity: 1;
   filter: brightness(1.08) saturate(1.03);
-  transform: translateZ(90px) scale(1.12);
+  transform: translateZ(90px) scale(1.08);
   box-shadow:
     0 35px 80px rgba(0,0,0,.62),
     0 0 42px rgba(155,124,255,.18);
 }
 .program-grid.is-show-tour .program-card.is-show-card.is-show-focus .program-card-glass {
-  border-color: rgba(255,255,255,.58);
-  background: linear-gradient(145deg, rgba(126,108,205,.30), rgba(20,18,38,.42));
+  border-color: rgba(255,255,255,.66);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.21), rgba(255,255,255,.05) 40%, rgba(6,7,10,.10));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.48),
+    0 22px 58px rgba(var(--program-shadow-rgb), .25);
+}
+.program-grid.is-show-tour .program-card.is-show-card.is-show-focus .program-card-ambient {
+  opacity: 1;
+  transform: translateY(2%) scale(1.08);
 }
 .show-camera-vignette {
   position: fixed;
@@ -1075,12 +1083,13 @@ a { color: inherit; text-decoration: none; }
   .hub-show-tour .hub-intro { padding-top: 8vh; padding-bottom: .35rem; }
   .program-grid.is-show-tour {
     padding-top: 1.2rem;
-    padding-inline: 11vw;
+    padding-inline: max(11vw, calc(50vw - 112px));
     mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
   }
   .program-grid.is-show-tour .program-card.is-show-card {
-    min-height: 170px;
+    flex-basis: clamp(188px, 58vw, 224px);
+    min-height: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
