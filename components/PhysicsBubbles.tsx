@@ -7,6 +7,8 @@ import { mediaUrl } from '@/lib/media-urls'
 
 type BubbleModule = 'ARIA' | 'JOZIEL' | 'NAYLA'
 
+type BubblePosition = { x: number; y: number; angle: number }
+
 interface PhysicsBubblesProps {
   onSelectModule: (module: BubbleModule) => void
   focusModule?: BubbleModule | null
@@ -15,414 +17,291 @@ interface PhysicsBubblesProps {
 
 export default function PhysicsBubbles({ onSelectModule, focusModule = null, interactive = true }: PhysicsBubblesProps) {
   const sceneRef = useRef<HTMLDivElement>(null)
-  const engineRef = useRef<Matter.Engine | null>(null)
   const focusModuleRef = useRef<BubbleModule | null>(focusModule)
-
-  useEffect(() => {
-    focusModuleRef.current = focusModule
-  }, [focusModule])
-
-  const [positions, setPositions] = useState({
+  const [positions, setPositions] = useState<Record<BubbleModule, BubblePosition>>({
     ARIA: { x: -1000, y: -1000, angle: 0 },
     JOZIEL: { x: -1000, y: -1000, angle: 0 },
     NAYLA: { x: -1000, y: -1000, angle: 0 },
   })
   const [isReady, setIsReady] = useState(false)
-
-  // To track click vs drag
-  const clickPosRef = useRef<{x: number, y: number, time: number} | null>(null)
+  const clickPosRef = useRef<{ x: number; y: number; time: number } | null>(null)
 
   useEffect(() => {
-    if (!sceneRef.current) return
+    focusModuleRef.current = focusModule
+  }, [focusModule])
 
+  useEffect(() => {
     const sceneEl = sceneRef.current
-    // Force use of window bounds to avoid relative container clipping issues
-    const width = window.innerWidth
-    const height = window.innerHeight
+    if (!sceneEl) return
 
-    // Initialize Engine
-    const engine = Matter.Engine.create({
-      gravity: { x: 0, y: 0, scale: 0 }
-    })
-    engineRef.current = engine
-
-    // Create bodies. Mobile uses a lower simulation rate and a slightly
-    // wider/lower constellation so it stays light and the bubbles keep air
-    // between them.
     const isMobile = window.innerWidth < 768
     const radius = isMobile ? 40 : 60
     const centerYRatio = isMobile ? 0.56 : 0.52
-    const anchorSpread = radius * (isMobile ? 3.05 : 3.15)
-    const options = {
-      restitution: 0.9, // Higher restitution for stronger bounce when hitting other bodies
-      friction: 0.05,
-      frictionAir: 0.02,
-      density: 0.005 // Higher density to make them less squishy when colliding
+    const anchorSpread = radius * (isMobile ? 2.6 : 2.8)
+    const naylaLift = radius * (isMobile ? 1.48 : 1.58)
+    const labels: BubbleModule[] = ['ARIA', 'JOZIEL', 'NAYLA']
+
+    const getAnchors = (width: number, height: number) => {
+      const center = { x: width / 2, y: height * centerYRatio }
+      return {
+        ARIA: { x: center.x - anchorSpread, y: center.y + radius * 0.22 },
+        JOZIEL: { x: center.x + anchorSpread, y: center.y + radius * 0.22 },
+        NAYLA: { x: center.x, y: center.y - naylaLift },
+      }
     }
 
-    // Keep the constellation a little lower and give each bubble its own
-    // resting anchor. They are attracted to one group, but never to the exact
-    // same point, so they do not stack on top of each other.
-    const center = { x: width / 2, y: height * centerYRatio }
-    const initialPositions = {
-      ARIA: { x: center.x - anchorSpread, y: center.y + radius * 0.30 },
-      JOZIEL: { x: center.x + anchorSpread, y: center.y + radius * 0.30 },
-      NAYLA: { x: center.x, y: center.y - radius * 1.85 }
+    const startWidth = window.innerWidth
+    const startHeight = window.innerHeight
+    const anchors = getAnchors(startWidth, startHeight)
+
+    const engine = Matter.Engine.create({ gravity: { x: 0, y: 0, scale: 0 } })
+    const bodyOptions = {
+      restitution: 0.78,
+      friction: 0.04,
+      frictionAir: 0.025,
+      density: 0.005,
     }
 
-    const ariaBody = Matter.Bodies.circle(initialPositions.ARIA.x, initialPositions.ARIA.y, radius, { ...options, label: 'ARIA' })
-    const jozielBody = Matter.Bodies.circle(initialPositions.JOZIEL.x, initialPositions.JOZIEL.y, radius, { ...options, label: 'JOZIEL' })
-    const naylaBody = Matter.Bodies.circle(initialPositions.NAYLA.x, initialPositions.NAYLA.y, radius, { ...options, label: 'NAYLA' })
-
-    const bodiesMap: Record<string, Matter.Body> = {
-      ARIA: ariaBody,
-      JOZIEL: jozielBody,
-      NAYLA: naylaBody
+    const bodiesMap: Record<BubbleModule, Matter.Body> = {
+      ARIA: Matter.Bodies.circle(anchors.ARIA.x, anchors.ARIA.y, radius, { ...bodyOptions, label: 'ARIA' }),
+      JOZIEL: Matter.Bodies.circle(anchors.JOZIEL.x, anchors.JOZIEL.y, radius, { ...bodyOptions, label: 'JOZIEL' }),
+      NAYLA: Matter.Bodies.circle(anchors.NAYLA.x, anchors.NAYLA.y, radius, { ...bodyOptions, label: 'NAYLA' }),
     }
 
-    // Walls
-    const wallOptions = { isStatic: true, restitution: 1.0, friction: 0 }
-    // Make walls 1000px thick to prevent high-velocity tunneling.
-    // Center them based on width/height, placing the inner edge exactly on the screen bounds.
-    const wallThickness = 1000;
+    const wallThickness = 1000
+    const wallOptions = { isStatic: true, restitution: 0.9, friction: 0 }
     const walls = [
-      Matter.Bodies.rectangle(width / 2, -wallThickness / 2, width * 2, wallThickness, wallOptions), // Top
-      Matter.Bodies.rectangle(width / 2, height + wallThickness / 2, width * 2, wallThickness, wallOptions), // Bottom
-      Matter.Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height * 2, wallOptions), // Left
-      Matter.Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height * 2, wallOptions) // Right
+      Matter.Bodies.rectangle(startWidth / 2, -wallThickness / 2, startWidth * 4, wallThickness, wallOptions),
+      Matter.Bodies.rectangle(startWidth / 2, startHeight + wallThickness / 2, startWidth * 4, wallThickness, wallOptions),
+      Matter.Bodies.rectangle(-wallThickness / 2, startHeight / 2, wallThickness, startHeight * 4, wallOptions),
+      Matter.Bodies.rectangle(startWidth + wallThickness / 2, startHeight / 2, wallThickness, startHeight * 4, wallOptions),
     ]
 
-    Matter.Composite.add(engine.world, [ariaBody, jozielBody, naylaBody, ...walls])
+    Matter.Composite.add(engine.world, [...labels.map(label => bodiesMap[label]), ...walls])
 
-    // Mouse constraint for dragging
-    // We attach the mouse to the sceneRef, but since it's full overlay, we need to ensure events pass through or are captured properly.
     const mouse = Matter.Mouse.create(sceneEl)
     const mouseConstraint = Matter.MouseConstraint.create(engine, {
-      mouse: mouse,
+      mouse,
       constraint: {
-        stiffness: 0.2,
-        render: { visible: false }
-      }
+        stiffness: 0.22,
+        damping: 0.08,
+        render: { visible: false },
+      },
     })
 
-    // Allow scrolling through the canvas when not interacting with a body
-    // Typecast for Matter.Mouse internals
-    const m = mouseConstraint.mouse as any;
-    if (m.mousewheel) {
-      m.element.removeEventListener("mousewheel", m.mousewheel);
-      m.element.removeEventListener("DOMMouseScroll", m.mousewheel);
+    const mouseInternals = mouse as any
+    if (mouseInternals.mousewheel) {
+      mouseInternals.element.removeEventListener('mousewheel', mouseInternals.mousewheel)
+      mouseInternals.element.removeEventListener('DOMMouseScroll', mouseInternals.mousewheel)
     }
 
-    Matter.Composite.add(engine.world, mouseConstraint)
+    if (interactive) Matter.Composite.add(engine.world, mouseConstraint)
 
-    // Spring/Gravity logic to return to initial positions
-    let lastInteractionTime = Date.now()
+    let lastInteractionTime = Date.now() - 1000
 
-    Matter.Events.on(mouseConstraint, 'startdrag', () => {
+    const markInteraction = () => {
       lastInteractionTime = Date.now()
-    })
-    Matter.Events.on(mouseConstraint, 'mousemove', () => {
-      if (mouseConstraint.body) {
-         lastInteractionTime = Date.now()
-      }
-    })
-    Matter.Events.on(mouseConstraint, 'enddrag', () => {
-      lastInteractionTime = Date.now()
-    })
+    }
 
-    Matter.Events.on(engine, 'beforeUpdate', () => {
-      const currentWidth = window.innerWidth
-      const currentHeight = window.innerHeight
-      const timeSinceInteraction = Date.now() - lastInteractionTime
+    if (interactive) {
+      Matter.Events.on(mouseConstraint, 'startdrag', markInteraction)
+      Matter.Events.on(mouseConstraint, 'mousemove', () => {
+        if (mouseConstraint.body) markInteraction()
+      })
+      Matter.Events.on(mouseConstraint, 'enddrag', markInteraction)
+    }
 
-      // Rescue logic: Teleport bodies back to center if they escape the bounds
-      ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
+    const beforeUpdate = () => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      const currentAnchors = getAnchors(width, height)
+      const screenCenter = { x: width / 2, y: height * centerYRatio }
+      const returning = Date.now() - lastInteractionTime > 550 && !mouseConstraint.body
+
+      labels.forEach((label) => {
         const body = bodiesMap[label]
+
         if (
-          body.position.x < -100 ||
-          body.position.x > currentWidth + 100 ||
-          body.position.y < -100 ||
-          body.position.y > currentHeight + 100
+          body.position.x < -120 || body.position.x > width + 120 ||
+          body.position.y < -120 || body.position.y > height + 120
         ) {
-          const rescueCenter = { x: currentWidth / 2, y: currentHeight * centerYRatio }
-          const rescueTarget = label === 'ARIA'
-            ? { x: rescueCenter.x - anchorSpread, y: rescueCenter.y + radius * 0.30 }
-            : label === 'JOZIEL'
-              ? { x: rescueCenter.x + anchorSpread, y: rescueCenter.y + radius * 0.30 }
-              : { x: rescueCenter.x, y: rescueCenter.y - radius * 1.85 }
-          Matter.Body.setPosition(body, rescueTarget)
+          Matter.Body.setPosition(body, currentAnchors[label])
           Matter.Body.setVelocity(body, { x: 0, y: 0 })
         }
-      })
 
-      ;(['ARIA', 'JOZIEL', 'NAYLA'] as const).forEach((label) => {
-        const body = bodiesMap[label]
-
-        // Self-correcting torque (Roly-Poly / Tentetieso effect)
-        // Spring-like force pulling the angle back to 0
-        const torqueSpring = 0.001; // Adjust for stiffness
-        const torqueDamping = 0.9;  // Adjust for bounce/elasticity
-
-        // Calculate torque to pull towards angle 0
-        // We normalize the angle to stay within -PI and PI to prevent crazy spinning
-        const currentAngle = body.angle % (Math.PI * 2);
-        let targetAngle = 0;
-
-        // Find shortest path to 0
-        if (currentAngle > Math.PI) targetAngle = Math.PI * 2;
-        if (currentAngle < -Math.PI) targetAngle = -Math.PI * 2;
-
-        const angularDiff = targetAngle - currentAngle;
-
-        // Apply torque proportional to the difference
-        body.torque = angularDiff * torqueSpring;
-        // Apply damping ONLY to the angular velocity added by the spring, not globally.
-        // We do this by applying an angular friction that is only strong when the angle is small,
-        // or by making torqueDamping much closer to 1 (e.g. 0.98) so it doesn't kill collision spins instantly.
-        // Let's use 0.98 so it still spins wildly on collision but settles eventually.
-        Matter.Body.setAngularVelocity(body, body.angularVelocity * 0.98);
-
-        // Add random gentle noise force so they constantly float
-        // Using a tiny random force updated every frame
-        const noiseX = (Math.random() - 0.5) * 0.00005
-        const noiseY = (Math.random() - 0.5) * 0.00005
-
-        Matter.Body.applyForce(body, body.position, {
-          x: noiseX,
-          y: noiseY
-        })
-      })
-
-      // Active repulsion creates a visible cushion before a real collision.
-      // This keeps the bubbles playful without letting them glue together.
-      const repulsionStrength = isMobile ? 0.000085 : 0.00007;
-      const labels = ['ARIA', 'JOZIEL', 'NAYLA'] as const;
-
-      for (let i = 0; i < labels.length; i++) {
-        for (let j = i + 1; j < labels.length; j++) {
-          const bodyA = bodiesMap[labels[i]];
-          const bodyB = bodiesMap[labels[j]];
-
-          const dx = bodyA.position.x - bodyB.position.x;
-          const dy = bodyA.position.y - bodyB.position.y;
-          const distance = Math.hypot(dx, dy);
-
-          // Begin separating well before the visible circles touch.
-          const minDistance = radius * 3.65;
-          if (distance > 0 && distance < minDistance) {
-             const cushionDistance = radius * 2.85
-             const intersectMultiplier = distance < cushionDistance ? 10 : 1
-             const force = ((minDistance - distance) / minDistance * repulsionStrength) * intersectMultiplier
-             const forceX = (dx / distance) * force
-             const forceY = (dy / distance) * force
-
-             Matter.Body.applyForce(bodyA, bodyA.position, { x: forceX, y: forceY })
-             Matter.Body.applyForce(bodyB, bodyB.position, { x: -forceX, y: -forceY })
-
-             // A small positional cushion guarantees a visible gap even after
-             // a fast drag/collision. It is intentionally gentle so the
-             // movement still feels elastic instead of snapping.
-             if (distance < cushionDistance) {
-               const correction = (cushionDistance - distance) * 0.10
-               const offsetX = (dx / distance) * correction
-               const offsetY = (dy / distance) * correction
-               const draggingA = mouseConstraint.body === bodyA
-               const draggingB = mouseConstraint.body === bodyB
-
-               if (!draggingA) {
-                 Matter.Body.translate(bodyA, {
-                   x: draggingB ? offsetX * 1.7 : offsetX,
-                   y: draggingB ? offsetY * 1.7 : offsetY,
-                 })
-               }
-               if (!draggingB) {
-                 Matter.Body.translate(bodyB, {
-                   x: draggingA ? -offsetX * 1.7 : -offsetX,
-                   y: draggingA ? -offsetY * 1.7 : -offsetY,
-                 })
-               }
-             }
-          }
-        }
-      }
-
-      if (timeSinceInteraction > 3200 && !mouseConstraint.body) {
-        const screenCenter = { x: currentWidth / 2, y: currentHeight * centerYRatio }
-        const anchors: Record<BubbleModule, { x: number; y: number }> = {
-          ARIA: { x: screenCenter.x - anchorSpread, y: screenCenter.y + radius * 0.30 },
-          JOZIEL: { x: screenCenter.x + anchorSpread, y: screenCenter.y + radius * 0.30 },
-          NAYLA: { x: screenCenter.x, y: screenCenter.y - radius * 1.85 },
-        }
-        const focused = focusModuleRef.current
-
-        labels.forEach((label) => {
-          const body = bodiesMap[label]
-          const target = focused === label
-            ? { x: screenCenter.x, y: screenCenter.y }
-            : anchors[label]
-
-          const dx = target.x - body.position.x
-          const dy = target.y - body.position.y
-          const forceMagnitude = focused === label ? 0.000012 : 0.000006
-
-          Matter.Body.applyForce(body, body.position, {
-            x: dx * forceMagnitude,
-            y: dy * forceMagnitude
-          })
-
+        const speed = Math.hypot(body.velocity.x, body.velocity.y)
+        if (speed > 15) {
+          const scale = 15 / speed
           Matter.Body.setVelocity(body, {
-             x: body.velocity.x * 0.988,
-             y: body.velocity.y * 0.988
+            x: body.velocity.x * scale,
+            y: body.velocity.y * scale,
           })
+        }
+
+        const normalizedAngle = Math.atan2(Math.sin(body.angle), Math.cos(body.angle))
+        body.torque = -normalizedAngle * 0.0012
+        Matter.Body.setAngularVelocity(body, body.angularVelocity * 0.965)
+
+        if (!returning || mouseConstraint.body === body) return
+
+        const target = focusModuleRef.current === label ? screenCenter : currentAnchors[label]
+        const dx = target.x - body.position.x
+        const dy = target.y - body.position.y
+        const distance = Math.hypot(dx, dy)
+        const spring = focusModuleRef.current === label ? 0.00004 : 0.000028
+
+        Matter.Body.applyForce(body, body.position, { x: dx * spring, y: dy * spring })
+        Matter.Body.setVelocity(body, {
+          x: body.velocity.x * 0.9,
+          y: body.velocity.y * 0.9,
         })
+
+        if (distance < 3 && Math.hypot(body.velocity.x, body.velocity.y) < 0.7) {
+          Matter.Body.setPosition(body, target)
+          Matter.Body.setVelocity(body, { x: 0, y: 0 })
+          Matter.Body.setAngle(body, 0)
+          Matter.Body.setAngularVelocity(body, 0)
+        }
+      })
+
+      const minimumDistance = radius * 2.16
+      for (let i = 0; i < labels.length; i += 1) {
+        for (let j = i + 1; j < labels.length; j += 1) {
+          const bodyA = bodiesMap[labels[i]]
+          const bodyB = bodiesMap[labels[j]]
+          const dx = bodyA.position.x - bodyB.position.x
+          const dy = bodyA.position.y - bodyB.position.y
+          const distance = Math.hypot(dx, dy)
+
+          if (distance <= 0 || distance >= minimumDistance) continue
+
+          const correction = (minimumDistance - distance) * 0.16
+          const offsetX = (dx / distance) * correction
+          const offsetY = (dy / distance) * correction
+          const draggingA = mouseConstraint.body === bodyA
+          const draggingB = mouseConstraint.body === bodyB
+
+          if (!draggingA) Matter.Body.translate(bodyA, { x: offsetX, y: offsetY })
+          if (!draggingB) Matter.Body.translate(bodyB, { x: -offsetX, y: -offsetY })
+        }
       }
-    })
-
-    // Native React onClick will handle selection now to improve sensitivity
-    // Removed Matter.js custom click logic based on mousedown/up duration
-
-    // Update dimensions on resize
-    const handleResize = () => {
-       const newWidth = window.innerWidth
-       const newHeight = window.innerHeight
-       // Ensure walls span massive lengths to cover all resizing edge cases
-       // Since they were created with width * 2, scaling them on every resize is tricky.
-       // Instead, we just position them exactly at the new screen boundaries.
-       // Their length is technically set at load to `window.innerWidth * 2`,
-       // but to be perfectly safe, we update their vertices dynamically using Matter.Body.setVertices
-
-       // Create fresh rectangles of the correct updated bounds and copy their vertices
-       const newTop = Matter.Bodies.rectangle(newWidth / 2, -wallThickness / 2, newWidth * 5, wallThickness)
-       const newBottom = Matter.Bodies.rectangle(newWidth / 2, newHeight + wallThickness / 2, newWidth * 5, wallThickness)
-       const newLeft = Matter.Bodies.rectangle(-wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
-       const newRight = Matter.Bodies.rectangle(newWidth + wallThickness / 2, newHeight / 2, wallThickness, newHeight * 5)
-
-       Matter.Body.setVertices(walls[0], newTop.vertices)
-       Matter.Body.setVertices(walls[1], newBottom.vertices)
-       Matter.Body.setVertices(walls[2], newLeft.vertices)
-       Matter.Body.setVertices(walls[3], newRight.vertices)
-
-       // Reposition them just in case setVertices drifts the center of mass
-       Matter.Body.setPosition(walls[0], { x: newWidth / 2, y: -wallThickness / 2 })
-       Matter.Body.setPosition(walls[1], { x: newWidth / 2, y: newHeight + wallThickness / 2 })
-       Matter.Body.setPosition(walls[2], { x: -wallThickness / 2, y: newHeight / 2 })
-       Matter.Body.setPosition(walls[3], { x: newWidth + wallThickness / 2, y: newHeight / 2 })
-
-       // Initial positions update
-       const newCenter = { x: newWidth / 2, y: newHeight * centerYRatio }
-       initialPositions.ARIA = { x: newCenter.x - anchorSpread, y: newCenter.y + radius * 0.30 }
-       initialPositions.JOZIEL = { x: newCenter.x + anchorSpread, y: newCenter.y + radius * 0.30 }
-       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 1.85 }
     }
+
+    Matter.Events.on(engine, 'beforeUpdate', beforeUpdate)
+
+    const handleResize = () => {
+      const width = window.innerWidth
+      const height = window.innerHeight
+      Matter.Body.setPosition(walls[0], { x: width / 2, y: -wallThickness / 2 })
+      Matter.Body.setPosition(walls[1], { x: width / 2, y: height + wallThickness / 2 })
+      Matter.Body.setPosition(walls[2], { x: -wallThickness / 2, y: height / 2 })
+      Matter.Body.setPosition(walls[3], { x: width + wallThickness / 2, y: height / 2 })
+      lastInteractionTime = Date.now() - 1000
+    }
+
     window.addEventListener('resize', handleResize)
 
-    // Animation Loop
-    let animationFrame: number
-    let lastTime = performance.now()
+    let animationFrame = 0
+    let lastFrame = performance.now()
     const targetFrameMs = isMobile ? 1000 / 30 : 1000 / 60
+
     const update = (time: number) => {
-      const delta = time - lastTime
-      if (delta < targetFrameMs) {
-        animationFrame = requestAnimationFrame(update)
-        return
+      const delta = time - lastFrame
+      if (delta >= targetFrameMs) {
+        lastFrame = time
+        Matter.Engine.update(engine, Math.min(delta, isMobile ? 36 : 50))
+        setPositions({
+          ARIA: { x: bodiesMap.ARIA.position.x, y: bodiesMap.ARIA.position.y, angle: bodiesMap.ARIA.angle },
+          JOZIEL: { x: bodiesMap.JOZIEL.position.x, y: bodiesMap.JOZIEL.position.y, angle: bodiesMap.JOZIEL.angle },
+          NAYLA: { x: bodiesMap.NAYLA.position.x, y: bodiesMap.NAYLA.position.y, angle: bodiesMap.NAYLA.angle },
+        })
       }
-      lastTime = time
-
-      Matter.Engine.update(engine, Math.min(delta, isMobile ? 36 : 50))
-
-      setPositions({
-        ARIA: { x: ariaBody.position.x, y: ariaBody.position.y, angle: ariaBody.angle },
-        JOZIEL: { x: jozielBody.position.x, y: jozielBody.position.y, angle: jozielBody.angle },
-        NAYLA: { x: naylaBody.position.x, y: naylaBody.position.y, angle: naylaBody.angle }
-      })
-
-      animationFrame = requestAnimationFrame(update)
+      animationFrame = window.requestAnimationFrame(update)
     }
-    animationFrame = requestAnimationFrame(update)
+
+    setPositions({
+      ARIA: { x: bodiesMap.ARIA.position.x, y: bodiesMap.ARIA.position.y, angle: 0 },
+      JOZIEL: { x: bodiesMap.JOZIEL.position.x, y: bodiesMap.JOZIEL.position.y, angle: 0 },
+      NAYLA: { x: bodiesMap.NAYLA.position.x, y: bodiesMap.NAYLA.position.y, angle: 0 },
+    })
     setIsReady(true)
+    animationFrame = window.requestAnimationFrame(update)
 
     return () => {
       window.removeEventListener('resize', handleResize)
-      cancelAnimationFrame(animationFrame)
-      Matter.Engine.clear(engine)
-      if (engineRef.current) {
-        Matter.World.clear(engine.world, false)
+      window.cancelAnimationFrame(animationFrame)
+      Matter.Events.off(engine, 'beforeUpdate', beforeUpdate)
+      if (interactive) {
+        Matter.Events.off(mouseConstraint, 'startdrag', markInteraction)
+        Matter.Events.off(mouseConstraint, 'enddrag', markInteraction)
       }
+      Matter.Mouse.clearSourceEvents(mouse)
+      Matter.Composite.clear(engine.world, false, true)
+      Matter.Engine.clear(engine)
     }
-  }, [onSelectModule])
+  }, [interactive, onSelectModule])
 
-  const bubbleRadius = typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 60 // Roughly half of standard 80-120px
+  const bubbleRadius = typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 60
 
-  const getLogoSrc = (module: string) => {
-    switch (module) {
-      case 'ARIA': return mediaUrl('aria/imagenes/aria-logo.png')
-      case 'JOZIEL': return mediaUrl('joziel/imagenes/joziel-logo.png')
-      case 'NAYLA': return mediaUrl('nayla/imagenes/nayla-logo.png')
-      default: return ''
-    }
+  const getLogoSrc = (module: BubbleModule) => {
+    if (module === 'ARIA') return mediaUrl('aria/imagenes/aria-logo.png')
+    if (module === 'JOZIEL') return mediaUrl('joziel/imagenes/joziel-logo.png')
+    return mediaUrl('nayla/imagenes/nayla-logo.png')
   }
 
   return (
-    <div ref={sceneRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 2 }}>
-       {isReady && ['ARIA', 'JOZIEL', 'NAYLA'].map(module => {
-          const pos = positions[module as keyof typeof positions]
-          return (
-             <div
-               key={module}
-               style={{
-                 position: 'absolute',
-                 left: pos.x - bubbleRadius,
-                 top: pos.y - bubbleRadius,
-                 width: bubbleRadius * 2,
-                 height: bubbleRadius * 2,
-                 transform: `rotate(${pos.angle}rad) scale(${focusModule === module ? 1.72 : focusModule ? 0.78 : 1})`,
-                 opacity: focusModule && focusModule !== module ? 0.34 : 1,
-                 filter: focusModule === module ? 'drop-shadow(0 0 28px rgba(255,255,255,.34))' : 'none',
-                 transition: 'transform 1.6s cubic-bezier(.2,.8,.2,1), opacity 1s ease, filter 1s ease',
-                 pointerEvents: interactive ? 'auto' : 'none',
-                 willChange: 'transform',
-                 contain: 'layout paint style'
-               }}
-               onPointerDown={(e) => {
-                 if (!interactive) return
-                 clickPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
-               }}
-               onPointerUp={(e) => {
-                 if (!interactive) return
-                 if (clickPosRef.current) {
-                   const { x, y, time } = clickPosRef.current
-                   const dist = Math.hypot(e.clientX - x, e.clientY - y)
-                   const duration = Date.now() - time
-                   if (dist < 10 && duration < 300) {
-                     onSelectModule(module as 'ARIA' | 'JOZIEL' | 'NAYLA')
-                   }
-                   clickPosRef.current = null
-                 }
-               }}
-             >
-                <BubbleWrapper
-                  className="floating-bubble"
-                  simple={!interactive}
-                  style={{ width: '100%', height: '100%' }}
-                >
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%' }}>
-                    <img
-                      src={getLogoSrc(module)}
-                      alt={`${module} logo`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        pointerEvents: 'none',
-                        userSelect: 'none',
-                        paddingBottom: module === 'JOZIEL' ? '12%' : '0'
-                      }}
-                    />
-                  </div>
-                </BubbleWrapper>
-             </div>
-          )
-       })}
+    <div ref={sceneRef} style={{ position: 'fixed', inset: 0, overflow: 'hidden', zIndex: 2 }}>
+      {isReady && (['ARIA', 'JOZIEL', 'NAYLA'] as BubbleModule[]).map(module => {
+        const pos = positions[module]
+        return (
+          <div
+            key={module}
+            style={{
+              position: 'absolute',
+              left: pos.x - bubbleRadius,
+              top: pos.y - bubbleRadius,
+              width: bubbleRadius * 2,
+              height: bubbleRadius * 2,
+              transform: `rotate(${pos.angle}rad) scale(${focusModule === module ? 1.72 : focusModule ? 0.78 : 1})`,
+              opacity: focusModule && focusModule !== module ? 0.34 : 1,
+              filter: focusModule === module ? 'drop-shadow(0 0 28px rgba(255,255,255,.34))' : 'none',
+              transition: 'transform 1.25s cubic-bezier(.2,.8,.2,1), opacity .8s ease, filter .8s ease',
+              pointerEvents: interactive ? 'auto' : 'none',
+              willChange: 'transform',
+              contain: 'layout paint style',
+            }}
+            onPointerDown={(e) => {
+              if (!interactive) return
+              clickPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+            }}
+            onPointerUp={(e) => {
+              if (!interactive || !clickPosRef.current) return
+              const { x, y, time } = clickPosRef.current
+              const distance = Math.hypot(e.clientX - x, e.clientY - y)
+              const duration = Date.now() - time
+              if (distance < 10 && duration < 300) onSelectModule(module)
+              clickPosRef.current = null
+            }}
+          >
+            <BubbleWrapper className="floating-bubble" simple={!interactive} style={{ width: '100%', height: '100%' }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%' }}>
+                <img
+                  src={getLogoSrc(module)}
+                  alt={`${module} logo`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    paddingBottom: module === 'JOZIEL' ? '12%' : '0',
+                  }}
+                />
+              </div>
+            </BubbleWrapper>
+          </div>
+        )
+      })}
     </div>
   )
 }
