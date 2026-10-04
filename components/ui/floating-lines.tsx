@@ -12,8 +12,11 @@ export function FloatingLines() {
     if (!ctx) return
 
     let animationFrameId: number
+    let lastFrame = 0
+    const isMobile = window.innerWidth < 768
+    const targetFrameMs = isMobile ? 1000 / 30 : 1000 / 60
 
-    const lines = Array.from({ length: 40 }, () => ({
+    const lines = Array.from({ length: isMobile ? 22 : 40 }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 1,
@@ -24,7 +27,7 @@ export function FloatingLines() {
     }))
 
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.35 : 2)
       canvas.width = window.innerWidth * dpr
       canvas.height = window.innerHeight * dpr
 
@@ -41,7 +44,12 @@ export function FloatingLines() {
     window.addEventListener('resize', resize)
     resize()
 
-    const render = () => {
+    const render = (time = performance.now()) => {
+      if (time - lastFrame < targetFrameMs) {
+        animationFrameId = requestAnimationFrame(render)
+        return
+      }
+      lastFrame = time
       const w = window.innerWidth
       const h = window.innerHeight
 
@@ -70,7 +78,7 @@ export function FloatingLines() {
       animationFrameId = requestAnimationFrame(render)
     }
 
-    render()
+    animationFrameId = requestAnimationFrame(render)
 
     return () => {
       window.removeEventListener('resize', resize)

@@ -45,7 +45,13 @@ export function useBackground() {
   return useContext(BackgroundContext)
 }
 
-export function BackgroundProvider({ children }: { children: React.ReactNode }) {
+export function BackgroundProvider({
+  children,
+  renderBackground = true,
+}: {
+  children: React.ReactNode
+  renderBackground?: boolean
+}) {
   const [settings, setSettings] = useState<BackgroundSettings>(defaultSettings)
   const [mounted, setMounted] = useState(false)
 
@@ -71,7 +77,7 @@ export function BackgroundProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <BackgroundContext.Provider value={{ settings, updateSettings }}>
-      <div style={{ position: 'fixed', zIndex: -1, inset: 0, width: '100%', height: '100%' }}>
+      {renderBackground && <div style={{ position: 'fixed', zIndex: -1, inset: 0, width: '100%', height: '100%' }}>
         {mounted && (
           <>
             {settings.type === 'floatingLines' && <FloatingLines />}
@@ -101,7 +107,7 @@ export function BackgroundProvider({ children }: { children: React.ReactNode }) 
             )}
           </>
         )}
-      </div>
+      </div>}
       {children}
     </BackgroundContext.Provider>
   )
