@@ -4,11 +4,51 @@
   bottom: calc(var(--hub-social-lift, 18px) + env(safe-area-inset-bottom)) !important;
 }
 
+/*
+ * Keep the fog stage fixed to the full viewport. The height control moves the
+ * oversized smoke layers inside the stage instead of translating the clipped
+ * stage itself. This prevents a hard horizontal seam when fog is lowered.
+ */
 .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash,
 .hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash {
-  transform: translate3d(0, var(--hub-fog-offset, 10dvh), 0) !important;
+  transform: none !important;
   opacity: var(--hub-fog-opacity, .84) !important;
-  will-change: transform, opacity;
+  will-change: opacity;
+
+  /* Smoke is born gradually from transparency at the top. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,.05) 5%,
+    rgba(0,0,0,.18) 11%,
+    rgba(0,0,0,.48) 20%,
+    rgba(0,0,0,.78) 29%,
+    #000 40%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0,0,0,.05) 5%,
+    rgba(0,0,0,.18) 11%,
+    rgba(0,0,0,.48) 20%,
+    rgba(0,0,0,.78) 29%,
+    #000 40%,
+    #000 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  /* Shift the smoke mass without ever moving the viewport-sized clipping area. */
+  top: calc(-34dvh + var(--hub-fog-offset, 10dvh)) !important;
+  bottom: calc(-34dvh - var(--hub-fog-offset, 10dvh)) !important;
 }
 
 .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
