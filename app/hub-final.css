@@ -1,0 +1,242 @@
+/* Final viewport and interaction normalization. Loaded after hub-clean.css. */
+
+/* Home stays as one uninterrupted viewport. */
+.home {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+.home-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Keep every Home bubble mathematically circular, including effect wrappers. */
+.home .floating-bubble,
+.home .floating-bubble > * {
+  border-radius: 50% !important;
+}
+
+.home .floating-bubble {
+  overflow: hidden !important;
+  clip-path: circle(50% at 50% 50%);
+  background-clip: padding-box;
+}
+
+.home .floating-bubble::before,
+.home .floating-bubble::after {
+  border-radius: 50% !important;
+}
+
+/* FUEGO menu: complete navigation/account entry point. */
+.hub-menu-topline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  margin-bottom: .2rem;
+}
+
+.hub-menu-topline .hub-menu-brand {
+  min-height: 0;
+  margin: 0;
+}
+
+.hub-menu-crystal .hub-menu-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2.2rem !important;
+  height: 2.2rem;
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.055) !important;
+  color: rgba(255,255,255,.92);
+  font-size: 1.45rem;
+  line-height: 1;
+  text-align: center !important;
+}
+
+.hub-auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.hub-auth-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(0,0,0,.48);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hub-auth-panel {
+  position: relative;
+  z-index: 1;
+  width: min(430px, 100%);
+}
+
+/* ARIA / JOZIEL are a single fixed visual stage: no vertical page scroll. */
+.hub-with-video:not(.hub-show-tour) {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+
+.hub-with-video:not(.hub-show-tour) .program-grid {
+  overflow-x: auto;
+  overflow-y: hidden !important;
+  margin-bottom: 0 !important;
+  padding-bottom: calc(4.7rem + env(safe-area-inset-bottom)) !important;
+}
+
+/* Remove any seam/band between the cards and social area. */
+.hub-with-video:not(.hub-show-tour)::before,
+.hub-with-video:not(.hub-show-tour)::after,
+.hub-with-video:not(.hub-show-tour) .program-grid::before,
+.hub-with-video:not(.hub-show-tour) .program-grid::after,
+.hub-with-video:not(.hub-show-tour) .social-dock::before,
+.hub-with-video:not(.hub-show-tour) .social-dock::after {
+  content: none !important;
+  display: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Continuous living fog: oversized layers have no rounded edge that can form a line. */
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash {
+  inset: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  top: -34dvh !important;
+  right: -70vw !important;
+  bottom: -34dvh !important;
+  left: -70vw !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-clip: border-box !important;
+  mix-blend-mode: screen;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before {
+  opacity: .88;
+  animation: finalFogDriftA 13s ease-in-out infinite alternate,
+             finalFogColorA 17s ease-in-out infinite alternate !important;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  opacity: .76;
+  animation: finalFogDriftB 17s ease-in-out infinite alternate-reverse,
+             finalFogColorB 21s ease-in-out infinite alternate !important;
+}
+
+@keyframes finalFogDriftA {
+  0% { transform: translate3d(-5%, 3%, 0) scale(1.02, .98); opacity: .72; }
+  34% { transform: translate3d(2%, -3%, 0) scale(1.10, 1.04); opacity: .92; }
+  68% { transform: translate3d(6%, 2%, 0) scale(1.04, 1.12); opacity: .80; }
+  100% { transform: translate3d(-2%, -4%, 0) scale(1.13, 1.01); opacity: .90; }
+}
+
+@keyframes finalFogDriftB {
+  0% { transform: translate3d(5%, -3%, 0) scale(1.08, 1.02); opacity: .62; }
+  38% { transform: translate3d(-4%, 5%, 0) scale(1.01, 1.12); opacity: .84; }
+  72% { transform: translate3d(-6%, -2%, 0) scale(1.12, 1.02); opacity: .70; }
+  100% { transform: translate3d(3%, 3%, 0) scale(1.04, 1.10); opacity: .80; }
+}
+
+@keyframes finalFogColorA {
+  0% { filter: blur(48px) saturate(118%) hue-rotate(-18deg) brightness(1.13); }
+  30% { filter: blur(53px) saturate(150%) hue-rotate(18deg) brightness(1.03); }
+  62% { filter: blur(50px) saturate(168%) hue-rotate(62deg) brightness(1.08); }
+  100% { filter: blur(56px) saturate(138%) hue-rotate(-34deg) brightness(1.16); }
+}
+
+@keyframes finalFogColorB {
+  0% { filter: blur(62px) saturate(126%) hue-rotate(12deg) brightness(1.10); }
+  45% { filter: blur(70px) saturate(170%) hue-rotate(-52deg) brightness(1.02); }
+  100% { filter: blur(64px) saturate(146%) hue-rotate(48deg) brightness(1.15); }
+}
+
+/* Social circles: slightly smaller, all equal and on the exact same baseline. */
+.social-dock {
+  height: 4.3rem !important;
+  align-items: center !important;
+  gap: clamp(.14rem, 1.2vw, .32rem) !important;
+  bottom: calc(.18rem + env(safe-area-inset-bottom)) !important;
+}
+
+.social-dock-item,
+.social-dock-item:nth-child(2),
+.social-dock-item:nth-child(4),
+.social-dock-item.is-primary {
+  flex: 0 0 3.45rem !important;
+  width: 3.45rem !important;
+  height: 3.45rem !important;
+  transform: none !important;
+  align-self: center !important;
+  animation: socialGlowOnly 5.4s ease-in-out infinite !important;
+}
+
+@keyframes socialGlowOnly {
+  0%, 100% {
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,.30)) drop-shadow(0 0 10px rgba(255,255,255,.12));
+  }
+  50% {
+    filter: drop-shadow(0 9px 20px rgba(0,0,0,.28)) drop-shadow(0 0 16px rgba(255,255,255,.22));
+  }
+}
+
+@media (max-width: 600px) {
+  .hub-with-video:not(.hub-show-tour) .program-grid {
+    margin-top: clamp(7rem, 16.5dvh, 9.5rem) !important;
+    padding-bottom: calc(4.35rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .social-dock {
+    width: min(330px, calc(100vw - .8rem)) !important;
+    height: 4rem !important;
+    gap: clamp(.08rem, .9vw, .22rem) !important;
+  }
+
+  .social-dock-item,
+  .social-dock-item:nth-child(2),
+  .social-dock-item:nth-child(4),
+  .social-dock-item.is-primary {
+    flex-basis: 3.18rem !important;
+    width: 3.18rem !important;
+    height: 3.18rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-dock-item,
+  .hub-video-wash::before,
+  .hub-video-wash::after {
+    animation: none !important;
+  }
+}

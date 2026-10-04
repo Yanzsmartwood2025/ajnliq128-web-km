@@ -2,6 +2,8 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import './hub-clean.css'
+import './hub-final.css'
+import { BackgroundProvider } from '@/components/BackgroundManager'
 import { PwaUpdater } from '@/components/PwaUpdater'
 import { Toaster } from '@/components/ui/toast'
 import { AuthProvider } from '@/lib/auth-context'
@@ -47,9 +49,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="es">
       <body className="antialiased bg-transparent">
         <AuthProvider>
-          <Toaster>{children}</Toaster>
-          <PwaUpdater />
-          {process.env.NODE_ENV === 'production' && <Analytics />}
+          <BackgroundProvider renderBackground={false}>
+            <Toaster>{children}</Toaster>
+            <PwaUpdater />
+            {process.env.NODE_ENV === 'production' && <Analytics />}
+          </BackgroundProvider>
         </AuthProvider>
       </body>
     </html>

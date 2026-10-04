@@ -3,14 +3,35 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { AuthForm } from './auth-form'
+import { BackgroundSettings } from './BackgroundSettings'
 
 export function CharacterMenu() {
   const [open, setOpen] = useState(false)
-  const { user, loading } = useAuth()
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null)
+  const { user, loading, signOut } = useAuth()
   const usesGoogle = Boolean(user?.providerData?.some((provider) => provider.providerId === 'google.com'))
+
+  const handleSignOut = async () => {
+    await signOut()
+    setOpen(false)
+  }
+
+  const openSettings = () => {
+    setOpen(false)
+    setSettingsOpen(true)
+  }
+
+  const openLogin = () => {
+    setOpen(false)
+    setAuthMode('login')
+  }
 
   return (
     <>
+      <BackgroundSettings open={settingsOpen} onOpenChange={setSettingsOpen} hideTrigger />
+
       <header className="hub-header hub-header-clean">
         <button
           type="button"
@@ -32,8 +53,18 @@ export function CharacterMenu() {
             onClick={() => setOpen(false)}
           />
           <aside className="hub-menu hub-menu-crystal" aria-label="Opciones">
-            <div className="hub-menu-brand" aria-hidden="true">
-              <img src="/assets/home/fuego.png" alt="" />
+            <div className="hub-menu-topline">
+              <div className="hub-menu-brand" aria-hidden="true">
+                <img src="/assets/home/fuego.png" alt="" />
+              </div>
+              <button
+                type="button"
+                className="hub-menu-close"
+                aria-label="Cerrar menú"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
             </div>
 
             <div className="hub-session-card" aria-live="polite">
@@ -58,13 +89,42 @@ export function CharacterMenu() {
               <span className="hub-session-copy">
                 <strong>{loading ? 'Comprobando sesión…' : user ? 'Sesión activa' : 'Sin sesión activa'}</strong>
                 {!loading && user?.email && <span>{user.email}</span>}
+                {!loading && !user && <span>Accede para sincronizar tu cuenta.</span>}
               </span>
             </div>
 
+            <button type="button" onClick={openSettings}>Fondo y botones</button>
             <Link href="/?skipIntro=1" onClick={() => setOpen(false)}>Inicio</Link>
-            <button type="button" onClick={() => setOpen(false)}>Cerrar</button>
+
+            {!loading && !user && (
+              <button type="button" onClick={openLogin}>Iniciar sesión</button>
+            )}
+
+            {!loading && user && (
+              <button type="button" onClick={handleSignOut}>Cerrar sesión</button>
+            )}
+
+            <button type="button" onClick={() => setOpen(false)}>Cerrar menú</button>
           </aside>
         </>
+      )}
+
+      {authMode && (
+        <div className="hub-auth-modal" role="dialog" aria-modal="true" aria-label="Acceso">
+          <button
+            type="button"
+            className="hub-auth-scrim"
+            aria-label="Cerrar acceso"
+            onClick={() => setAuthMode(null)}
+          />
+          <div className="hub-auth-panel">
+            <AuthForm
+              mode={authMode}
+              onClose={() => setAuthMode(null)}
+              onSwitchMode={setAuthMode}
+            />
+          </div>
+        </div>
       )}
     </>
   )
