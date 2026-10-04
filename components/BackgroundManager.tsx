@@ -1,16 +1,17 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { AmbientBackgroundType } from '@/components/effects/AmbientBackgrounds'
 import type { ExtraBubbleEffectType } from '@/components/effects/BubbleEffects'
-
-const FloatingLines = dynamic(() => import('@/components/ui/floating-lines').then(mod => mod.FloatingLines), { ssr: false })
-const GhostFibers = dynamic(() => import('@/components/GhostFibers'), { ssr: false })
-const RippleDistortion = dynamic(() => import('@/components/RippleDistortion'), { ssr: false })
-const WebThreads = dynamic(() => import('@/components/WebThreads'), { ssr: false })
-const MagicRings = dynamic(() => import('@/components/MagicRings'), { ssr: false })
-const AmbientBackground = dynamic(() => import('@/components/effects/AmbientBackgrounds'), { ssr: false })
+import { BackgroundEffectRenderer } from '@/components/effects/BackgroundEffectRenderer'
+import {
+  defaultBackgroundControls,
+  defaultBubbleControls,
+  mergeBackgroundControls,
+  mergeBubbleControls,
+  type BackgroundControlSettings,
+  type BubbleControlSettings,
+} from '@/components/effects/effect-settings'
 
 export type BackgroundType =
   | 'floatingLines'
@@ -31,30 +32,59 @@ export type BubbleEffectType =
 
 export interface BackgroundSettings {
   type: BackgroundType
-  ghostFibers: { lineColor: string; glowColor: string }
-  rippleDistortion: { tint: string }
-  webThreads: { color1: string; color2: string; color3: string }
-  magicRings: { color: string; colorTwo: string }
   bubbleEffect: BubbleEffectType
+  backgroundControls: Record<string, BackgroundControlSettings>
+  bubbleControls: Record<string, BubbleControlSettings>
 }
 
-const defaultSettings: BackgroundSettings = {
+export const defaultSettings: BackgroundSettings = {
   type: 'floatingLines',
-  ghostFibers: { lineColor: '#140E35', glowColor: '#3437A0' },
-  rippleDistortion: { tint: '#a855f7' },
-  webThreads: { color1: '#5227FF', color2: '#FF9FFC', color3: '#FFFFFF' },
-  magicRings: { color: '#fc42ff', colorTwo: '#42fcff' },
   bubbleEffect: 'none',
+  backgroundControls: mergeBackgroundControls(),
+  bubbleControls: mergeBubbleControls(),
 }
 
-const ambientTypes = new Set<AmbientBackgroundType>([
-  'auroraWaves',
-  'nebulaFlow',
-  'liquidLight',
-  'prismTunnel',
-  'particleVeil',
-  'starPulse',
-])
+function migrateStoredSettings(raw: unknown): BackgroundSettings {
+  if (!raw || typeof raw !== 'object') return defaultSettings
+  const saved = raw as Record<string, any>
+  const backgroundControls = mergeBackgroundControls(saved.backgroundControls)
+  const bubbleControls = mergeBubbleControls(saved.bubbleControls)
+
+  // Compatibility with preferences saved by the first version of the panel.
+  if (!saved.backgroundControls?.ghostFibers && saved.ghostFibers) {
+    backgroundControls.ghostFibers = {
+      ...backgroundControls.ghostFibers,
+      color1: saved.ghostFibers.lineColor ?? backgroundControls.ghostFibers.color1,
+      color2: saved.ghostFibers.glowColor ?? backgroundControls.ghostFibers.color2,
+    }
+  }
+  if (!saved.backgroundControls?.rippleDistortion && saved.rippleDistortion) {
+    backgroundControls.rippleDistortion = {
+      ...backgroundControls.rippleDistortion,
+      color1: saved.rippleDistortion.tint ?? backgroundControls.rippleDistortion.color1,
+    }
+  }
+  if (!saved.backgroundControls?.webThreads && saved.webThreads) {
+    backgroundControls.webThreads = {
+      ...backgroundControls.webThreads,
+      color1: saved.webThreads.color1 ?? backgroundControls.webThreads.color1,
+      color2: saved.webThreads.color2 ?? backgroundControls.webThreads.color2,
+      color3: saved.webThreads.color3 ?? backgroundControls.webThreads.color3,
+    }
+  }
+  if (!saved.backgroundControls?.magicRings && saved.magicRings) {
+    backgroundControls.magicRings = {
+      ...backgroundControls.magicRings,
+      color1: saved.magicRings.color ?? backgroundControls.magicRings.color1,
+      color2: saved.magicRings.colorTwo ?? backgroundControls.magicRings.color2,
+    }
+  }
+
+  const type = Object.prototype.hasOwnProperty.call(defaultBackgroundControls, saved.type) ? saved.type as BackgroundType : defaultSettings.type
+  const bubbleEffect = Object.prototype.hasOwnProperty.call(defaultBubbleControls, saved.bubbleEffect) ? saved.bubbleEffect as BubbleEffectType : defaultSettings.bubbleEffect
+
+  return { type, bubbleEffect, backgroundControls, bubbleControls }
+}
 
 interface BackgroundContextType {
   settings: BackgroundSettings
@@ -75,9 +105,10 @@ export function BackgroundProvider({ children, renderBackground = true }: { chil
     const saved = localStorage.getItem('fuego_bg_preferences')
     if (saved) {
       try {
-        setSettings({ ...defaultSettings, ...JSON.parse(saved) })
+        setSettings(migrateStoredSettings(JSON.parse(saved)))
       } catch (error) {
         console.error('Error parsing background settings', error)
+        setSettings(defaultSettings)
       }
     }
     setMounted(true)
@@ -85,28 +116,27 @@ export function BackgroundProvider({ children, renderBackground = true }: { chil
 
   const updateSettings = (newSettings: Partial<BackgroundSettings>) => {
     setSettings((prev) => {
-      const updated = { ...prev, ...newSettings }
+      const updated: BackgroundSettings = {
+        ...prev,
+        ...newSettings,
+        backgroundControls: newSettings.backgroundControls ?? prev.backgroundControls,
+        bubbleControls: newSettings.bubbleControls ?? prev.bubbleControls,
+      }
       localStorage.setItem('fuego_bg_preferences', JSON.stringify(updated))
       return updated
     })
   }
 
-  const isAmbient = ambientTypes.has(settings.type as AmbientBackgroundType)
+  const activeControls = useMemo(
+    () => settings.backgroundControls[settings.type] ?? defaultBackgroundControls[settings.type],
+    [settings.backgroundControls, settings.type]
+  )
 
   return (
     <BackgroundContext.Provider value={{ settings, updateSettings }}>
       {renderBackground && (
         <div style={{ position: 'fixed', zIndex: -1, inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
-          {mounted && (
-            <>
-              {settings.type === 'floatingLines' && <FloatingLines />}
-              {settings.type === 'ghostFibers' && <GhostFibers lineColor={settings.ghostFibers.lineColor} glowColor={settings.ghostFibers.glowColor} />}
-              {settings.type === 'rippleDistortion' && <RippleDistortion tint={settings.rippleDistortion.tint} />}
-              {settings.type === 'webThreads' && <WebThreads color1={settings.webThreads.color1} color2={settings.webThreads.color2} color3={settings.webThreads.color3} />}
-              {settings.type === 'magicRings' && <MagicRings color={settings.magicRings.color} colorTwo={settings.magicRings.colorTwo} scaleRate={0} noiseAmount={0.035} attenuation={12} />}
-              {isAmbient && <AmbientBackground variant={settings.type as AmbientBackgroundType} />}
-            </>
-          )}
+          {mounted && activeControls && <BackgroundEffectRenderer type={settings.type} controls={activeControls} />}
         </div>
       )}
       {children}

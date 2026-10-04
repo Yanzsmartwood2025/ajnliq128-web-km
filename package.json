@@ -6,10 +6,11 @@
   "scripts": {
     "predev": "node scripts/prepare-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
+    "prebuild": "node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
     "build": "next build",
     "start": "next start",
     "check:assets": "node scripts/check-assets.mjs",
+    "check:effects": "node scripts/check-effects.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,104 +1,131 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
-export function FloatingLines() {
+type Props = {
+  color?: string
+  color2?: string
+  speed?: number
+  density?: number
+  length?: number
+  thickness?: number
+  opacity?: number
+  className?: string
+}
+
+const hexToRgb = (hex: string) => {
+  const raw = hex.replace('#', '').trim()
+  const full = raw.length === 3 ? raw.split('').map((c) => c + c).join('') : raw
+  const value = Number.parseInt(full, 16)
+  if (Number.isNaN(value)) return [255, 255, 255]
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
+}
+
+export function FloatingLines({
+  color = '#ffffff',
+  color2 = '#87cfff',
+  speed = 1,
+  density = 1,
+  length = 1,
+  thickness = 1,
+  opacity = .48,
+  className = '',
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    const host = canvas.parentElement
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!host || !ctx) return
 
-    let animationFrameId: number
+    let animationFrameId = 0
     let lastFrame = 0
+    let width = 1
+    let height = 1
+    let dpr = 1
     const isMobile = window.innerWidth < 768
     const targetFrameMs = isMobile ? 1000 / 30 : 1000 / 60
+    const c1 = hexToRgb(color)
+    const c2 = hexToRgb(color2)
+    const count = Math.max(8, Math.round((isMobile ? 22 : 40) * Math.max(.4, Math.min(2, density))))
+    const velocity = Math.max(.15, Math.min(3, speed))
+    const lengthScale = Math.max(.5, Math.min(2, length))
+    const widthScale = Math.max(.4, Math.min(2, thickness))
+    const alphaScale = Math.max(.05, Math.min(1, opacity))
 
-    const lines = Array.from({ length: isMobile ? 22 : 40 }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      vx: (Math.random() - 0.5) * 1,
-      vy: (Math.random() - 0.5) * 1,
-      length: Math.random() * 150 + 50,
-      width: Math.random() * 2 + 0.5,
-      opacity: Math.random() * 0.4 + 0.1
+    const lines = Array.from({ length: count }, (_, index) => ({
+      x: Math.random(),
+      y: Math.random(),
+      vx: (Math.random() - .5) * velocity,
+      vy: (Math.random() - .5) * velocity,
+      lineLength: (Math.random() * 110 + 45) * lengthScale,
+      lineWidth: (Math.random() * 1.45 + .45) * widthScale,
+      alpha: (Math.random() * .45 + .18) * alphaScale,
+      mix: index / Math.max(count - 1, 1),
     }))
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.35 : 2)
-      canvas.width = window.innerWidth * dpr
-      canvas.height = window.innerHeight * dpr
-
-      // We don't necessarily need to scale the context with ctx.scale(dpr, dpr) here
-      // if we are keeping the logic pixel-based and mapping to canvas.width,
-      // but to keep math in CSS pixels, it's easier.
-      // Wait, the lines logic generates random positions based on window.innerWidth!
-      // If we scale the canvas width, the bounds logic uses canvas.width.
-      // Let's adjust bounds to be based on window.innerWidth instead of canvas.width,
-      // and use ctx.scale to scale all drawing commands.
+      const rect = host.getBoundingClientRect()
+      width = Math.max(1, rect.width)
+      height = Math.max(1, rect.height)
+      dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.35 : 2)
+      canvas.width = Math.max(1, Math.floor(width * dpr))
+      canvas.height = Math.max(1, Math.floor(height * dpr))
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    window.addEventListener('resize', resize)
+    const observer = new ResizeObserver(resize)
+    observer.observe(host)
     resize()
 
     const render = (time = performance.now()) => {
-      if (time - lastFrame < targetFrameMs) {
-        animationFrameId = requestAnimationFrame(render)
-        return
-      }
+      animationFrameId = requestAnimationFrame(render)
+      if (document.hidden || time - lastFrame < targetFrameMs) return
       lastFrame = time
-      const w = window.innerWidth
-      const h = window.innerHeight
+      ctx.clearRect(0, 0, width, height)
 
-      // Clear scaled space
-      ctx.clearRect(0, 0, w, h)
+      lines.forEach((line) => {
+        let x = line.x * width
+        let y = line.y * height
+        x += line.vx
+        y += line.vy
+        line.x = x / width
+        line.y = y / height
 
-      lines.forEach(line => {
-        line.x += line.vx
-        line.y += line.vy
+        if (x < -180) line.x = (width + 180) / width
+        else if (x > width + 180) line.x = -180 / width
+        if (y < -180) line.y = (height + 180) / height
+        else if (y > height + 180) line.y = -180 / height
 
-        if (line.x < -200) line.x = w + 200
-        else if (line.x > w + 200) line.x = -200
-
-        if (line.y < -200) line.y = h + 200
-        else if (line.y > h + 200) line.y = -200
-
+        const r = Math.round(c1[0] + (c2[0] - c1[0]) * line.mix)
+        const g = Math.round(c1[1] + (c2[1] - c1[1]) * line.mix)
+        const b = Math.round(c1[2] + (c2[2] - c1[2]) * line.mix)
         ctx.beginPath()
-        ctx.moveTo(line.x, line.y)
-        ctx.lineTo(line.x + line.vx * line.length, line.y + line.vy * line.length)
-
-        ctx.strokeStyle = `rgba(255, 255, 255, ${line.opacity})`
-        ctx.lineWidth = line.width
+        ctx.moveTo(x, y)
+        ctx.lineTo(x + line.vx * line.lineLength, y + line.vy * line.lineLength)
+        ctx.strokeStyle = `rgba(${r},${g},${b},${line.alpha})`
+        ctx.lineWidth = line.lineWidth
         ctx.stroke()
       })
-
-      animationFrameId = requestAnimationFrame(render)
     }
 
     animationFrameId = requestAnimationFrame(render)
-
     return () => {
-      window.removeEventListener('resize', resize)
+      observer.disconnect()
       cancelAnimationFrame(animationFrameId)
     }
-  }, [])
+  }, [color, color2, speed, density, length, thickness, opacity])
 
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
-        pointerEvents: 'none',
-        background: 'transparent' // Changed to let it act as an overlay/underlay without hiding everything if it is z-index -1
-      }}
+      className={className}
+      aria-hidden="true"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', background: 'transparent' }}
     />
   )
 }
