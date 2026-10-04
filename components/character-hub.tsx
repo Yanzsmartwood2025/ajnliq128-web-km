@@ -110,6 +110,7 @@ export function CharacterHub({
     const grid = gridRef.current
     if (!grid) return
 
+    activeCardIndexRef.current = -1
     let frame = 0
 
     const updateDepth = () => {
