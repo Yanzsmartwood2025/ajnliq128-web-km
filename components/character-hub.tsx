@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { FlameMark, Wordmark } from './galaxy-background'
+import { Wordmark } from './galaxy-background'
 import { ProgramLauncher } from './program-launcher'
 import { mediaUrl } from '@/lib/media-urls'
 import { slugifyProgram } from '@/lib/module-flags'
@@ -10,6 +10,54 @@ import { slugifyProgram } from '@/lib/module-flags'
 const programs = {
   aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance', 'arIA'],
   joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire", 'Lumenfall'],
+}
+
+const programCardImages: Record<'aria' | 'joziel', Record<string, string>> = {
+  aria: {
+    'arias-anthem': '/assets/characters/aria/cards/arias-anthem.jpg',
+    'synthetic-soul': '/assets/characters/aria/cards/synthetic-soul.jpg',
+    'starlight-log': '/assets/characters/aria/cards/starlight-log.jpg',
+    'code-and-conscience': '/assets/characters/aria/cards/code-and-conscience.jpg',
+    'real-world-quests': '/assets/characters/aria/cards/real-world-quests.jpg',
+    'lyrical-resonance': '/assets/characters/aria/cards/lyrical-resonance.jpg',
+    aria: '/assets/characters/aria/cards/aria-main.jpg',
+  },
+  joziel: {
+    'midnight-mantras': '/assets/characters/joziel/cards/midnight-mantras.jpg',
+    'dark-siren': '/assets/characters/joziel/cards/dark-siren.jpg',
+    'sonic-autopsy': '/assets/characters/joziel/cards/sonic-autopsy.jpg',
+    'shadow-files': '/assets/characters/joziel/cards/shadow-files.jpg',
+    'joziels-grimoire': '/assets/characters/joziel/cards/joziels-grimoire.jpg',
+    lumenfall: '/assets/characters/joziel/cards/lumenfall.jpg',
+  },
+}
+
+const characterBackgrounds: Record<'aria' | 'joziel', string[]> = {
+  aria: [
+    '/assets/characters/aria/carousel/01-noir-rain-portrait.jpg',
+    '/assets/characters/aria/carousel/02-noir-rain-standing.jpg',
+    '/assets/characters/aria/carousel/03-noir-window-closeup.jpg',
+    '/assets/characters/aria/carousel/04-purple-braid-train-window.jpg',
+    '/assets/characters/aria/carousel/05-lavender-braid-train.jpg',
+    '/assets/characters/aria/carousel/06-lavender-sunset-mountains.jpg',
+    '/assets/characters/aria/carousel/07-cyber-noir-led-city.jpg',
+    '/assets/characters/aria/carousel/08-silver-cyber-grid-seated.jpg',
+    '/assets/characters/aria/carousel/09-silver-cyber-grid-standing.jpg',
+  ],
+  joziel: [
+    '/assets/characters/joziel/carousel/01-tattooed-studio-portrait.jpg',
+    '/assets/characters/joziel/carousel/02-rainy-forest-crouch.jpg',
+    '/assets/characters/joziel/carousel/03-moonlit-hooded-walk.jpg',
+    '/assets/characters/joziel/carousel/04-snowy-window-seat.jpg',
+    '/assets/characters/joziel/carousel/05-graveyard-witch-walk.jpg',
+    '/assets/characters/joziel/carousel/06-graveyard-witch-profile.jpg',
+    '/assets/characters/joziel/carousel/07-moonlit-hooded-portrait.jpg',
+    '/assets/characters/joziel/carousel/08-moonlit-hooded-closeup.jpg',
+    '/assets/characters/joziel/carousel/09-graveyard-witch-fullbody.jpg',
+    '/assets/characters/joziel/carousel/10-snowy-studio-window.jpg',
+    '/assets/characters/joziel/carousel/11-empty-theater-leather-jacket.jpg',
+    '/assets/characters/joziel/carousel/12-lumenfall-wordmark.jpg',
+  ],
 }
 
 const placeholderVideoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
@@ -30,7 +78,6 @@ function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel'
   const [hasError, setHasError] = useState(false)
   const poster = character === 'aria' ? '/aria-card.png' : '/joziel-card.png'
 
-  // When the program changes, reset error state so we attempt to load the new R2 video
   useEffect(() => {
     setHasError(false)
   }, [programSlug])
@@ -52,11 +99,11 @@ function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel'
 
   const videoUrl = programSlug && !hasError
     ? mediaUrl(programMediaPath(character, programSlug, 'fondo.mp4'))
-    : placeholderVideoUrl;
+    : placeholderVideoUrl
 
   return (
     <video
-      key={videoUrl} // Force re-render of video element when URL changes
+      key={videoUrl}
       ref={videoRef}
       className="hub-video"
       autoPlay={shouldLoad}
@@ -67,15 +114,11 @@ function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel'
       poster={poster}
       aria-hidden="true"
       onError={() => {
-        if (!hasError && programSlug) {
-          setHasError(true);
-        }
+        if (!hasError && programSlug) setHasError(true)
       }}
     >
       {shouldLoad ? <source src={videoUrl} type="video/mp4" onError={() => {
-        if (!hasError && programSlug) {
-          setHasError(true);
-        }
+        if (!hasError && programSlug) setHasError(true)
       }} /> : null}
     </video>
   )
@@ -95,15 +138,10 @@ export function CharacterHub({
   const isAria = character === 'aria'
   const [backgroundIndex, setBackgroundIndex] = useState(0)
   const [focusedProgramSlug, setFocusedProgramSlug] = useState<string | null>(null)
-  const [bgImageError, setBgImageError] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
   const activeCardIndexRef = useRef(-1)
-  const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
-
-  useEffect(() => {
-    setBgImageError(false)
-  }, [focusedProgramSlug])
+  const backgrounds = characterBackgrounds[character]
 
   useEffect(() => {
     if (showMode) return
@@ -177,13 +215,10 @@ export function CharacterHub({
 
   const changeBackgroundAndCenter = (programIndex: number, el: HTMLElement) => {
     const programName = programs[character][programIndex]
-    if (programName) {
-      setFocusedProgramSlug(slugifyProgram(programName))
-    }
+    if (programName) setFocusedProgramSlug(slugifyProgram(programName))
     const nextIndex = programIndex % backgrounds.length
     setBackgroundIndex(prev => prev === nextIndex ? prev : nextIndex)
 
-    // Smooth scroll to center the element
     const grid = gridRef.current
     if (grid) {
       const elRect = el.getBoundingClientRect()
@@ -250,11 +285,8 @@ export function CharacterHub({
     }
   }, [backgrounds.length, character, onShowComplete, showDurationMs, showMode])
 
-
   const name = isAria ? 'ARIA' : 'JOZIEL'
-  const activeBackgroundUrl = focusedProgramSlug && !bgImageError
-    ? mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))
-    : backgrounds[backgroundIndex]
+  const activeBackgroundUrl = backgrounds[backgroundIndex % backgrounds.length]
   const [backgroundLayers, setBackgroundLayers] = useState({
     previous: backgrounds[0],
     current: backgrounds[0],
@@ -285,19 +317,18 @@ export function CharacterHub({
         aria-hidden="true"
         style={{ backgroundImage: `url(${backgroundLayers.current})` }}
       />
-      {/* Hidden image to trigger onError for background fallback */}
-      {focusedProgramSlug && !bgImageError && (
-        <img
-          src={mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))}
-          style={{ display: 'none' }}
-          onError={() => setBgImageError(true)}
-          alt=""
-        />
-      )}
       <LazyHubVideo character={character} programSlug={focusedProgramSlug} />
       <div className="hub-video-wash" aria-hidden="true" />
       {!showMode && <header className="hub-header">
-        <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
+        <Link href="/" className="back-link">
+          <img
+            src="/fuego-logo.png"
+            alt=""
+            aria-hidden="true"
+            style={{ width: '1.45rem', height: '1.45rem', objectFit: 'contain', flex: '0 0 auto' }}
+          />
+          <span>FUEGO</span>
+        </Link>
         <div className="hub-actions">
           <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">▣</button>
           <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
@@ -307,27 +338,33 @@ export function CharacterHub({
       <section className="hub-intro"><Wordmark name={name} /></section>
       {showMode && <div className="show-camera-vignette" aria-hidden="true" />}
       <div className={`program-grid${showMode ? ' is-show-tour' : ''}`} ref={gridRef}>
-        {programs[character].map((program, index) => (
-          <ProgramLauncher
-            character={character}
-            showMode={showMode}
-            program={program}
-            index={index}
-            photoUrl={mediaUrl(programMediaPath(character, slugifyProgram(program), 'tarjeta.webp'))}
-            fallbackPhoto={isAria ? '/aria-card.png' : '/joziel-card.png'}
-            key={program}
-            destination={
-              isAria && program === 'Starlight Log'
-                ? '/aria/starlight-log'
-                : isAria && program === 'arIA'
-                  ? '/aria/aria'
-                  : !isAria && program === 'Lumenfall'
-                    ? '/joziel/lumenfall'
-                    : undefined
-            }
-            onActivate={(el) => changeBackgroundAndCenter(index, el)}
-          />
-        ))}
+        {programs[character].map((program, index) => {
+          const slug = slugifyProgram(program)
+          const fallbackPhoto = isAria ? '/aria-card.png' : '/joziel-card.png'
+          const photoUrl = programCardImages[character][slug] ?? fallbackPhoto
+
+          return (
+            <ProgramLauncher
+              character={character}
+              showMode={showMode}
+              program={program}
+              index={index}
+              photoUrl={photoUrl}
+              fallbackPhoto={fallbackPhoto}
+              key={program}
+              destination={
+                isAria && program === 'Starlight Log'
+                  ? '/aria/starlight-log'
+                  : isAria && program === 'arIA'
+                    ? '/aria/aria'
+                    : !isAria && program === 'Lumenfall'
+                      ? '/joziel/lumenfall'
+                      : undefined
+              }
+              onActivate={(el) => changeBackgroundAndCenter(index, el)}
+            />
+          )
+        })}
       </div>
     </main>
   )
