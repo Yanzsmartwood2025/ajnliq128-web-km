@@ -13,11 +13,12 @@ interface BubbleWrapperProps {
   className?: string;
   style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent<any>) => void;
+  simple?: boolean;
 }
 
-export function BubbleWrapper({ children, className = "", style, onClick }: BubbleWrapperProps) {
+export function BubbleWrapper({ children, className = "", style, onClick, simple = false }: BubbleWrapperProps) {
   const { settings } = useBackground();
-  const effect = settings.bubbleEffect;
+  const effect = simple ? 'none' : settings.bubbleEffect;
 
   const innerClasses = "w-full h-full rounded-full absolute inset-0";
 
