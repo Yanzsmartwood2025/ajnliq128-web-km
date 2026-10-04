@@ -1,0 +1,260 @@
+{
+  "version": 1,
+  "notes": [
+    "Original PNG files retained without resizing or lossy recompression.",
+    "The repeated Aria source 01-1000239391.png was identical to 10-1000239391.png and is included once.",
+    "Card assets are catalogued for later card wiring; no UI code was changed."
+  ],
+  "characters": {
+    "aria": {
+      "cards": [
+        {
+          "program": "real-world-quests",
+          "file": "public/assets/characters/aria/cards/real-world-quests.jpg",
+          "source": "01-1000239413.png",
+          "dimensions": "864x1536",
+          "sha256": "3f1d9266fa02fe26e8cb1a86b4042f4e99b90097f873eee587247a3266bd1a62"
+        },
+        {
+          "program": "aria-main",
+          "file": "public/assets/characters/aria/cards/aria-main.jpg",
+          "source": "02-1000239409.png",
+          "dimensions": "864x1536",
+          "sha256": "170888a3b26af1e8f545cc1ff53efe5ac1a40f575b6aacaa6fe28b25ff4df16f"
+        },
+        {
+          "program": "arias-anthem",
+          "file": "public/assets/characters/aria/cards/arias-anthem.jpg",
+          "source": "03-1000239408.png",
+          "dimensions": "864x1536",
+          "sha256": "e19a443f7e59b84c277160214748cd91588a9802ea70868c8454144fe6987683"
+        },
+        {
+          "program": "synthetic-soul",
+          "file": "public/assets/characters/aria/cards/synthetic-soul.jpg",
+          "source": "04-1000239407.png",
+          "dimensions": "864x1536",
+          "sha256": "f6317d92ca48b9a1721aecf92990543578b55aaed93956c7c481b1c09f834717"
+        },
+        {
+          "program": "lyrical-resonance",
+          "file": "public/assets/characters/aria/cards/lyrical-resonance.jpg",
+          "source": "05-1000239401.png",
+          "dimensions": "864x1536",
+          "sha256": "ceb8b0160330fe025f4a6cbfb667f13814ebc645747bc9173fcc55e1b7cde392"
+        },
+        {
+          "program": "code-and-conscience",
+          "file": "public/assets/characters/aria/cards/code-and-conscience.jpg",
+          "source": "06-1000239402.png",
+          "dimensions": "864x1536",
+          "sha256": "09f0a0bed1c30d40ed7fa20a74ebdf1f02d98ed5ee4fd92b978fc705263dd98f"
+        },
+        {
+          "program": "starlight-log",
+          "file": "public/assets/characters/aria/cards/starlight-log.jpg",
+          "source": "07-1000239405.png",
+          "dimensions": "864x1536",
+          "sha256": "b411edfd7026949f0de0809ff22a68ad6fd2977a4a56cd7c5e9ea86d3af43b54"
+        }
+      ],
+      "carousel": [
+        {
+          "order": 1,
+          "file": "public/assets/characters/aria/carousel/01-noir-rain-portrait.jpg",
+          "source": "08-1000239394.png",
+          "dimensions": "864x1536",
+          "sha256": "773aa4f78ca26159d05afb81e90632a2480f74dfcf448b3317a56d9e83d508b6"
+        },
+        {
+          "order": 2,
+          "file": "public/assets/characters/aria/carousel/02-noir-rain-standing.jpg",
+          "source": "09-1000239393.png",
+          "dimensions": "864x1536",
+          "sha256": "bcdb8f5d5f9d52442773e48a085bc4a091db43e83ff4426896de3a462dc7a783"
+        },
+        {
+          "order": 3,
+          "file": "public/assets/characters/aria/carousel/03-noir-window-closeup.jpg",
+          "source": "10-1000239391.png",
+          "dimensions": "864x1536",
+          "sha256": "ab8c9fb4ea239ea6f650afe5d58cffd4354d4c5076b87ba7c017c7f809fe8e7b"
+        },
+        {
+          "order": 4,
+          "file": "public/assets/characters/aria/carousel/04-purple-braid-train-window.jpg",
+          "source": "02-1000239392.png",
+          "dimensions": "864x1536",
+          "sha256": "cafb139842858927f00fe74bff5028fb56a132bbd378aff586b21c174f32642e"
+        },
+        {
+          "order": 5,
+          "file": "public/assets/characters/aria/carousel/05-lavender-braid-train.jpg",
+          "source": "03-1000239390.png",
+          "dimensions": "864x1536",
+          "sha256": "aaae4a7a86c068bf19985fae869831826d71da16ba0e56e7c090b07154cf0ec3"
+        },
+        {
+          "order": 6,
+          "file": "public/assets/characters/aria/carousel/06-lavender-sunset-mountains.jpg",
+          "source": "04-1000239386.png",
+          "dimensions": "864x1536",
+          "sha256": "375fb6cf0f6a74f661b03e6f074e4118493e5106cf0697e17b97bf826fda7d7c"
+        },
+        {
+          "order": 7,
+          "file": "public/assets/characters/aria/carousel/07-cyber-noir-led-city.jpg",
+          "source": "05-1000239387.png",
+          "dimensions": "864x1536",
+          "sha256": "7871435d1b7da4574479a1f78619012fea87c93f4451877609aad120b9dc1f09"
+        },
+        {
+          "order": 8,
+          "file": "public/assets/characters/aria/carousel/08-silver-cyber-grid-seated.jpg",
+          "source": "06-1000239388.png",
+          "dimensions": "864x1536",
+          "sha256": "9098ff6eab22e437889f787108c9b80df59f6f1bd5f47ef16eb29171f24473c9"
+        },
+        {
+          "order": 9,
+          "file": "public/assets/characters/aria/carousel/09-silver-cyber-grid-standing.jpg",
+          "source": "07-1000239389.png",
+          "dimensions": "864x1536",
+          "sha256": "1baf0969b9fcb599279189d1fc43994f21fa683a89fab54679b7a36285f52f73"
+        }
+      ]
+    },
+    "joziel": {
+      "cards": [
+        {
+          "program": "joziels-grimoire",
+          "file": "public/assets/characters/joziel/cards/joziels-grimoire.jpg",
+          "source": "02-1000239351.png",
+          "dimensions": "864x1536",
+          "sha256": "a0ac6186e49fe4acf72a1321127563b16672242ce9df80526444b64d0fc3ca34"
+        },
+        {
+          "program": "midnight-mantras",
+          "file": "public/assets/characters/joziel/cards/midnight-mantras.jpg",
+          "source": "03-1000239349.png",
+          "dimensions": "864x1536",
+          "sha256": "9a89baf058975f6b85e0a374bebf61f2a05530c2842c013dbe59698098a168e9"
+        },
+        {
+          "program": "shadow-files",
+          "file": "public/assets/characters/joziel/cards/shadow-files.jpg",
+          "source": "04-1000239347.png",
+          "dimensions": "864x1536",
+          "sha256": "ad2f1fdca2aaa942f6848ebc8e24ab1f0854deb235ac333ef1f94c3870f1f699"
+        },
+        {
+          "program": "sonic-autopsy",
+          "file": "public/assets/characters/joziel/cards/sonic-autopsy.jpg",
+          "source": "05-1000239350.png",
+          "dimensions": "864x1536",
+          "sha256": "6bb215f10b49cf9df2e2f179d0ecbc026febb0ef75b3432745d80c34cadc56e9"
+        },
+        {
+          "program": "dark-siren",
+          "file": "public/assets/characters/joziel/cards/dark-siren.jpg",
+          "source": "06-1000239348.png",
+          "dimensions": "864x1536",
+          "sha256": "613cbb1eefa73fc40261af56654130af25b722552bffe86eb72ae46585750401"
+        },
+        {
+          "program": "lumenfall",
+          "file": "public/assets/characters/joziel/cards/lumenfall.jpg",
+          "source": "08-1000239343.png",
+          "dimensions": "864x1536",
+          "sha256": "3c4f544b8c259a10800d31fbf9b47f9a0de7225ea4cd82103ae07b10ccb6fc4f"
+        }
+      ],
+      "carousel": [
+        {
+          "order": 1,
+          "file": "public/assets/characters/joziel/carousel/01-tattooed-studio-portrait.jpg",
+          "source": "01-1000239368.png",
+          "dimensions": "1024x1536",
+          "sha256": "fdbb5d0469424dea3f900d3b0a4f896197c48036475f645b24893a67655950d7"
+        },
+        {
+          "order": 2,
+          "file": "public/assets/characters/joziel/carousel/02-rainy-forest-crouch.jpg",
+          "source": "02-1000239367.png",
+          "dimensions": "1024x1536",
+          "sha256": "7d4fb77accb9aa280e0866c50ae0a930b92fbb78866874d7c0efaadf50ea8724"
+        },
+        {
+          "order": 3,
+          "file": "public/assets/characters/joziel/carousel/03-moonlit-hooded-walk.jpg",
+          "source": "03-1000239366.png",
+          "dimensions": "864x1536",
+          "sha256": "6b0ddd96ca5563bb2dba30dc15897b9255ee71d261c59895a0fbe549b0bdfcba"
+        },
+        {
+          "order": 4,
+          "file": "public/assets/characters/joziel/carousel/04-snowy-window-seat.jpg",
+          "source": "04-1000239364.png",
+          "dimensions": "864x1536",
+          "sha256": "be9bf59e4fbd85238a8ec4721db6ac6e55f9d0f3698644867b0deaa86a21ddb6"
+        },
+        {
+          "order": 5,
+          "file": "public/assets/characters/joziel/carousel/05-graveyard-witch-walk.jpg",
+          "source": "05-1000239365.png",
+          "dimensions": "864x1536",
+          "sha256": "1bd7cf207afb7a4002cd05dfda3e1deb4c4a7e67d69160518e2ace0373ee3dec"
+        },
+        {
+          "order": 6,
+          "file": "public/assets/characters/joziel/carousel/06-graveyard-witch-profile.jpg",
+          "source": "06-1000239358.png",
+          "dimensions": "864x1536",
+          "sha256": "9439967de29762ba8523045332654676a215d434e2e09479c0f6d4708c93fef9"
+        },
+        {
+          "order": 7,
+          "file": "public/assets/characters/joziel/carousel/07-moonlit-hooded-portrait.jpg",
+          "source": "07-1000239359.png",
+          "dimensions": "864x1536",
+          "sha256": "5313f7b9ce2658bf1feb3d4adad0a9d8e836727200b00d41567a36d8bc3a703f"
+        },
+        {
+          "order": 8,
+          "file": "public/assets/characters/joziel/carousel/08-moonlit-hooded-closeup.jpg",
+          "source": "08-1000239356.png",
+          "dimensions": "864x1536",
+          "sha256": "de70513ef88f19fb47a83823025980cfa8178343151de75a45fb031b20d61240"
+        },
+        {
+          "order": 9,
+          "file": "public/assets/characters/joziel/carousel/09-graveyard-witch-fullbody.jpg",
+          "source": "09-1000239353.png",
+          "dimensions": "864x1536",
+          "sha256": "8ca873bf369b383d850248601d270462a68d9c4f8e59de0f69203bc40c868671"
+        },
+        {
+          "order": 10,
+          "file": "public/assets/characters/joziel/carousel/10-snowy-studio-window.jpg",
+          "source": "10-1000239354.png",
+          "dimensions": "864x1536",
+          "sha256": "4ab0e48758577b59510986a94c7d9dd0946052b08e830f65c335dec7be1fcf4b"
+        },
+        {
+          "order": 11,
+          "file": "public/assets/characters/joziel/carousel/11-empty-theater-leather-jacket.jpg",
+          "source": "01-1000239355.png",
+          "dimensions": "864x1536",
+          "sha256": "edbc1e099f7be06148c7b81f4faf6fc0a9bee440e3b477ff775d3eaabd2b8052"
+        },
+        {
+          "order": 12,
+          "file": "public/assets/characters/joziel/carousel/12-lumenfall-wordmark.jpg",
+          "source": "07-1000239344.png",
+          "dimensions": "864x1536",
+          "sha256": "a760ec4314477c876a6827e810263c0559373b321cd451a6fc1996c1ed08af6c"
+        }
+      ]
+    }
+  }
+}
