@@ -223,7 +223,7 @@ export function FuegoHome() {
         {selectedModule && (
           <div
             onClick={handleTouchOutside}
-            style={{ position: 'fixed', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.27)', backdropFilter: 'blur(2px)' }}
           />
         )}
         <div style={{ position: 'relative', width: '100%', height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -239,7 +239,7 @@ export function FuegoHome() {
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'ARIA')}>
-                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/aria-preview.mp4')}
                       autoPlay
@@ -274,7 +274,7 @@ export function FuegoHome() {
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'JOZIEL')}>
-                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/joziel-preview.mp4')}
                       autoPlay
@@ -309,7 +309,7 @@ export function FuegoHome() {
                 style={{ position: 'absolute' }}
               >
                 <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'NAYLA')}>
-                  <div className="bubble-video-container" style={{ opacity: 0.6, transition: 'opacity 0.5s ease' }}>
+                  <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video
                       src={mediaUrl('fuego/botones/nayla-preview.mp4')}
                       autoPlay
