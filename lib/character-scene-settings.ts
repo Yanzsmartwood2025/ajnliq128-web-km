@@ -1,5 +1,6 @@
 import type { Character } from '@/lib/character-assets'
 
+// Per-character visual controls. Values are persisted independently for ARIA and JOZIEL.
 export type HubBackgroundTransition = 'auto' | 'zoom' | 'drift' | 'focus' | 'fade'
 
 export interface CharacterSceneSettings {
