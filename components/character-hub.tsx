@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ProgramLauncher } from './program-launcher'
 import { CharacterAssetPreloader } from './character-asset-preloader'
 import { CharacterMenu } from './character-menu'
@@ -14,6 +14,12 @@ import {
   getCharacterFallbackPhoto,
   type Character,
 } from '@/lib/character-assets'
+import {
+  DEFAULT_CHARACTER_SCENE_SETTINGS,
+  characterSceneStorageKey,
+  normalizeCharacterSceneSettings,
+  type CharacterSceneSettings,
+} from '@/lib/character-scene-settings'
 
 export function CharacterHub({
   character,
@@ -40,6 +46,7 @@ export function CharacterHub({
     current: backgrounds[0],
     version: 0,
   })
+  const [sceneSettings, setSceneSettings] = useState<CharacterSceneSettings>({ ...DEFAULT_CHARACTER_SCENE_SETTINGS })
 
   useEffect(() => {
     onShowCompleteRef.current = onShowComplete
@@ -50,6 +57,28 @@ export function CharacterHub({
     setBackgroundIndex(0)
     setBackgroundLayers({ previous: backgrounds[0], current: backgrounds[0], version: 0 })
   }, [backgrounds, character])
+
+  useEffect(() => {
+    if (showMode) {
+      setSceneSettings({ ...DEFAULT_CHARACTER_SCENE_SETTINGS })
+      return
+    }
+
+    try {
+      const saved = localStorage.getItem(characterSceneStorageKey(character))
+      setSceneSettings(normalizeCharacterSceneSettings(saved ? JSON.parse(saved) : null))
+    } catch {
+      setSceneSettings({ ...DEFAULT_CHARACTER_SCENE_SETTINGS })
+    }
+  }, [character, showMode])
+
+  const updateSceneSettings = useCallback((next: CharacterSceneSettings) => {
+    const normalized = normalizeCharacterSceneSettings(next)
+    setSceneSettings(normalized)
+    if (!showMode) {
+      localStorage.setItem(characterSceneStorageKey(character), JSON.stringify(normalized))
+    }
+  }, [character, showMode])
 
   const criticalAssets = useMemo(
     () => [...getCharacterCardSources(character), ...backgrounds.slice(0, 2)],
@@ -76,7 +105,7 @@ export function CharacterHub({
       if (document.visibilityState !== 'visible') return
       interval = window.setInterval(() => {
         setBackgroundIndex((current) => (current + 1) % backgrounds.length)
-      }, 5_000)
+      }, sceneSettings.backgroundInterval * 1000)
     }
 
     const onVisibilityChange = () => {
@@ -91,7 +120,7 @@ export function CharacterHub({
       stop()
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [assetsReady, backgrounds.length, character])
+  }, [assetsReady, backgrounds.length, character, sceneSettings.backgroundInterval])
 
   const activeBackgroundUrl = backgrounds[backgroundIndex % backgrounds.length]
 
@@ -224,8 +253,30 @@ export function CharacterHub({
     }
   }, [assetsReady, character, showDurationMs, showMode])
 
+  const backgroundEffectClass = useMemo(() => {
+    if (sceneSettings.backgroundTransition === 'auto') {
+      return ['hub-bg-effect-zoom', 'hub-bg-effect-drift', 'hub-bg-effect-focus'][backgroundLayers.version % 3]
+    }
+    return `hub-bg-effect-${sceneSettings.backgroundTransition}`
+  }, [backgroundLayers.version, sceneSettings.backgroundTransition])
+
+  const stageStyle = {
+    '--hub-social-lift': `${sceneSettings.socialLift}px`,
+    '--hub-fog-offset': `${sceneSettings.fogOffset}dvh`,
+    '--hub-fog-opacity': String(sceneSettings.fogIntensity),
+    '--hub-fog-drift-a': `${13 / sceneSettings.fogSpeed}s`,
+    '--hub-fog-drift-b': `${17 / sceneSettings.fogSpeed}s`,
+    '--hub-fog-color-a': `${17 / sceneSettings.fogColorSpeed}s`,
+    '--hub-fog-color-b': `${21 / sceneSettings.fogColorSpeed}s`,
+    '--hub-bg-transition-duration': `${sceneSettings.backgroundTransitionDuration}s`,
+  } as CSSProperties
+
   return (
-    <main className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}>
+    <main
+      className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}
+      style={stageStyle}
+      data-fog-color-cycle={sceneSettings.fogColorCycle ? 'on' : 'off'}
+    >
       <CharacterAssetPreloader
         critical={criticalAssets}
         deferred={deferredAssets}
@@ -239,13 +290,19 @@ export function CharacterHub({
       />
       <div
         key={`${backgroundLayers.version}:${backgroundLayers.current}`}
-        className={`hub-carousel-bg is-current hub-bg-effect-${backgroundLayers.version % 3}`}
+        className={`hub-carousel-bg is-current ${backgroundEffectClass}`}
         aria-hidden="true"
         style={{ backgroundImage: `url(${backgroundLayers.current})` }}
       />
       <div className="hub-video-wash" aria-hidden="true" />
 
-      {!showMode && <CharacterMenu />}
+      {!showMode && (
+        <CharacterMenu
+          character={character}
+          sceneSettings={sceneSettings}
+          onSceneSettingsChange={updateSceneSettings}
+        />
+      )}
 
       {showMode && <div className="show-camera-vignette" aria-hidden="true" />}
 
