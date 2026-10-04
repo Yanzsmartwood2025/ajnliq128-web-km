@@ -1,64 +1,19 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ProgramLauncher } from './program-launcher'
+import { CharacterAssetPreloader } from './character-asset-preloader'
+import { CharacterMenu } from './character-menu'
+import { SocialDock } from './social-dock'
 import { slugifyProgram } from '@/lib/module-flags'
-import { useAuth } from '@/lib/auth-context'
-
-const programs = {
-  aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance', 'arIA'],
-  joziel: ['Midnight Mantras', 'Dark Siren', 'Night Strategy', 'Sonic Autopsy', 'Shadow Files', "Joziel's Grimoire", 'Lumenfall'],
-}
-
-const programCardImages: Record<'aria' | 'joziel', Record<string, string>> = {
-  aria: {
-    'arias-anthem': '/assets/characters/aria/cards/arias-anthem.jpg',
-    'synthetic-soul': '/assets/characters/aria/cards/synthetic-soul.jpg',
-    'starlight-log': '/assets/characters/aria/cards/starlight-log.jpg',
-    'code-and-conscience': '/assets/characters/aria/cards/code-and-conscience.jpg',
-    'real-world-quests': '/assets/characters/aria/cards/real-world-quests.jpg',
-    'lyrical-resonance': '/assets/characters/aria/cards/lyrical-resonance.jpg',
-    aria: '/assets/characters/aria/cards/aria-main.jpg',
-  },
-  joziel: {
-    'midnight-mantras': '/assets/characters/joziel/cards/midnight-mantras.jpg',
-    'dark-siren': '/assets/characters/joziel/cards/dark-siren.jpg',
-    'night-strategy': '/assets/characters/joziel/cards/night-strategy.png',
-    'sonic-autopsy': '/assets/characters/joziel/cards/sonic-autopsy.jpg',
-    'shadow-files': '/assets/characters/joziel/cards/shadow-files.jpg',
-    'joziels-grimoire': '/assets/characters/joziel/cards/joziels-grimoire.jpg',
-    lumenfall: '/assets/characters/joziel/cards/lumenfall.jpg',
-  },
-}
-
-const characterBackgrounds: Record<'aria' | 'joziel', string[]> = {
-  aria: [
-    '/assets/characters/aria/carousel/01-noir-rain-portrait.jpg',
-    '/assets/characters/aria/carousel/02-noir-rain-standing.jpg',
-    '/assets/characters/aria/carousel/03-noir-window-closeup.jpg',
-    '/assets/characters/aria/carousel/04-purple-braid-train-window.jpg',
-    '/assets/characters/aria/carousel/05-lavender-braid-train.jpg',
-    '/assets/characters/aria/carousel/06-lavender-sunset-mountains.jpg',
-    '/assets/characters/aria/carousel/07-cyber-noir-led-city.jpg',
-    '/assets/characters/aria/carousel/08-silver-cyber-grid-seated.jpg',
-    '/assets/characters/aria/carousel/09-silver-cyber-grid-standing.jpg',
-  ],
-  joziel: [
-    '/assets/characters/joziel/carousel/01-tattooed-studio-portrait.jpg',
-    '/assets/characters/joziel/carousel/02-rainy-forest-crouch.jpg',
-    '/assets/characters/joziel/carousel/03-moonlit-hooded-walk.jpg',
-    '/assets/characters/joziel/carousel/04-snowy-window-seat.jpg',
-    '/assets/characters/joziel/carousel/05-graveyard-witch-walk.jpg',
-    '/assets/characters/joziel/carousel/06-graveyard-witch-profile.jpg',
-    '/assets/characters/joziel/carousel/07-moonlit-hooded-portrait.jpg',
-    '/assets/characters/joziel/carousel/08-moonlit-hooded-closeup.jpg',
-    '/assets/characters/joziel/carousel/09-graveyard-witch-fullbody.jpg',
-    '/assets/characters/joziel/carousel/10-snowy-studio-window.jpg',
-    '/assets/characters/joziel/carousel/11-empty-theater-leather-jacket.jpg',
-    '/assets/characters/joziel/carousel/12-lumenfall-wordmark.jpg',
-  ],
-}
+import {
+  CHARACTER_BACKGROUNDS,
+  CHARACTER_CARD_IMAGES,
+  CHARACTER_PROGRAMS,
+  getCharacterCardSources,
+  getCharacterFallbackPhoto,
+  type Character,
+} from '@/lib/character-assets'
 
 export function CharacterHub({
   character,
@@ -66,37 +21,93 @@ export function CharacterHub({
   showDurationMs = 54_000,
   onShowComplete,
 }: {
-  character: 'aria' | 'joziel'
+  character: Character
   showMode?: boolean
   showDurationMs?: number
   onShowComplete?: () => void
 }) {
   const isAria = character === 'aria'
-  const backgrounds = characterBackgrounds[character]
-  const [backgroundIndex, setBackgroundIndex] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const programs = CHARACTER_PROGRAMS[character]
+  const backgrounds = CHARACTER_BACKGROUNDS[character]
+  const fallbackPhoto = getCharacterFallbackPhoto(character)
   const gridRef = useRef<HTMLDivElement>(null)
-  const { user, loading: authLoading } = useAuth()
-  const usesGoogle = Boolean(user?.providerData?.some((provider) => provider.providerId === 'google.com'))
+  const onShowCompleteRef = useRef(onShowComplete)
+
+  const [assetsReady, setAssetsReady] = useState(false)
+  const [backgroundIndex, setBackgroundIndex] = useState(0)
+  const [backgroundLayers, setBackgroundLayers] = useState({
+    previous: backgrounds[0],
+    current: backgrounds[0],
+    version: 0,
+  })
 
   useEffect(() => {
+    onShowCompleteRef.current = onShowComplete
+  }, [onShowComplete])
+
+  useEffect(() => {
+    setAssetsReady(false)
     setBackgroundIndex(0)
-  }, [character])
+    setBackgroundLayers({ previous: backgrounds[0], current: backgrounds[0], version: 0 })
+  }, [backgrounds, character])
+
+  const criticalAssets = useMemo(
+    () => [...getCharacterCardSources(character), ...backgrounds.slice(0, 2)],
+    [backgrounds, character],
+  )
+  const deferredAssets = useMemo(() => backgrounds.slice(2), [backgrounds])
+  const markAssetsReady = useCallback(() => setAssetsReady(true), [])
 
   useEffect(() => {
-    if (backgrounds.length < 2) return
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReducedMotion) return
+    if (!assetsReady || backgrounds.length < 2) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    const interval = window.setInterval(() => {
-      setBackgroundIndex((current) => (current + 1) % backgrounds.length)
-    }, 5_000)
+    let interval: number | null = null
 
-    return () => window.clearInterval(interval)
-  }, [backgrounds.length, character])
+    const stop = () => {
+      if (interval !== null) {
+        window.clearInterval(interval)
+        interval = null
+      }
+    }
+
+    const start = () => {
+      stop()
+      if (document.visibilityState !== 'visible') return
+      interval = window.setInterval(() => {
+        setBackgroundIndex((current) => (current + 1) % backgrounds.length)
+      }, 5_000)
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') start()
+      else stop()
+    }
+
+    start()
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [assetsReady, backgrounds.length, character])
+
+  const activeBackgroundUrl = backgrounds[backgroundIndex % backgrounds.length]
 
   useEffect(() => {
-    if (showMode) return
+    setBackgroundLayers((layers) => {
+      if (layers.current === activeBackgroundUrl) return layers
+      return {
+        previous: layers.current,
+        current: activeBackgroundUrl,
+        version: layers.version + 1,
+      }
+    })
+  }, [activeBackgroundUrl])
+
+  useEffect(() => {
+    if (showMode || !assetsReady) return
     const grid = gridRef.current
     if (!grid) return
 
@@ -147,9 +158,9 @@ export function CharacterHub({
       grid.removeEventListener('pointercancel', stopDrag)
       window.removeEventListener('resize', requestDepthUpdate)
     }
-  }, [character, showMode])
+  }, [assetsReady, character, showMode])
 
-  const centerProgram = (el: HTMLElement) => {
+  const centerProgram = useCallback((el: HTMLElement) => {
     const grid = gridRef.current
     if (!grid) return
 
@@ -157,10 +168,10 @@ export function CharacterHub({
     const gridRect = grid.getBoundingClientRect()
     const centerOffset = elRect.left - gridRect.left - (gridRect.width / 2) + (elRect.width / 2)
     grid.scrollBy({ left: centerOffset, behavior: 'smooth' })
-  }
+  }, [])
 
   useEffect(() => {
-    if (!showMode) return
+    if (!showMode || !assetsReady) return
     const grid = gridRef.current
     if (!grid) return
 
@@ -202,7 +213,7 @@ export function CharacterHub({
 
     finishTimer = window.setTimeout(() => {
       cards.forEach((item) => item.classList.remove('is-show-focus'))
-      onShowComplete?.()
+      onShowCompleteRef.current?.()
     }, showDurationMs)
 
     return () => {
@@ -211,32 +222,16 @@ export function CharacterHub({
       if (interval) window.clearInterval(interval)
       cards.forEach((item) => item.classList.remove('is-show-focus'))
     }
-  }, [character, onShowComplete, showDurationMs, showMode])
-
-  const activeBackgroundUrl = backgrounds[backgroundIndex % backgrounds.length]
-  const [backgroundLayers, setBackgroundLayers] = useState({
-    previous: backgrounds[0],
-    current: backgrounds[0],
-    version: 0,
-  })
-
-  useEffect(() => {
-    setBackgroundLayers((layers) => {
-      if (layers.current === activeBackgroundUrl) return layers
-      return {
-        previous: layers.current,
-        current: activeBackgroundUrl,
-        version: layers.version + 1,
-      }
-    })
-  }, [activeBackgroundUrl])
-
-  const fallbackPhoto = isAria
-    ? '/assets/characters/aria/cards/aria-main.jpg'
-    : '/assets/characters/joziel/cards/lumenfall.jpg'
+  }, [assetsReady, character, showDurationMs, showMode])
 
   return (
     <main className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}>
+      <CharacterAssetPreloader
+        critical={criticalAssets}
+        deferred={deferredAssets}
+        onCriticalReady={markAssetsReady}
+      />
+
       <div
         className="hub-carousel-bg is-previous"
         aria-hidden="true"
@@ -250,93 +245,18 @@ export function CharacterHub({
       />
       <div className="hub-video-wash" aria-hidden="true" />
 
-      {!showMode && (
-        <header className="hub-header hub-header-clean">
-          <button
-            type="button"
-            className="fuego-menu-button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-expanded={menuOpen}
-            aria-label="Abrir opciones"
-          >
-            <img src="/assets/home/fuego.png" alt="" aria-hidden="true" />
-          </button>
-        </header>
-      )}
-
-      {!showMode && menuOpen && (
-        <>
-          <button className="hub-menu-scrim" type="button" aria-label="Cerrar opciones" onClick={() => setMenuOpen(false)} />
-          <aside className="hub-menu hub-menu-crystal" aria-label="Opciones">
-            <div className="hub-menu-brand" aria-hidden="true">
-              <img src="/assets/home/fuego.png" alt="" />
-            </div>
-
-            <div
-              aria-live="polite"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '.7rem',
-                margin: '.2rem 0 .55rem',
-                padding: '.72rem .78rem',
-                border: '1px solid rgba(255,255,255,.14)',
-                borderRadius: '.9rem',
-                background: 'rgba(255,255,255,.055)',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08)',
-                overflow: 'hidden'
-              }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  flex: '0 0 auto',
-                  width: '1.9rem',
-                  height: '1.9rem',
-                  display: 'grid',
-                  placeItems: 'center',
-                  borderRadius: '999px',
-                  background: 'rgba(255,255,255,.1)'
-                }}
-              >
-                {usesGoogle ? (
-                  <svg viewBox="0 0 24 24" style={{ width: '1.15rem', height: '1.15rem' }}>
-                    <path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.44h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/>
-                    <path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.44c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.52A9.74 9.74 0 0 0 12 21.6Z"/>
-                    <path fill="#FBBC05" d="M6.54 13.69a5.86 5.86 0 0 1 0-3.38V7.79H3.3a9.76 9.76 0 0 0 0 8.42l3.24-2.52Z"/>
-                    <path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.27 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.39l3.24 2.52c.77-2.31 2.92-4.03 5.46-4.03Z"/>
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" style={{ width: '1.15rem', height: '1.15rem', fill: 'none', stroke: 'white', strokeWidth: 1.6 }}>
-                    <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
-                    <path d="m4.5 7 7.5 5.7L19.5 7" />
-                  </svg>
-                )}
-              </span>
-              <span style={{ minWidth: 0, display: 'grid', gap: '.15rem' }}>
-                <strong style={{ fontSize: '.72rem', fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
-                  {authLoading ? 'Comprobando sesión…' : user ? 'Sesión activa' : 'Sin sesión activa'}
-                </strong>
-                {!authLoading && user?.email && (
-                  <span style={{ fontSize: '.68rem', color: 'rgba(255,255,255,.68)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {user.email}
-                  </span>
-                )}
-              </span>
-            </div>
-
-            <Link href="/?skipIntro=1">Inicio</Link>
-            <button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button>
-          </aside>
-        </>
-      )}
+      {!showMode && <CharacterMenu />}
 
       {showMode && <div className="show-camera-vignette" aria-hidden="true" />}
 
-      <div className={`program-grid${showMode ? ' is-show-tour' : ''}`} ref={gridRef}>
-        {programs[character].map((program, index) => {
+      <div
+        className={`program-grid${showMode ? ' is-show-tour' : ''}${assetsReady ? ' is-assets-ready' : ''}`}
+        ref={gridRef}
+        aria-busy={!assetsReady}
+      >
+        {programs.map((program, index) => {
           const slug = slugifyProgram(program)
-          const photoUrl = programCardImages[character][slug] ?? fallbackPhoto
+          const photoUrl = CHARACTER_CARD_IMAGES[character][slug] ?? fallbackPhoto
 
           return (
             <ProgramLauncher
@@ -361,6 +281,8 @@ export function CharacterHub({
           )
         })}
       </div>
+
+      {!showMode && <SocialDock character={character} />}
     </main>
   )
 }

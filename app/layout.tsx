@@ -2,9 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import './hub-clean.css'
-import './social-icons.css'
 import { PwaUpdater } from '@/components/PwaUpdater'
-import { UserPhotoBridge } from '@/components/UserPhotoBridge'
 import { Toaster } from '@/components/ui/toast'
 import { AuthProvider } from '@/lib/auth-context'
 
@@ -28,18 +26,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      {
-        url: '/icon-32x32.png',
-        sizes: '32x32',
-      },
-      {
-        url: '/icon-192x192.png',
-        sizes: '192x192',
-      },
-      {
-        url: '/icon-512x512.png',
-        sizes: '512x512',
-      }
+      { url: '/icon-32x32.png', sizes: '32x32' },
+      { url: '/icon-192x192.png', sizes: '192x192' },
+      { url: '/icon-512x512.png', sizes: '512x512' },
     ],
     apple: '/apple-icon.png',
   },
@@ -53,19 +42,12 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
       <body className="antialiased bg-transparent">
         <AuthProvider>
-          <UserPhotoBridge />
-          <Toaster>
-            {children}
-          </Toaster>
+          <Toaster>{children}</Toaster>
           <PwaUpdater />
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </AuthProvider>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,17 +13,16 @@ import dynamic from 'next/dynamic'
 
 const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
 
+type HomeModule = 'ARIA' | 'JOZIEL' | 'NAYLA'
+
 export function FuegoHome() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [splash, setSplash] = useState(() => searchParams.get('skipIntro') !== '1')
-  const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
+  const [selectedModule, setSelectedModule] = useState<HomeModule | null>(null)
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const { user } = useAuth()
-
-  const ariaAudioRef = useRef<HTMLAudioElement>(null)
-  const jozielAudioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
     if (searchParams.get('skipIntro') !== '1' || typeof window === 'undefined') return
@@ -45,109 +44,67 @@ export function FuegoHome() {
   }, [searchParams, user])
 
   useEffect(() => {
-    if (user && typeof window !== 'undefined') {
-      const pendingRedirect = localStorage.getItem('pendingEditorRedirect')
-      if (pendingRedirect) {
-        localStorage.removeItem('pendingEditorRedirect')
+    if (!user || typeof window === 'undefined') return
 
-        const getAuthTokenAndRedirect = async () => {
-          try {
-            const idToken = await user.getIdToken()
-            const res = await fetch('/api/auth/token', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${idToken}`
-              }
-            })
-            if (res.ok) {
-              const data = await res.json()
-              if (data.customToken) {
-                const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app'
-                window.location.href = `${editorUrl}/#authToken=${data.customToken}`
-              }
-            }
-          } catch (e) {
-            console.error('Error in pending redirect:', e)
-          }
-        }
+    const pendingRedirect = localStorage.getItem('pendingEditorRedirect')
+    if (!pendingRedirect) return
+    localStorage.removeItem('pendingEditorRedirect')
 
-        getAuthTokenAndRedirect()
+    const getAuthTokenAndRedirect = async () => {
+      try {
+        const idToken = await user.getIdToken()
+        const res = await fetch('/api/auth/token', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idToken}` },
+        })
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (!data.customToken) return
+
+        const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app'
+        window.location.href = `${editorUrl}/#authToken=${data.customToken}`
+      } catch (error) {
+        console.error('Error in pending redirect:', error)
       }
     }
+
+    void getAuthTokenAndRedirect()
   }, [user])
 
   useEffect(() => {
     if (!splash) return
-    const timer = window.setTimeout(() => {
-      setSplash(false)
-    }, 6000)
+    const timer = window.setTimeout(() => setSplash(false), 6000)
     return () => window.clearTimeout(timer)
   }, [splash])
 
-  const handleSplashVideoEnded = () => {
-    setSplash(false)
-  }
-
-  const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
-    e.stopPropagation()
-    if (selectedModule === module) {
-      enterModule(module)
-    } else {
-      setSelectedModule(module)
-      const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
-      if (audio) {
-        audio.currentTime = 0
-        audio.volume = 1
-        audio.play().catch(e => console.error('Audio play failed', e))
-      }
-    }
-  }
-
-  const enterModule = (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
-    const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
-    if (audio) {
-      let fadeTimer = 0
-      const fadeInterval = setInterval(() => {
-        fadeTimer += 50
-        if (fadeTimer >= 1500 && audio.volume > 0.1) {
-          audio.volume -= 0.1
-        } else if (fadeTimer >= 2000) {
-          audio.volume = 0
-          clearInterval(fadeInterval)
-        }
-      }, 50)
-    }
-
+  const enterModule = useCallback((module: HomeModule) => {
     window.setTimeout(() => {
-      if (audio) {
-        audio.pause()
-        audio.currentTime = 0
-      }
-      router.push(module === 'ARIA' ? '/aria' : (module === 'JOZIEL' ? '/joziel' : '/nayla'))
-    }, 2000)
-  }
+      router.push(module === 'ARIA' ? '/aria' : module === 'JOZIEL' ? '/joziel' : '/nayla')
+    }, 900)
+  }, [router])
 
-  const handleTouchOutside = () => {
-    if (selectedModule) {
-      setSelectedModule(null)
-      const ariaAudio = ariaAudioRef.current
-      const jozielAudio = jozielAudioRef.current
-      if (ariaAudio) {
-        ariaAudio.pause()
-        ariaAudio.currentTime = 0
+  const handleModuleSelect = useCallback((module: HomeModule) => {
+    setSelectedModule((current) => {
+      if (current === module) {
+        enterModule(module)
+        return current
       }
-      if (jozielAudio) {
-        jozielAudio.pause()
-        jozielAudio.currentTime = 0
-      }
-    }
-  }
+      return module
+    })
+  }, [enterModule])
+
+  const handleFocusedBubbleClick = useCallback((event: React.MouseEvent, module: HomeModule) => {
+    event.stopPropagation()
+    handleModuleSelect(module)
+  }, [handleModuleSelect])
+
+  const handleTouchOutside = useCallback(() => {
+    setSelectedModule(null)
+  }, [])
 
   return (
     <main className={`home ${splash ? 'is-splashing' : 'is-ready'} ${selectedModule ? 'is-transitioning' : ''}`}>
-      <audio ref={ariaAudioRef} src="/audio/aria.mp3" preload="auto" />
-      <audio ref={jozielAudioRef} src="/audio/joziel.mp3" preload="auto" />
-
       {splash && (
         <section className="splash" aria-label="Fuego" style={{ backgroundColor: 'black', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <video
@@ -155,7 +112,7 @@ export function FuegoHome() {
             autoPlay
             muted
             playsInline
-            onEnded={handleSplashVideoEnded}
+            onEnded={() => setSplash(false)}
             style={{ width: '100%', maxWidth: '400px', height: 'auto', objectFit: 'contain' }}
           />
         </section>
@@ -183,11 +140,11 @@ export function FuegoHome() {
                   backdropFilter: 'blur(20px) saturate(135%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(135%)',
                   boxShadow: '0 12px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.3)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
               >
                 {user.photoURL ? (
-                  <img src={user.photoURL} alt="Perfil" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={user.photoURL} alt="Perfil" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   <svg viewBox="0 0 24 24" aria-hidden="true" style={{ width: '1.35rem', height: '1.35rem', fill: 'none', stroke: 'white', strokeWidth: '1.5' }}>
                     <circle cx="12" cy="8" r="3.25" />
@@ -210,7 +167,7 @@ export function FuegoHome() {
             objectFit: 'contain',
             display: 'block',
             position: 'relative',
-            zIndex: 4
+            zIndex: 4,
           }}
         />
 
@@ -229,7 +186,7 @@ export function FuegoHome() {
                 placeItems: 'center',
                 background: 'rgba(0,0,0,0.4)',
                 backdropFilter: 'blur(4px)',
-                padding: '1.25rem'
+                padding: '1.25rem',
               }}
             >
               <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
@@ -239,7 +196,7 @@ export function FuegoHome() {
                     setShowAuthModal(null)
                     localStorage.removeItem('pendingEditorRedirect')
                   }}
-                  onSwitchMode={(mode) => setShowAuthModal(mode)}
+                  onSwitchMode={setShowAuthModal}
                 />
               </div>
             </motion.div>
@@ -264,20 +221,9 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'ARIA')}>
+                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'ARIA')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
-                    <video
-                      src={mediaUrl('fuego/botones/aria-preview.mp4')}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="bubble-video"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = '/placeholder-video-1.mp4'
-                      }}
-                    />
+                    <video src={mediaUrl('fuego/botones/aria-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
                     <img src={mediaUrl('aria/imagenes/aria-logo.png')} alt="Aria logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
@@ -295,20 +241,9 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'JOZIEL')}>
+                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'JOZIEL')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
-                    <video
-                      src={mediaUrl('fuego/botones/joziel-preview.mp4')}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="bubble-video"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = '/placeholder-video-2.mp4'
-                      }}
-                    />
+                    <video src={mediaUrl('fuego/botones/joziel-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', paddingBottom: '28%', zIndex: 20 }}>
                     <img src={mediaUrl('joziel/imagenes/joziel-logo.png')} alt="Joziel logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
@@ -326,20 +261,9 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(e) => handleBubbleClick(e, 'NAYLA')}>
+                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'NAYLA')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
-                    <video
-                      src={mediaUrl('fuego/botones/nayla-preview.mp4')}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="bubble-video"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = '/placeholder-video-3.mp4'
-                      }}
-                    />
+                    <video src={mediaUrl('fuego/botones/nayla-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
                     <img src={mediaUrl('nayla/imagenes/nayla-logo.png')} alt="Nayla logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
@@ -349,13 +273,7 @@ export function FuegoHome() {
             )}
           </AnimatePresence>
 
-          {!selectedModule && (
-            <PhysicsBubbles
-              onSelectModule={(module) => {
-                handleBubbleClick({ stopPropagation: () => {} } as any, module)
-              }}
-            />
-          )}
+          {!selectedModule && <PhysicsBubbles onSelectModule={handleModuleSelect} />}
         </div>
       </section>
     </main>

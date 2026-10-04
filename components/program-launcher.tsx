@@ -55,7 +55,8 @@ export function ProgramLauncher({
           <img
             src={visiblePhoto}
             alt=""
-            loading={showMode ? 'eager' : 'lazy'}
+            loading="eager"
+            fetchPriority={index < 3 ? 'high' : 'auto'}
             decoding="async"
             onError={() => {
               if (!photoFailed && fallbackPhoto) setPhotoFailed(true)

@@ -2,10 +2,15 @@
   "name": "my-project",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
+    "predev": "node scripts/prepare-assets.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check:assets": "node scripts/check-assets.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
