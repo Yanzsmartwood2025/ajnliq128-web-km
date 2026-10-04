@@ -4,26 +4,29 @@
   content: '';
   position: fixed;
   left: 50%;
-  bottom: calc(.7rem + env(safe-area-inset-bottom));
-  z-index: 6;
-  width: min(360px, calc(100vw - 1.5rem));
-  height: clamp(3.5rem, 8svh, 4.25rem);
+  bottom: calc(.35rem + env(safe-area-inset-bottom));
+  z-index: 8;
+  width: min(352px, calc(100vw - .55rem));
+  height: 5.6rem;
   transform: translateX(-50%);
   pointer-events: none;
   background-repeat: no-repeat;
   background-size:
-    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
-    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
-    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
-    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
-    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem);
+    3.65rem 3.65rem,
+    3.85rem 3.85rem,
+    4.7rem 4.7rem,
+    3.85rem 3.85rem,
+    3.65rem 3.65rem;
   background-position:
-    4% 50%,
-    27% 50%,
-    50% 50%,
-    73% 50%,
-    96% 50%;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.24));
+    8% 62%,
+    29% 57%,
+    50% 25%,
+    71% 57%,
+    92% 62%;
+  filter:
+    drop-shadow(0 9px 20px rgba(0,0,0,.32))
+    drop-shadow(0 0 13px rgba(255,255,255,.16));
+  animation: socialIconBreath 5.4s ease-in-out infinite;
 }
 
 .hub-with-video.hub-aria:not(.hub-show-tour)::after {
@@ -44,11 +47,142 @@
     url('/assets/characters/joziel/social/youtube-blue-flame.png');
 }
 
+@keyframes socialIconBreath {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter:
+      drop-shadow(0 9px 20px rgba(0,0,0,.32))
+      drop-shadow(0 0 12px rgba(255,255,255,.14));
+  }
+  50% {
+    transform: translateX(-50%) translateY(-2px) scale(1.015);
+    filter:
+      drop-shadow(0 11px 23px rgba(0,0,0,.30))
+      drop-shadow(0 0 18px rgba(255,255,255,.22));
+  }
+}
+
+/* Remove the old lower wash/band completely. The fog below replaces it without a hard edge. */
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash {
+  background: transparent !important;
+  overflow: visible !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Full-screen atmospheric fog. It extends outside the viewport so no horizontal clipping line can appear. */
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  content: '';
+  position: absolute;
+  top: -20svh;
+  left: -42vw;
+  right: -42vw;
+  bottom: -30svh;
+  height: auto;
+  pointer-events: none;
+  border: 0;
+  border-radius: 46%;
+  transform-origin: 50% 64%;
+  mix-blend-mode: screen;
+  will-change: transform, opacity, filter;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before {
+  opacity: .74;
+  background:
+    radial-gradient(ellipse at 13% 68%, rgba(255,255,255,.45) 0%, rgba(255,255,255,.13) 24%, transparent 54%),
+    radial-gradient(ellipse at 42% 73%, rgba(var(--program-accent-rgb), .54) 0%, rgba(var(--program-accent-rgb), .16) 31%, transparent 62%),
+    radial-gradient(ellipse at 72% 62%, rgba(var(--program-accent-two-rgb), .48) 0%, rgba(var(--program-accent-two-rgb), .15) 27%, transparent 58%),
+    radial-gradient(ellipse at 91% 78%, rgba(255,255,255,.37) 0%, rgba(255,255,255,.10) 24%, transparent 52%);
+  filter: blur(46px) saturate(132%) brightness(1.08);
+  animation: hubLivingFogA 12s ease-in-out infinite alternate, hubLivingFogColorA 18s ease-in-out infinite alternate;
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+  opacity: .61;
+  background:
+    radial-gradient(ellipse at 24% 76%, rgba(var(--program-accent-two-rgb), .50) 0%, rgba(var(--program-accent-two-rgb), .13) 28%, transparent 58%),
+    radial-gradient(ellipse at 53% 61%, rgba(255,255,255,.50) 0%, rgba(255,255,255,.12) 30%, transparent 62%),
+    radial-gradient(ellipse at 82% 72%, rgba(var(--program-accent-rgb), .47) 0%, rgba(var(--program-accent-rgb), .14) 28%, transparent 58%);
+  filter: blur(62px) saturate(145%) brightness(1.04);
+  animation: hubLivingFogB 16s ease-in-out infinite alternate-reverse, hubLivingFogColorB 22s ease-in-out infinite alternate;
+}
+
+@keyframes hubLivingFogA {
+  0%   { transform: translate3d(-4%, 4%, 0) rotate(-4deg) scale(1.03, .96); opacity: .62; }
+  32%  { transform: translate3d(2%, -2%, 0) rotate(1deg) scale(1.11, 1.03); opacity: .82; }
+  68%  { transform: translate3d(5%, 2%, 0) rotate(4deg) scale(1.05, 1.11); opacity: .70; }
+  100% { transform: translate3d(-1%, -4%, 0) rotate(-1deg) scale(1.13, .99); opacity: .79; }
+}
+
+@keyframes hubLivingFogB {
+  0%   { transform: translate3d(6%, -2%, 0) rotate(5deg) scale(1.08, 1.02); opacity: .50; }
+  38%  { transform: translate3d(-3%, 5%, 0) rotate(-3deg) scale(.99, 1.13); opacity: .70; }
+  72%  { transform: translate3d(-6%, -3%, 0) rotate(-5deg) scale(1.13, 1.01); opacity: .58; }
+  100% { transform: translate3d(2%, 2%, 0) rotate(2deg) scale(1.03, 1.09); opacity: .66; }
+}
+
+@keyframes hubLivingFogColorA {
+  0%   { filter: blur(46px) saturate(118%) hue-rotate(0deg) brightness(1.10); }
+  34%  { filter: blur(51px) saturate(144%) hue-rotate(22deg) brightness(1.00); }
+  68%  { filter: blur(48px) saturate(154%) hue-rotate(48deg) brightness(1.04); }
+  100% { filter: blur(55px) saturate(128%) hue-rotate(-20deg) brightness(1.13); }
+}
+
+@keyframes hubLivingFogColorB {
+  0%   { filter: blur(62px) saturate(122%) hue-rotate(0deg) brightness(1.08); }
+  46%  { filter: blur(68px) saturate(157%) hue-rotate(-38deg) brightness(.99); }
+  100% { filter: blur(64px) saturate(134%) hue-rotate(32deg) brightness(1.12); }
+}
+
 @media (max-width: 600px) {
   .hub-with-video.hub-aria:not(.hub-show-tour)::after,
   .hub-with-video.hub-joziel:not(.hub-show-tour)::after {
-    width: min(345px, calc(100vw - 1rem));
-    bottom: calc(.55rem + env(safe-area-inset-bottom));
+    width: min(348px, calc(100vw - .4rem));
+    height: 5.35rem;
+    bottom: calc(.28rem + env(safe-area-inset-bottom));
+    background-size:
+      3.45rem 3.45rem,
+      3.62rem 3.62rem,
+      4.42rem 4.42rem,
+      3.62rem 3.62rem,
+      3.45rem 3.45rem;
+    background-position:
+      8% 64%,
+      29% 58%,
+      50% 25%,
+      71% 58%,
+      92% 64%;
+  }
+
+  .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+  .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+  .hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before,
+  .hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+    top: -18svh;
+    left: -58vw;
+    right: -58vw;
+    bottom: -32svh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-with-video.hub-aria:not(.hub-show-tour)::after,
+  .hub-with-video.hub-joziel:not(.hub-show-tour)::after,
+  .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::before,
+  .hub-with-video.hub-aria:not(.hub-show-tour) .hub-video-wash::after,
+  .hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::before,
+  .hub-with-video.hub-joziel:not(.hub-show-tour) .hub-video-wash::after {
+    animation: none !important;
   }
 }
 
