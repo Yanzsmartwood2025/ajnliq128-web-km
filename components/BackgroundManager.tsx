@@ -103,6 +103,9 @@ export function BackgroundProvider({
               <MagicRings
                 color={settings.magicRings.color}
                 colorTwo={settings.magicRings.colorTwo}
+                scaleRate={0}
+                noiseAmount={0.035}
+                attenuation={12}
               />
             )}
           </>
