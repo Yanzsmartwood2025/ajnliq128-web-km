@@ -1,0 +1,20 @@
+/* Home account control: same white crystal language as the options dialog. */
+.home-login button[aria-label='Abrir cuenta y opciones'] {
+  border: 1px solid rgba(255,255,255,.5) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,.30), rgba(255,255,255,.10)) !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.48) !important;
+  backdrop-filter: blur(24px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+}
+
+.home-login [role='menu'][aria-label='Cuenta y opciones'] {
+  border: 1px solid rgba(255,255,255,.46) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,.30), rgba(255,255,255,.12) 55%, rgba(255,255,255,.08)) !important;
+  box-shadow: 0 22px 64px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.48) !important;
+  backdrop-filter: blur(30px) saturate(142%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(142%) !important;
+}
+
+.home-login [role='menu'][aria-label='Cuenta y opciones'] [role='menuitem']:hover {
+  background: rgba(255,255,255,.14) !important;
+}
