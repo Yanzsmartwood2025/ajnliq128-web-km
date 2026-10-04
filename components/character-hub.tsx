@@ -77,7 +77,17 @@ function LazyHubVideo({ character, programSlug }: { character: 'aria' | 'joziel'
   )
 }
 
-export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
+export function CharacterHub({
+  character,
+  showMode = false,
+  showDurationMs = 54_000,
+  onShowComplete,
+}: {
+  character: 'aria' | 'joziel'
+  showMode?: boolean
+  showDurationMs?: number
+  onShowComplete?: () => void
+}) {
   const isAria = character === 'aria'
   const [backgroundIndex, setBackgroundIndex] = useState(0)
   const [focusedProgramSlug, setFocusedProgramSlug] = useState<string | null>(null)
@@ -91,6 +101,7 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
   }, [focusedProgramSlug])
 
   useEffect(() => {
+    if (showMode) return
     const grid = gridRef.current
     if (!grid) return
 
@@ -122,7 +133,7 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
     cards.forEach(card => observer.observe(card))
 
     return () => observer.disconnect()
-  }, [backgrounds.length])
+  }, [backgrounds.length, character, showMode])
 
   const changeBackgroundAndCenter = (programIndex: number, el: HTMLElement) => {
     const programName = programs[character][programIndex]
@@ -142,13 +153,71 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
     }
   }
 
+  useEffect(() => {
+    if (!showMode) return
+    const grid = gridRef.current
+    if (!grid) return
+
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.program-card'))
+    if (!cards.length) return
+
+    const introHoldMs = 2_800
+    const outroHoldMs = 4_200
+    const usableMs = Math.max(28_000, showDurationMs - introHoldMs - outroHoldMs)
+    const stepMs = Math.max(4_500, Math.floor(usableMs / cards.length))
+    let index = 0
+    let interval: number | null = null
+    let finishTimer: number | null = null
+
+    const focusCard = (nextIndex: number) => {
+      const card = cards[nextIndex]
+      if (!card) return
+      cards.forEach((item, itemIndex) => {
+        item.classList.toggle('is-show-focus', itemIndex === nextIndex)
+      })
+
+      const programName = programs[character][nextIndex]
+      if (programName) setFocusedProgramSlug(slugifyProgram(programName))
+      setBackgroundIndex(nextIndex % backgrounds.length)
+
+      const left = card.offsetLeft - (grid.clientWidth - card.clientWidth) / 2
+      grid.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
+    }
+
+    const firstTimer = window.setTimeout(() => {
+      focusCard(0)
+      interval = window.setInterval(() => {
+        index += 1
+        if (index >= cards.length) {
+          if (interval) window.clearInterval(interval)
+          interval = null
+          return
+        }
+        focusCard(index)
+      }, stepMs)
+    }, introHoldMs)
+
+    finishTimer = window.setTimeout(() => {
+      cards.forEach((item) => item.classList.remove('is-show-focus'))
+      onShowComplete?.()
+    }, showDurationMs)
+
+    return () => {
+      window.clearTimeout(firstTimer)
+      if (finishTimer) window.clearTimeout(finishTimer)
+      if (interval) window.clearInterval(interval)
+      cards.forEach((item) => item.classList.remove('is-show-focus'))
+    }
+  }, [backgrounds.length, character, onShowComplete, showDurationMs, showMode])
+
+
   const name = isAria ? 'ARIA' : 'JOZIEL'
   const backgroundImage = focusedProgramSlug && !bgImageError
     ? `url(${mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))})`
     : `url(${backgrounds[backgroundIndex]})`;
 
   return (
-    <main className={`hub hub-with-video hub-${character}`}>
+    <main className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}>
       <div
         className="hub-placeholder-bg"
         aria-hidden="true"
@@ -168,19 +237,21 @@ export function CharacterHub({ character }: { character: 'aria' | 'joziel' }) {
       )}
       <LazyHubVideo character={character} programSlug={focusedProgramSlug} />
       <div className="hub-video-wash" aria-hidden="true" />
-      <header className="hub-header">
+      {!showMode && <header className="hub-header">
         <Link href="/" className="back-link"><FlameMark /> <span>FUEGO</span></Link>
         <div className="hub-actions">
           <button type="button" className="options-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Abrir opciones">▣</button>
           <span className="hub-index">{isAria ? '01' : '02'} / 02</span>
         </div>
-      </header>
-      {menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
+      </header>}
+      {!showMode && menuOpen && <aside className="hub-menu" aria-label="Opciones"><Link href="/">Regresar a FUEGO</Link><Link href="/login">Iniciar sesión</Link><button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button></aside>}
       <section className="hub-intro"><Wordmark name={name} /></section>
-      <div className="program-grid" ref={gridRef}>
+      {showMode && <div className="show-camera-vignette" aria-hidden="true" />}
+      <div className={`program-grid${showMode ? ' is-show-tour' : ''}`} ref={gridRef}>
         {programs[character].map((program, index) => (
           <ProgramLauncher
             character={character}
+            showMode={showMode}
             program={program}
             index={index}
             key={program}
