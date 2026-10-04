@@ -111,8 +111,37 @@
   transform: scale(.985);
 }
 
+/* Lower the card rail and keep a clean footer zone for five round social PNGs. */
+.hub:not(.hub-show-tour) {
+  padding-bottom: calc(clamp(7rem, 14svh, 9rem) + env(safe-area-inset-bottom));
+}
+
 .hub:not(.hub-show-tour) .program-grid {
-  margin-top: clamp(4rem, 10vh, 7rem);
+  margin-top: clamp(7.5rem, 17svh, 11rem);
+  margin-bottom: clamp(1.5rem, 4svh, 3rem);
+}
+
+/* Future social row: five circular PNG icons, horizontal and centered. */
+.hub-social-row {
+  position: relative;
+  z-index: 4;
+  width: min(430px, calc(100vw - 2rem));
+  min-height: 4.5rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: clamp(.45rem, 2.4vw, .8rem);
+}
+
+.hub-social-row img,
+.hub-social-icon {
+  width: clamp(2.65rem, 11vw, 3.35rem);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 999px;
+  display: block;
 }
 
 /* Background carousel owns its motion; cards no longer drive the background. */
@@ -189,6 +218,50 @@
   -webkit-backdrop-filter: saturate(106%);
 }
 
+/* Aurora-like diffuse light lives in the background layer, never over card photos. */
+.hub-video-wash::after {
+  content: '';
+  position: absolute;
+  left: -14vw;
+  right: -14vw;
+  bottom: 7svh;
+  height: 42svh;
+  pointer-events: none;
+  opacity: .74;
+  filter: blur(28px) saturate(135%);
+  transform: translate3d(0,0,0) rotate(-3deg);
+  animation: hubAuroraDrift 9s ease-in-out infinite alternate;
+}
+
+.hub-aria .hub-video-wash::after {
+  background:
+    radial-gradient(ellipse at 15% 64%, rgba(91,255,198,.54), transparent 34%),
+    radial-gradient(ellipse at 52% 76%, rgba(112,224,255,.48), transparent 38%),
+    radial-gradient(ellipse at 82% 54%, rgba(194,255,237,.34), transparent 32%);
+}
+
+.hub-joziel .hub-video-wash::after {
+  background:
+    radial-gradient(ellipse at 16% 66%, rgba(154,94,255,.50), transparent 35%),
+    radial-gradient(ellipse at 54% 78%, rgba(106,173,255,.42), transparent 38%),
+    radial-gradient(ellipse at 84% 54%, rgba(214,196,255,.30), transparent 32%);
+}
+
+@keyframes hubAuroraDrift {
+  0% {
+    transform: translate3d(-2%, 1.5%, 0) rotate(-4deg) scale(1.02);
+    opacity: .58;
+  }
+  55% {
+    transform: translate3d(1.5%, -1%, 0) rotate(1deg) scale(1.08);
+    opacity: .78;
+  }
+  100% {
+    transform: translate3d(3%, 1%, 0) rotate(4deg) scale(1.03);
+    opacity: .66;
+  }
+}
+
 /* Cards stay sharp: no lower haze, no full-card blur, no generic numbers. */
 .program-number,
 .program-card-ambient {
@@ -246,8 +319,19 @@
     height: 2.75rem;
   }
 
+  .hub:not(.hub-show-tour) {
+    padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+  }
+
   .hub:not(.hub-show-tour) .program-grid {
-    margin-top: clamp(3.5rem, 8vh, 5.5rem);
+    margin-top: clamp(6.5rem, 15svh, 9.5rem);
+    margin-bottom: 1.25rem;
+  }
+
+  .hub-video-wash::after {
+    bottom: 5svh;
+    height: 38svh;
+    filter: blur(22px) saturate(135%);
   }
 }
 
@@ -265,7 +349,8 @@
   .hub-carousel-bg.is-current,
   .hub-bg-effect-0,
   .hub-bg-effect-1,
-  .hub-bg-effect-2 {
+  .hub-bg-effect-2,
+  .hub-video-wash::after {
     animation: none !important;
   }
 }
