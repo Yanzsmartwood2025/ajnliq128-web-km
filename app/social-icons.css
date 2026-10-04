@@ -1,0 +1,53 @@
+/* Character social icon row: five transparent PNGs centered above the animated fog. */
+.hub-with-video.hub-aria:not(.hub-show-tour)::after,
+.hub-with-video.hub-joziel:not(.hub-show-tour)::after {
+  content: '';
+  position: fixed;
+  left: 50%;
+  bottom: calc(.7rem + env(safe-area-inset-bottom));
+  z-index: 6;
+  width: min(360px, calc(100vw - 1.5rem));
+  height: clamp(3.5rem, 8svh, 4.25rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size:
+    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
+    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
+    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
+    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem),
+    clamp(2.65rem, 10vw, 3.25rem) clamp(2.65rem, 10vw, 3.25rem);
+  background-position:
+    4% 50%,
+    27% 50%,
+    50% 50%,
+    73% 50%,
+    96% 50%;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.24));
+}
+
+.hub-with-video.hub-aria:not(.hub-show-tour)::after {
+  background-image:
+    url('/assets/characters/aria/social/facebook-neon.png'),
+    url('/assets/characters/aria/social/instagram-neon.png'),
+    url('/assets/characters/aria/social/tiktok-neon.png'),
+    url('/assets/characters/aria/social/x-neon.png'),
+    url('/assets/characters/aria/social/youtube-neon.png');
+}
+
+.hub-with-video.hub-joziel:not(.hub-show-tour)::after {
+  background-image:
+    url('/assets/characters/joziel/social/facebook-blue-flame.png'),
+    url('/assets/characters/joziel/social/instagram-blue-flame.png'),
+    url('/assets/characters/joziel/social/tiktok-blue-flame.png'),
+    url('/assets/characters/joziel/social/x-blue-flame.png'),
+    url('/assets/characters/joziel/social/youtube-blue-flame.png');
+}
+
+@media (max-width: 600px) {
+  .hub-with-video.hub-aria:not(.hub-show-tour)::after,
+  .hub-with-video.hub-joziel:not(.hub-show-tour)::after {
+    width: min(345px, calc(100vw - 1rem));
+    bottom: calc(.55rem + env(safe-area-inset-bottom));
+  }
+}
