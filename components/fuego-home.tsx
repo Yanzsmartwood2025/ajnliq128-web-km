@@ -15,16 +15,22 @@ const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
 
 export function FuegoHome() {
   const router = useRouter()
-  const [splash, setSplash] = useState(true)
+  const searchParams = useSearchParams()
+  const [splash, setSplash] = useState(() => searchParams.get('skipIntro') !== '1')
   const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-
-  const searchParams = useSearchParams()
   const { user } = useAuth()
 
   const ariaAudioRef = useRef<HTMLAudioElement>(null)
   const jozielAudioRef = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    if (searchParams.get('skipIntro') !== '1' || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    url.searchParams.delete('skipIntro')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [searchParams])
 
   useEffect(() => {
     if (searchParams.get('login') === 'true' && !user) {
@@ -71,11 +77,12 @@ export function FuegoHome() {
   }, [user])
 
   useEffect(() => {
+    if (!splash) return
     const timer = window.setTimeout(() => {
       setSplash(false)
     }, 6000)
     return () => window.clearTimeout(timer)
-  }, [])
+  }, [splash])
 
   const handleSplashVideoEnded = () => {
     setSplash(false)
@@ -141,16 +148,18 @@ export function FuegoHome() {
       <audio ref={ariaAudioRef} src="/audio/aria.mp3" preload="auto" />
       <audio ref={jozielAudioRef} src="/audio/joziel.mp3" preload="auto" />
 
-      <section className="splash" aria-label="Fuego" style={{ backgroundColor: 'black', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <video
-          src={mediaUrl('fuego/videos/fuego-intro.mp4')}
-          autoPlay
-          muted
-          playsInline
-          onEnded={handleSplashVideoEnded}
-          style={{ width: '100%', maxWidth: '400px', height: 'auto', objectFit: 'contain' }}
-        />
-      </section>
+      {splash && (
+        <section className="splash" aria-label="Fuego" style={{ backgroundColor: 'black', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <video
+            src={mediaUrl('fuego/videos/fuego-intro.mp4')}
+            autoPlay
+            muted
+            playsInline
+            onEnded={handleSplashVideoEnded}
+            style={{ width: '100%', maxWidth: '400px', height: 'auto', objectFit: 'contain' }}
+          />
+        </section>
+      )}
 
       <section className="home-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
         {!splash && (
