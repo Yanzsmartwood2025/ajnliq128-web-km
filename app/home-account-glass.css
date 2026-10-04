@@ -18,3 +18,60 @@
 .home-login [role='menu'][aria-label='Cuenta y opciones'] [role='menuitem']:hover {
   background: rgba(255,255,255,.14) !important;
 }
+
+/* Login/register header uses the same official PNG identity as Home. */
+.auth-panel-topline {
+  gap: .75rem;
+}
+
+.auth-kicker {
+  margin: 0 !important;
+  min-width: 0;
+  display: flex !important;
+  align-items: center;
+  gap: .42rem;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  color: transparent !important;
+}
+
+.auth-kicker::before {
+  content: '';
+  display: block;
+  flex: 0 1 auto;
+  width: clamp(96px, 22vw, 132px);
+  height: 30px;
+  background: url('/assets/home/ajnliq128.png') center / contain no-repeat;
+  filter: drop-shadow(0 3px 10px rgba(0,0,0,.24));
+}
+
+.auth-kicker::after {
+  content: '';
+  display: block;
+  flex: 0 0 auto;
+  width: 27px;
+  height: 30px;
+  background: url('/assets/home/fuego.png') center / contain no-repeat;
+  filter: drop-shadow(0 3px 10px rgba(0,0,0,.24));
+}
+
+@media (max-width: 480px) {
+  .auth-kicker {
+    gap: .32rem;
+  }
+
+  .auth-kicker::before {
+    width: clamp(88px, 25vw, 112px);
+    height: 27px;
+  }
+
+  .auth-kicker::after {
+    width: 24px;
+    height: 27px;
+  }
+
+  .auth-back {
+    white-space: nowrap;
+  }
+}
