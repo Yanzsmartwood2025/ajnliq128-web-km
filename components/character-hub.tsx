@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ProgramLauncher } from './program-launcher'
 import { slugifyProgram } from '@/lib/module-flags'
+import { useAuth } from '@/lib/auth-context'
 
 const programs = {
   aria: ['Aria\'s Anthem', 'Synthetic Soul', 'Starlight Log', 'Code & Conscience', 'Real World Quests', 'Lyrical Resonance', 'arIA'],
@@ -75,6 +76,8 @@ export function CharacterHub({
   const [backgroundIndex, setBackgroundIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
+  const { user, loading: authLoading } = useAuth()
+  const usesGoogle = Boolean(user?.providerData?.some((provider) => provider.providerId === 'google.com'))
 
   useEffect(() => {
     setBackgroundIndex(0)
@@ -268,7 +271,61 @@ export function CharacterHub({
             <div className="hub-menu-brand" aria-hidden="true">
               <img src="/assets/home/fuego.png" alt="" />
             </div>
-            <Link href="/">Inicio</Link>
+
+            <div
+              aria-live="polite"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '.7rem',
+                margin: '.2rem 0 .55rem',
+                padding: '.72rem .78rem',
+                border: '1px solid rgba(255,255,255,.14)',
+                borderRadius: '.9rem',
+                background: 'rgba(255,255,255,.055)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08)',
+                overflow: 'hidden'
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  flex: '0 0 auto',
+                  width: '1.9rem',
+                  height: '1.9rem',
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '999px',
+                  background: 'rgba(255,255,255,.1)'
+                }}
+              >
+                {usesGoogle ? (
+                  <svg viewBox="0 0 24 24" style={{ width: '1.15rem', height: '1.15rem' }}>
+                    <path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.44h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/>
+                    <path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.44c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.52A9.74 9.74 0 0 0 12 21.6Z"/>
+                    <path fill="#FBBC05" d="M6.54 13.69a5.86 5.86 0 0 1 0-3.38V7.79H3.3a9.76 9.76 0 0 0 0 8.42l3.24-2.52Z"/>
+                    <path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.27 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.39l3.24 2.52c.77-2.31 2.92-4.03 5.46-4.03Z"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" style={{ width: '1.15rem', height: '1.15rem', fill: 'none', stroke: 'white', strokeWidth: 1.6 }}>
+                    <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+                    <path d="m4.5 7 7.5 5.7L19.5 7" />
+                  </svg>
+                )}
+              </span>
+              <span style={{ minWidth: 0, display: 'grid', gap: '.15rem' }}>
+                <strong style={{ fontSize: '.72rem', fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
+                  {authLoading ? 'Comprobando sesión…' : user ? 'Sesión activa' : 'Sin sesión activa'}
+                </strong>
+                {!authLoading && user?.email && (
+                  <span style={{ fontSize: '.68rem', color: 'rgba(255,255,255,.68)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.email}
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <Link href="/?skipIntro=1">Inicio</Link>
             <button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button>
           </aside>
         </>
