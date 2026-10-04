@@ -707,18 +707,17 @@ a { color: inherit; text-decoration: none; }
 .program-grid.is-show-tour .program-card.is-show-card {
   flex: 0 0 min(78vw, 340px);
   min-height: clamp(180px, 31vh, 260px);
-  opacity: .36;
-  filter: blur(.8px) brightness(.82);
-  transform: translateZ(-130px) scale(.88);
+  opacity: .52;
+  filter: brightness(.96);
+  transform: translateZ(-110px) scale(.90);
   transition:
-    opacity 1.2s ease,
-    filter 1.2s ease,
-    transform 1.45s cubic-bezier(.2,.8,.2,1),
-    box-shadow 1.2s ease;
+    opacity 1.05s ease,
+    transform 1.35s cubic-bezier(.2,.8,.2,1),
+    box-shadow 1.05s ease;
 }
 .program-grid.is-show-tour .program-card.is-show-card.is-show-focus {
   opacity: 1;
-  filter: blur(0) brightness(1.12) saturate(1.04);
+  filter: brightness(1.08) saturate(1.03);
   transform: translateZ(90px) scale(1.12);
   box-shadow:
     0 35px 80px rgba(0,0,0,.62),
@@ -755,7 +754,6 @@ a { color: inherit; text-decoration: none; }
   .hub-show-tour .hub-video,
   .hub-show-tour .hub-placeholder-bg {
     animation: showBackgroundBreatheMobile 11s ease-in-out infinite alternate;
-    filter: saturate(1.03) brightness(1.04);
   }
   .hub-show-tour .hub-video-wash {
     background:
