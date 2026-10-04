@@ -14,7 +14,11 @@ const programs = {
 
 const placeholderVideoUrl = 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-night-city-1573/1080p.mp4'
 
-function programMediaPath(character: 'aria' | 'joziel', programSlug: string, filename: 'fondo.mp4' | 'fondo.png') {
+function programMediaPath(
+  character: 'aria' | 'joziel',
+  programSlug: string,
+  filename: 'fondo.mp4' | 'fondo.png' | 'tarjeta.webp',
+) {
   if (character === 'aria' && programSlug === 'aria') return `aria/aria/ui/${filename}`
   if (character === 'joziel' && programSlug === 'lumenfall') return `joziel/lumenfall/ui/${filename}`
   return `${character}/programas/${programSlug}/${filename}`
@@ -94,6 +98,7 @@ export function CharacterHub({
   const [bgImageError, setBgImageError] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
+  const activeCardIndexRef = useRef(-1)
   const backgrounds = ['/placeholder-01.png', '/placeholder-02.png', '/placeholder-03.png', '/placeholder-04.png', '/placeholder-05.png']
 
   useEffect(() => {
@@ -105,34 +110,69 @@ export function CharacterHub({
     const grid = gridRef.current
     if (!grid) return
 
-    const observer = new IntersectionObserver((entries) => {
-      // Find the card that is closest to the center (has the highest intersection ratio)
-      // or simply the one that is intersecting our center-line rootMargin.
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const idx = Number(entry.target.getAttribute('data-index'))
-          if (!isNaN(idx)) {
-            const programName = programs[character][idx]
-            if (programName) {
-              setFocusedProgramSlug(slugifyProgram(programName))
-            }
-            setBackgroundIndex(prev => {
-              const nextIndex = idx % backgrounds.length
-              return prev === nextIndex ? prev : nextIndex
-            })
-          }
+    activeCardIndexRef.current = -1
+    let frame = 0
+
+    const updateDepth = () => {
+      frame = 0
+      const gridRect = grid.getBoundingClientRect()
+      const center = gridRect.left + gridRect.width / 2
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('.program-card'))
+      let closestIndex = 0
+      let closestDistance = Number.POSITIVE_INFINITY
+
+      cards.forEach((card, index) => {
+        const rect = card.getBoundingClientRect()
+        const cardCenter = rect.left + rect.width / 2
+        const distancePx = cardCenter - center
+        const normalized = Math.max(-1.35, Math.min(1.35, distancePx / Math.max(1, gridRect.width * 0.52)))
+        const absolute = Math.min(1, Math.abs(normalized))
+
+        card.style.setProperty('--card-offset', normalized.toFixed(4))
+        card.style.setProperty('--card-depth', absolute.toFixed(4))
+        card.classList.toggle('is-swipe-focus', absolute < 0.22)
+
+        const rawDistance = Math.abs(distancePx)
+        if (rawDistance < closestDistance) {
+          closestDistance = rawDistance
+          closestIndex = index
         }
       })
-    }, {
-      root: grid,
-      rootMargin: '0px -49% 0px -49%',
-      threshold: 0
-    })
 
-    const cards = grid.querySelectorAll('.program-card')
-    cards.forEach(card => observer.observe(card))
+      if (closestIndex !== activeCardIndexRef.current) {
+        activeCardIndexRef.current = closestIndex
+        const programName = programs[character][closestIndex]
+        if (programName) setFocusedProgramSlug(slugifyProgram(programName))
+        setBackgroundIndex(closestIndex % backgrounds.length)
+      }
+    }
 
-    return () => observer.disconnect()
+    const requestDepthUpdate = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(updateDepth)
+    }
+
+    const startDrag = () => grid.classList.add('is-user-dragging')
+    const stopDrag = () => {
+      grid.classList.remove('is-user-dragging')
+      requestDepthUpdate()
+    }
+
+    updateDepth()
+    grid.addEventListener('scroll', requestDepthUpdate, { passive: true })
+    grid.addEventListener('pointerdown', startDrag, { passive: true })
+    grid.addEventListener('pointerup', stopDrag, { passive: true })
+    grid.addEventListener('pointercancel', stopDrag, { passive: true })
+    window.addEventListener('resize', requestDepthUpdate)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      grid.removeEventListener('scroll', requestDepthUpdate)
+      grid.removeEventListener('pointerdown', startDrag)
+      grid.removeEventListener('pointerup', stopDrag)
+      grid.removeEventListener('pointercancel', stopDrag)
+      window.removeEventListener('resize', requestDepthUpdate)
+    }
   }, [backgrounds.length, character, showMode])
 
   const changeBackgroundAndCenter = (programIndex: number, el: HTMLElement) => {
@@ -212,19 +252,38 @@ export function CharacterHub({
 
 
   const name = isAria ? 'ARIA' : 'JOZIEL'
-  const backgroundImage = focusedProgramSlug && !bgImageError
-    ? `url(${mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))})`
-    : `url(${backgrounds[backgroundIndex]})`;
+  const activeBackgroundUrl = focusedProgramSlug && !bgImageError
+    ? mediaUrl(programMediaPath(character, focusedProgramSlug, 'fondo.png'))
+    : backgrounds[backgroundIndex]
+  const [backgroundLayers, setBackgroundLayers] = useState({
+    previous: backgrounds[0],
+    current: backgrounds[0],
+    version: 0,
+  })
+
+  useEffect(() => {
+    setBackgroundLayers((layers) => {
+      if (layers.current === activeBackgroundUrl) return layers
+      return {
+        previous: layers.current,
+        current: activeBackgroundUrl,
+        version: layers.version + 1,
+      }
+    })
+  }, [activeBackgroundUrl])
 
   return (
     <main className={`hub hub-with-video hub-${character}${showMode ? ' hub-show-tour' : ''}`}>
       <div
-        className="hub-placeholder-bg"
+        className="hub-carousel-bg is-previous"
         aria-hidden="true"
-        style={{ backgroundImage }}
-        // Note: we can't easily catch background-image load errors on a div directly in React without an Image object.
-        // For now, if R2 fails, it might just show a broken bg or transparent depending on browser.
-        // A better robust way is an invisible <img> but since it's an interim state, this might suffice.
+        style={{ backgroundImage: `url(${backgroundLayers.previous})` }}
+      />
+      <div
+        key={`${backgroundLayers.version}:${backgroundLayers.current}`}
+        className="hub-carousel-bg is-current"
+        aria-hidden="true"
+        style={{ backgroundImage: `url(${backgroundLayers.current})` }}
       />
       {/* Hidden image to trigger onError for background fallback */}
       {focusedProgramSlug && !bgImageError && (
@@ -254,6 +313,8 @@ export function CharacterHub({
             showMode={showMode}
             program={program}
             index={index}
+            photoUrl={mediaUrl(programMediaPath(character, slugifyProgram(program), 'tarjeta.webp'))}
+            fallbackPhoto={isAria ? '/aria-card.png' : '/joziel-card.png'}
             key={program}
             destination={
               isAria && program === 'Starlight Log'
