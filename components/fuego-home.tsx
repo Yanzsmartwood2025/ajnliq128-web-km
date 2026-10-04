@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { FlameMark, Wordmark } from './galaxy-background'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BackgroundSettings } from './BackgroundSettings'
@@ -11,16 +10,16 @@ import { mediaUrl } from '@/lib/media-urls'
 import { BubbleWrapper } from './BubbleWrapper'
 import { AuthForm } from './auth-form'
 import dynamic from 'next/dynamic'
-const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
 
+const PhysicsBubbles = dynamic(() => import('./PhysicsBubbles'), { ssr: false })
 
 export function FuegoHome() {
   const router = useRouter()
   const [splash, setSplash] = useState(true)
   const [selectedModule, setSelectedModule] = useState<'ARIA' | 'JOZIEL' | 'NAYLA' | null>(null)
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Audio refs
   const searchParams = useSearchParams()
   const { user } = useAuth()
 
@@ -31,7 +30,6 @@ export function FuegoHome() {
     if (searchParams.get('login') === 'true' && !user) {
       setShowAuthModal('login')
 
-      // Clean up the URL so it doesn't stay stuck on ?login=true
       if (typeof window !== 'undefined') {
         const url = new URL(window.location.href)
         url.searchParams.delete('login')
@@ -46,29 +44,28 @@ export function FuegoHome() {
       if (pendingRedirect) {
         localStorage.removeItem('pendingEditorRedirect')
 
-        // Function to get the token and redirect
         const getAuthTokenAndRedirect = async () => {
           try {
-            const idToken = await user.getIdToken();
+            const idToken = await user.getIdToken()
             const res = await fetch('/api/auth/token', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${idToken}`
+                Authorization: `Bearer ${idToken}`
               }
-            });
+            })
             if (res.ok) {
-              const data = await res.json();
+              const data = await res.json()
               if (data.customToken) {
-                const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app';
-                window.location.href = `${editorUrl}/#authToken=${data.customToken}`;
+                const editorUrl = process.env.NEXT_PUBLIC_EDITOR_URL || 'https://editor.vercel.app'
+                window.location.href = `${editorUrl}/#authToken=${data.customToken}`
               }
             }
           } catch (e) {
-            console.error('Error in pending redirect:', e);
+            console.error('Error in pending redirect:', e)
           }
-        };
+        }
 
-        getAuthTokenAndRedirect();
+        getAuthTokenAndRedirect()
       }
     }
   }, [user])
@@ -76,7 +73,7 @@ export function FuegoHome() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setSplash(false)
-    }, 6000) // 6 second max fallback if video onEnded doesn't fire
+    }, 6000)
     return () => window.clearTimeout(timer)
   }, [])
 
@@ -85,24 +82,21 @@ export function FuegoHome() {
   }
 
   const handleBubbleClick = (e: React.MouseEvent, module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
-    e.stopPropagation() // Prevent click from triggering "touch outside"
+    e.stopPropagation()
     if (selectedModule === module) {
-      // Second touch -> Enter module
       enterModule(module)
     } else {
-      // First touch -> Focus bubble and play sound
       setSelectedModule(module)
       const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
       if (audio) {
         audio.currentTime = 0
         audio.volume = 1
-        audio.play().catch(e => console.error("Audio play failed", e))
+        audio.play().catch(e => console.error('Audio play failed', e))
       }
     }
   }
 
   const enterModule = (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => {
-    // Fade out logic and navigate
     const audio = module === 'ARIA' ? ariaAudioRef.current : (module === 'JOZIEL' ? jozielAudioRef.current : null)
     if (audio) {
       let fadeTimer = 0
@@ -142,29 +136,8 @@ export function FuegoHome() {
     }
   }
 
-  // Organic floating animation variants
-  const floatingAnimation = (delay: number, durationX: number, durationY: number) => ({
-    y: ["-5vh", "5vh", "-5vh"],
-    x: ["-4vw", "4vw", "-4vw"],
-    transition: {
-      y: {
-        duration: durationY,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay
-      },
-      x: {
-        duration: durationX,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: delay + 1
-      }
-    }
-  } as any)
-
   return (
     <main className={`home ${splash ? 'is-splashing' : 'is-ready'} ${selectedModule ? 'is-transitioning' : ''}`}>
-      {/* Audio elements */}
       <audio ref={ariaAudioRef} src="/audio/aria.mp3" preload="auto" />
       <audio ref={jozielAudioRef} src="/audio/joziel.mp3" preload="auto" />
 
@@ -182,11 +155,55 @@ export function FuegoHome() {
       <section className="home-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
         {!splash && (
           <div className="home-login" style={{ display: 'flex', alignItems: 'center' }}>
-            <BackgroundSettings />
-            <LoginHeader onLoginClick={() => setShowAuthModal('login')} />
+            <BackgroundSettings open={settingsOpen} onOpenChange={setSettingsOpen} hideTrigger />
+            {user ? (
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Abrir opciones"
+                title="Opciones"
+                style={{
+                  width: '3rem',
+                  height: '3rem',
+                  padding: '0.2rem',
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(255,255,255,.34)',
+                  background: 'linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.06))',
+                  backdropFilter: 'blur(20px) saturate(135%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(135%)',
+                  boxShadow: '0 12px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.3)',
+                  cursor: 'pointer'
+                }}
+              >
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="Perfil" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true" style={{ width: '1.35rem', height: '1.35rem', fill: 'none', stroke: 'white', strokeWidth: '1.5' }}>
+                    <circle cx="12" cy="8" r="3.25" />
+                    <path d="M5.5 20c.65-3.15 2.85-5 6.5-5s5.85 1.85 6.5 5" />
+                  </svg>
+                )}
+              </button>
+            ) : (
+              <LoginHeader onLoginClick={() => setShowAuthModal('login')} />
+            )}
           </div>
         )}
-        <p className="selection-wordmark" aria-label="AJNLIQ128">AJNLIQ128</p>
+
+        <img
+          src="/assets/home/ajnliq128.png"
+          alt="AJNLIQ128"
+          style={{
+            width: 'clamp(190px, 32vw, 260px)',
+            height: 'auto',
+            objectFit: 'contain',
+            display: 'block',
+            position: 'relative',
+            zIndex: 4
+          }}
+        />
 
         <AnimatePresence>
           {showAuthModal && (
@@ -226,8 +243,8 @@ export function FuegoHome() {
             style={{ position: 'fixed', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.27)', backdropFilter: 'blur(2px)' }}
           />
         )}
+
         <div style={{ position: 'relative', width: '100%', height: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          {/* If a module is selected, show the full screen focused view */}
           <AnimatePresence>
             {selectedModule === 'ARIA' && (
               <motion.div
@@ -248,17 +265,13 @@ export function FuegoHome() {
                       playsInline
                       className="bubble-video"
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/placeholder-video-1.mp4";
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = '/placeholder-video-1.mp4'
                       }}
                     />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
-                    <img
-                      src={mediaUrl('aria/imagenes/aria-logo.png')}
-                      alt="Aria logo"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
-                    />
+                    <img src={mediaUrl('aria/imagenes/aria-logo.png')} alt="Aria logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
                   </div>
                 </BubbleWrapper>
               </motion.div>
@@ -283,17 +296,13 @@ export function FuegoHome() {
                       playsInline
                       className="bubble-video"
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/placeholder-video-2.mp4";
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = '/placeholder-video-2.mp4'
                       }}
                     />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', paddingBottom: '28%', zIndex: 20 }}>
-                    <img
-                      src={mediaUrl('joziel/imagenes/joziel-logo.png')}
-                      alt="Joziel logo"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
-                    />
+                    <img src={mediaUrl('joziel/imagenes/joziel-logo.png')} alt="Joziel logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
                   </div>
                 </BubbleWrapper>
               </motion.div>
@@ -318,30 +327,23 @@ export function FuegoHome() {
                       playsInline
                       className="bubble-video"
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/placeholder-video-3.mp4";
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = '/placeholder-video-3.mp4'
                       }}
                     />
                   </div>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16%', zIndex: 20 }}>
-                    <img
-                      src={mediaUrl('nayla/imagenes/nayla-logo.png')}
-                      alt="Nayla logo"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
-                    />
+                    <img src={mediaUrl('nayla/imagenes/nayla-logo.png')} alt="Nayla logo" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }} />
                   </div>
                 </BubbleWrapper>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* If NO module is selected, render Physics system */}
           {!selectedModule && (
             <PhysicsBubbles
               onSelectModule={(module) => {
-                // Synthesize an event object or pass null if possible,
-                // handleBubbleClick expects React.MouseEvent but we can make it optional or cast it.
-                handleBubbleClick({ stopPropagation: () => {} } as any, module);
+                handleBubbleClick({ stopPropagation: () => {} } as any, module)
               }}
             />
           )}
