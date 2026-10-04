@@ -23,6 +23,7 @@ const programCardImages: Record<'aria' | 'joziel', Record<string, string>> = {
   joziel: {
     'midnight-mantras': '/assets/characters/joziel/cards/midnight-mantras.jpg',
     'dark-siren': '/assets/characters/joziel/cards/dark-siren.jpg',
+    'night-strategy': '/assets/characters/joziel/cards/night-strategy.png',
     'sonic-autopsy': '/assets/characters/joziel/cards/sonic-autopsy.jpg',
     'shadow-files': '/assets/characters/joziel/cards/shadow-files.jpg',
     'joziels-grimoire': '/assets/characters/joziel/cards/joziels-grimoire.jpg',
