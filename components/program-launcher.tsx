@@ -63,27 +63,6 @@ export function ProgramLauncher({
           />
         ) : null}
       </span>
-
-      <span className="program-card-glass" aria-hidden="true">
-        <span className="program-card-clip" />
-      </span>
-
-      <span className="program-card-content">
-        <span className="program-card-copy">
-          <h2>{program}</h2>
-          <span className="program-status">
-            {showMode ? 'ON AIR / PROGRAM' : enabled ? 'Enter frequency' : 'Temporarily unavailable'}
-            {!showMode && <span aria-hidden="true">↗</span>}
-          </span>
-        </span>
-      </span>
-
-      {launching && (
-        <span className="program-launch" aria-live="polite">
-          <strong>{program}</strong>
-          <small>Loading module</small>
-        </span>
-      )}
     </button>
   )
 }
