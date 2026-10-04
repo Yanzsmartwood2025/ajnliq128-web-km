@@ -51,3 +51,27 @@
     bottom: calc(.55rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Keep the Home profile/login control comfortably below the phone status bar. */
+.home .home-login {
+  top: max(.75rem, env(safe-area-inset-top)) !important;
+  right: max(.75rem, env(safe-area-inset-right)) !important;
+}
+
+/* Center the dialog X inside the glass corner instead of hugging the border. */
+[data-slot='dialog-content'] > [data-slot='dialog-close'] {
+  top: 1rem !important;
+  right: 1rem !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+}
+
+[data-slot='dialog-content'] > [data-slot='dialog-close'] svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
