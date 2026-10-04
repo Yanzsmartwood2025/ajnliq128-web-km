@@ -5,13 +5,22 @@ import Matter from 'matter-js'
 import { BubbleWrapper } from './BubbleWrapper'
 import { mediaUrl } from '@/lib/media-urls'
 
+type BubbleModule = 'ARIA' | 'JOZIEL' | 'NAYLA'
+
 interface PhysicsBubblesProps {
-  onSelectModule: (module: 'ARIA' | 'JOZIEL' | 'NAYLA') => void;
+  onSelectModule: (module: BubbleModule) => void
+  focusModule?: BubbleModule | null
+  interactive?: boolean
 }
 
-export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) {
+export default function PhysicsBubbles({ onSelectModule, focusModule = null, interactive = true }: PhysicsBubblesProps) {
   const sceneRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<Matter.Engine | null>(null)
+  const focusModuleRef = useRef<BubbleModule | null>(focusModule)
+
+  useEffect(() => {
+    focusModuleRef.current = focusModule
+  }, [focusModule])
 
   const [positions, setPositions] = useState({
     ARIA: { x: -1000, y: -1000, angle: 0 },
@@ -46,12 +55,15 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
       density: 0.005 // Higher density to make them less squishy when colliding
     }
 
-    // AJN starting positions (all spawn near the center now)
-    const center = { x: width / 2, y: height * 0.35 }
+    // Keep the constellation a little lower and give each bubble its own
+    // resting anchor. They are attracted to one group, but never to the exact
+    // same point, so they do not stack on top of each other.
+    const center = { x: width / 2, y: height * 0.48 }
+    const anchorSpread = radius * 2.75
     const initialPositions = {
-      ARIA: { x: center.x - radius * 2, y: center.y },
-      JOZIEL: { x: center.x + radius * 2, y: center.y },
-      NAYLA: { x: center.x, y: center.y - radius * 2 }
+      ARIA: { x: center.x - anchorSpread, y: center.y + radius * 0.28 },
+      JOZIEL: { x: center.x + anchorSpread, y: center.y + radius * 0.28 },
+      NAYLA: { x: center.x, y: center.y - radius * 1.75 }
     }
 
     const ariaBody = Matter.Bodies.circle(initialPositions.ARIA.x, initialPositions.ARIA.y, radius, { ...options, label: 'ARIA' })
@@ -128,7 +140,14 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
           body.position.y < -100 ||
           body.position.y > currentHeight + 100
         ) {
-          Matter.Body.setPosition(body, { x: currentWidth / 2, y: currentHeight / 2 })
+          const rescueCenter = { x: currentWidth / 2, y: currentHeight * 0.48 }
+          const spread = radius * 2.75
+          const rescueTarget = label === 'ARIA'
+            ? { x: rescueCenter.x - spread, y: rescueCenter.y + radius * 0.28 }
+            : label === 'JOZIEL'
+              ? { x: rescueCenter.x + spread, y: rescueCenter.y + radius * 0.28 }
+              : { x: rescueCenter.x, y: rescueCenter.y - radius * 1.75 }
+          Matter.Body.setPosition(body, rescueTarget)
           Matter.Body.setVelocity(body, { x: 0, y: 0 })
         }
       })
@@ -171,8 +190,9 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
         })
       })
 
-      // Apply active repulsion between bubbles to keep them separated
-      const repulsionStrength = 0.00003;
+      // Active repulsion creates a visible cushion before a real collision.
+      // This keeps the bubbles playful without letting them glue together.
+      const repulsionStrength = 0.00005;
       const labels = ['ARIA', 'JOZIEL', 'NAYLA'] as const;
 
       for (let i = 0; i < labels.length; i++) {
@@ -184,11 +204,11 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
           const dy = bodyA.position.y - bodyB.position.y;
           const distance = Math.hypot(dx, dy);
 
-          // Repel if they get closer than 3.5x their radius
-          const minDistance = radius * 3.5;
+          // Begin separating before the circles touch.
+          const minDistance = radius * 3.25;
           if (distance > 0 && distance < minDistance) {
-             // Increase force significantly when they actually intersect (distance < radius * 2)
-             const intersectMultiplier = distance < radius * 2 ? 5 : 1;
+             // Strong emergency separation if they physically touch.
+             const intersectMultiplier = distance < radius * 2.15 ? 8 : 1;
              const force = ((minDistance - distance) / minDistance * repulsionStrength) * intersectMultiplier;
              const forceX = (dx / distance) * force;
              const forceY = (dy / distance) * force;
@@ -199,27 +219,34 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
         }
       }
 
-      if (timeSinceInteraction > 5000 && !mouseConstraint.body) {
-        // Apply soft attractive force towards the center of the screen
-        const screenCenter = { x: currentWidth / 2, y: currentHeight * 0.35 };
+      if (timeSinceInteraction > 3200 && !mouseConstraint.body) {
+        const screenCenter = { x: currentWidth / 2, y: currentHeight * 0.48 }
+        const spread = radius * 2.75
+        const anchors: Record<BubbleModule, { x: number; y: number }> = {
+          ARIA: { x: screenCenter.x - spread, y: screenCenter.y + radius * 0.28 },
+          JOZIEL: { x: screenCenter.x + spread, y: screenCenter.y + radius * 0.28 },
+          NAYLA: { x: screenCenter.x, y: screenCenter.y - radius * 1.75 },
+        }
+        const focused = focusModuleRef.current
+
         labels.forEach((label) => {
           const body = bodiesMap[label]
-          const target = screenCenter
+          const target = focused === label
+            ? { x: screenCenter.x, y: screenCenter.y }
+            : anchors[label]
 
           const dx = target.x - body.position.x
           const dy = target.y - body.position.y
+          const forceMagnitude = focused === label ? 0.000012 : 0.000006
 
-          // Very gentle pull towards exact center
-          const forceMagnitude = 0.000005
           Matter.Body.applyForce(body, body.position, {
             x: dx * forceMagnitude,
             y: dy * forceMagnitude
           })
 
-          // Maintain momentum slightly to keep alive
           Matter.Body.setVelocity(body, {
-             x: body.velocity.x * 0.99,
-             y: body.velocity.y * 0.99
+             x: body.velocity.x * 0.988,
+             y: body.velocity.y * 0.988
           })
         })
       }
@@ -256,10 +283,11 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
        Matter.Body.setPosition(walls[3], { x: newWidth + wallThickness / 2, y: newHeight / 2 })
 
        // Initial positions update
-       const newCenter = { x: newWidth / 2, y: newHeight * 0.35 }
-       initialPositions.ARIA = { x: newCenter.x - radius * 2, y: newCenter.y }
-       initialPositions.JOZIEL = { x: newCenter.x + radius * 2, y: newCenter.y }
-       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 2 }
+       const newCenter = { x: newWidth / 2, y: newHeight * 0.48 }
+       const newSpread = radius * 2.75
+       initialPositions.ARIA = { x: newCenter.x - newSpread, y: newCenter.y + radius * 0.28 }
+       initialPositions.JOZIEL = { x: newCenter.x + newSpread, y: newCenter.y + radius * 0.28 }
+       initialPositions.NAYLA = { x: newCenter.x, y: newCenter.y - radius * 1.75 }
     }
     window.addEventListener('resize', handleResize)
 
@@ -336,13 +364,18 @@ export default function PhysicsBubbles({ onSelectModule }: PhysicsBubblesProps) 
                  top: pos.y - bubbleRadius,
                  width: bubbleRadius * 2,
                  height: bubbleRadius * 2,
-                 transform: `rotate(${pos.angle}rad)`,
-                 pointerEvents: 'auto' // React to DOM events, matter.js will still track mouse on background
+                 transform: `rotate(${pos.angle}rad) scale(${focusModule === module ? 1.72 : focusModule ? 0.78 : 1})`,
+                 opacity: focusModule && focusModule !== module ? 0.34 : 1,
+                 filter: focusModule === module ? 'drop-shadow(0 0 28px rgba(255,255,255,.34))' : 'none',
+                 transition: 'transform 1.6s cubic-bezier(.2,.8,.2,1), opacity 1s ease, filter 1s ease',
+                 pointerEvents: interactive ? 'auto' : 'none'
                }}
                onPointerDown={(e) => {
+                 if (!interactive) return
                  clickPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
                }}
                onPointerUp={(e) => {
+                 if (!interactive) return
                  if (clickPosRef.current) {
                    const { x, y, time } = clickPosRef.current
                    const dist = Math.hypot(e.clientX - x, e.clientY - y)
