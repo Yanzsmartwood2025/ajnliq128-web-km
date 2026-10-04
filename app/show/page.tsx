@@ -3,7 +3,7 @@ import { ShowTour } from '@/components/show-tour'
 
 export default function ShowPage() {
   return (
-    <BackgroundProvider>
+    <BackgroundProvider renderBackground={false}>
       <ShowTour />
     </BackgroundProvider>
   )
