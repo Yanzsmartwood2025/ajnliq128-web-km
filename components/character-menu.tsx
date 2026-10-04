@@ -6,7 +6,6 @@ import { useAuth } from '@/lib/auth-context'
 import type { Character } from '@/lib/character-assets'
 import type { CharacterSceneSettings } from '@/lib/character-scene-settings'
 import { AuthForm } from './auth-form'
-import { BackgroundSettings } from './BackgroundSettings'
 import { CharacterSceneSettingsDialog } from './character-scene-settings'
 
 export function CharacterMenu({
@@ -19,7 +18,6 @@ export function CharacterMenu({
   onSceneSettingsChange: (settings: CharacterSceneSettings) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [sceneOpen, setSceneOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null)
   const { user, loading, signOut } = useAuth()
@@ -28,11 +26,6 @@ export function CharacterMenu({
   const handleSignOut = async () => {
     await signOut()
     setOpen(false)
-  }
-
-  const openSettings = () => {
-    setOpen(false)
-    setSettingsOpen(true)
   }
 
   const openSceneSettings = () => {
@@ -47,7 +40,6 @@ export function CharacterMenu({
 
   return (
     <>
-      <BackgroundSettings open={settingsOpen} onOpenChange={setSettingsOpen} hideTrigger />
       <CharacterSceneSettingsDialog
         character={character}
         open={sceneOpen}
@@ -76,7 +68,7 @@ export function CharacterMenu({
             aria-label="Cerrar opciones"
             onClick={() => setOpen(false)}
           />
-          <aside className="hub-menu hub-menu-crystal" aria-label="Opciones">
+          <aside className="hub-menu hub-menu-crystal" aria-label="Opciones del canal">
             <div className="hub-menu-topline">
               <div className="hub-menu-brand" aria-hidden="true">
                 <img src="/assets/home/fuego.png" alt="" />
@@ -117,8 +109,7 @@ export function CharacterMenu({
               </span>
             </div>
 
-            <button type="button" onClick={openSceneSettings}>Escena</button>
-            <button type="button" onClick={openSettings}>Fondo y botones</button>
+            <button type="button" onClick={openSceneSettings}>Ajustes del canal</button>
             <Link href="/?skipIntro=1" onClick={() => setOpen(false)}>Inicio</Link>
 
             {!loading && !user && (
