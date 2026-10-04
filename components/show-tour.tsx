@@ -22,6 +22,7 @@ export function ShowTour() {
   const [phase, setPhase] = useState<ShowPhase>('intro')
   const [focusModule, setFocusModule] = useState<BubbleModule | null>(null)
   const completedRef = useRef(false)
+  const ignoreBubbleSelection = useCallback(() => undefined, [])
 
   const completeShow = useCallback(() => {
     if (completedRef.current) return
@@ -111,7 +112,7 @@ export function ShowTour() {
             <PhysicsBubbles
               interactive={false}
               focusModule={focusModule}
-              onSelectModule={() => undefined}
+              onSelectModule={ignoreBubbleSelection}
             />
             {focusModule && (
               <motion.div
