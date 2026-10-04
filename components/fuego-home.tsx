@@ -22,7 +22,8 @@ export function FuegoHome() {
   const [selectedModule, setSelectedModule] = useState<HomeModule | null>(null)
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const { user } = useAuth()
+  const [homeMenuOpen, setHomeMenuOpen] = useState(false)
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     if (searchParams.get('skipIntro') !== '1' || typeof window === 'undefined') return
@@ -103,6 +104,12 @@ export function FuegoHome() {
     setSelectedModule(null)
   }, [])
 
+  const handleSignOut = useCallback(async () => {
+    setHomeMenuOpen(false)
+    setSettingsOpen(false)
+    await signOut()
+  }, [signOut])
+
   return (
     <main className={`home ${splash ? 'is-splashing' : 'is-ready'} ${selectedModule ? 'is-transitioning' : ''}`}>
       {splash && (
@@ -123,35 +130,84 @@ export function FuegoHome() {
           <div className="home-login" style={{ display: 'flex', alignItems: 'center' }}>
             <BackgroundSettings open={settingsOpen} onOpenChange={setSettingsOpen} hideTrigger />
             {user ? (
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                aria-label="Abrir opciones"
-                title="Opciones"
-                style={{
-                  width: '3rem',
-                  height: '3rem',
-                  padding: '0.2rem',
-                  display: 'grid',
-                  placeItems: 'center',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(255,255,255,.34)',
-                  background: 'linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.06))',
-                  backdropFilter: 'blur(20px) saturate(135%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(135%)',
-                  boxShadow: '0 12px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.3)',
-                  cursor: 'pointer',
-                }}
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="Perfil" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  <svg viewBox="0 0 24 24" aria-hidden="true" style={{ width: '1.35rem', height: '1.35rem', fill: 'none', stroke: 'white', strokeWidth: '1.5' }}>
-                    <circle cx="12" cy="8" r="3.25" />
-                    <path d="M5.5 20c.65-3.15 2.85-5 6.5-5s5.85 1.85 6.5 5" />
-                  </svg>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setHomeMenuOpen((current) => !current)}
+                  aria-label="Abrir cuenta y opciones"
+                  aria-expanded={homeMenuOpen}
+                  title="Cuenta y opciones"
+                  style={{
+                    width: '3rem',
+                    height: '3rem',
+                    padding: '0.2rem',
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,.34)',
+                    background: 'linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.06))',
+                    backdropFilter: 'blur(20px) saturate(135%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(135%)',
+                    boxShadow: '0 12px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.3)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="Perfil" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true" style={{ width: '1.35rem', height: '1.35rem', fill: 'none', stroke: 'white', strokeWidth: '1.5' }}>
+                      <circle cx="12" cy="8" r="3.25" />
+                      <path d="M5.5 20c.65-3.15 2.85-5 6.5-5s5.85 1.85 6.5 5" />
+                    </svg>
+                  )}
+                </button>
+
+                {homeMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Cuenta y opciones"
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + .55rem)',
+                      right: 0,
+                      zIndex: 60,
+                      width: 'min(220px, calc(100vw - 2rem))',
+                      padding: '.55rem',
+                      borderRadius: '1rem',
+                      border: '1px solid rgba(255,255,255,.25)',
+                      background: 'linear-gradient(145deg, rgba(32,32,40,.84), rgba(10,10,14,.74))',
+                      backdropFilter: 'blur(22px) saturate(135%)',
+                      WebkitBackdropFilter: 'blur(22px) saturate(135%)',
+                      boxShadow: '0 18px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.18)',
+                    }}
+                  >
+                    <div style={{ padding: '.55rem .65rem .65rem', borderBottom: '1px solid rgba(255,255,255,.10)', marginBottom: '.35rem', textAlign: 'left' }}>
+                      <div style={{ fontSize: '.72rem', fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>Sesión activa</div>
+                      {user.email && <div style={{ marginTop: '.18rem', fontSize: '.68rem', color: 'rgba(255,255,255,.62)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>}
+                    </div>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setHomeMenuOpen(false)
+                        setSettingsOpen(true)
+                      }}
+                      style={{ width: '100%', padding: '.68rem .7rem', border: 0, borderRadius: '.75rem', background: 'transparent', color: 'white', textAlign: 'left', cursor: 'pointer' }}
+                    >
+                      Opciones
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void handleSignOut()}
+                      style={{ width: '100%', padding: '.68rem .7rem', border: 0, borderRadius: '.75rem', background: 'transparent', color: 'rgba(255,255,255,.88)', textAlign: 'left', cursor: 'pointer' }}
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
             ) : (
               <LoginHeader onLoginClick={() => setShowAuthModal('login')} />
             )}
