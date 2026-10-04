@@ -269,8 +269,6 @@ export function CharacterHub({
               <img src="/assets/home/fuego.png" alt="" />
             </div>
             <Link href="/">Inicio</Link>
-            <Link href={isAria ? '/joziel' : '/aria'}>{isAria ? 'Abrir JOZIEL' : 'Abrir ARIA'}</Link>
-            <Link href="/?login=true">Iniciar sesión</Link>
             <button type="button" onClick={() => setMenuOpen(false)}>Cerrar</button>
           </aside>
         </>
