@@ -44,16 +44,30 @@ export function BubbleWrapper({ children, className = '', style, onClick, simple
   const glow = clamp(controls.glow, 0, 2)
   const opacity = clamp(controls.opacity, .05, 1)
 
+  // The Home button settings preview historically used the placeholder text "AJ".
+  // Keep the preview structure intact, but render the official transparent brand PNG instead.
+  const bubbleContent = React.isValidElement<{ children?: React.ReactNode }>(children) && children.props.children === 'AJ'
+    ? React.cloneElement(
+        children,
+        {},
+        <img
+          src="/assets/home/ajnliq128.png"
+          alt="AJNLIQ128"
+          style={{ width: '72%', height: '72%', objectFit: 'contain', display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,.28))' }}
+        />,
+      )
+    : children
+
   const renderEffect = () => {
-    if (effect === 'none') return <div className={innerClasses}>{children}</div>
-    if (effect === 'tiltedCard') return <TiltedCard className={innerClasses} rotationIntensity={15 * clamp(controls.tilt, .25, 2)}>{children}</TiltedCard>
-    if (effect === 'glareHover') return <GlareHover className={innerClasses}>{children}</GlareHover>
-    if (effect === 'borderGlow') return <BorderGlow className={innerClasses} glowColor={controls.color1}>{children}</BorderGlow>
-    if (effect === 'splashCursor') return <SplashCursor className={innerClasses}>{children}</SplashCursor>
+    if (effect === 'none') return <div className={innerClasses}>{bubbleContent}</div>
+    if (effect === 'tiltedCard') return <TiltedCard className={innerClasses} rotationIntensity={15 * clamp(controls.tilt, .25, 2)}>{bubbleContent}</TiltedCard>
+    if (effect === 'glareHover') return <GlareHover className={innerClasses}>{bubbleContent}</GlareHover>
+    if (effect === 'borderGlow') return <BorderGlow className={innerClasses} glowColor={controls.color1}>{bubbleContent}</BorderGlow>
+    if (effect === 'splashCursor') return <SplashCursor className={innerClasses}>{bubbleContent}</SplashCursor>
     if (effect === 'rippleDistortion') {
       return (
         <div className={innerClasses}>
-          {children}
+          {bubbleContent}
           <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none', opacity }}>
             <RippleDistortion tint={controls.color1} highlightColor={controls.color2} strength={.1 + .2 * intensity} glint={glow} tintAmount={.12 + .12 * intensity} quality="low" />
           </div>
@@ -61,9 +75,9 @@ export function BubbleWrapper({ children, className = '', style, onClick, simple
       )
     }
     if (extraEffects.has(effect as ExtraBubbleEffectType)) {
-      return <BubbleEffectFrame variant={effect as ExtraBubbleEffectType} className={innerClasses} controls={controls}>{children}</BubbleEffectFrame>
+      return <BubbleEffectFrame variant={effect as ExtraBubbleEffectType} className={innerClasses} controls={controls}>{bubbleContent}</BubbleEffectFrame>
     }
-    return <div className={innerClasses}>{children}</div>
+    return <div className={innerClasses}>{bubbleContent}</div>
   }
 
   return (
