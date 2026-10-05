@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { createEditorBridgePayload } from '@/lib/editorBridgeToken.mjs';
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +25,8 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true, uid });
+    // The editor bridge consumes this custom token from the #authToken fragment.
+    return NextResponse.json(await createEditorBridgePayload(adminAuth, uid));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error preparing Firebase/Supabase session:', error);
