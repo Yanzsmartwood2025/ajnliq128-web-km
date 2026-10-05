@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "node scripts/prepare-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
+    "prebuild": "node --test tests/editor-bridge-token.test.mjs && node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
     "build": "next build",
     "start": "next start",
     "check:assets": "node scripts/check-assets.mjs",
@@ -44,6 +44,7 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/matter-js": "^0.20.2",
     "canvas": "^3.2.3",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.5",
