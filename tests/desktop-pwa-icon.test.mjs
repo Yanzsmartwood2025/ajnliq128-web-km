@@ -17,8 +17,11 @@ test('Windows uses new transparent white flame, mobile/Apple icon paths remain t
     const mobile = icons.find(icon => icon.src === `/icon-${size}x${size}.png`);
     assert.equal(mobile?.purpose, 'maskable');
   }
-  assert.ok(icons.some(icon => icon.src === '/apple-icon.png'));
-  assert.ok(icons.some(icon => icon.src === '/icon-32x32.png'));
+  // Site favicon and Apple touch assets stay in the HTML metadata, not in
+  // the PWA candidate list, so Windows cannot choose a black-backed PNG.
+  assert.ok(!icons.some(icon => icon.src === '/apple-icon.png'));
+  assert.ok(!icons.some(icon => icon.src === '/icon-32x32.png'));
+  assert.equal(icons.length, 4);
 });
 
 test('desktop flame PNGs have transparent corners and retain real visible artwork', async () => {
