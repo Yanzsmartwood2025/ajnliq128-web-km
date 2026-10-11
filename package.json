@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "predev": "node scripts/prepare-assets.mjs",
+    "predev": "node scripts/prepare-assets.mjs && node scripts/generate-desktop-flame.mjs",
     "dev": "next dev",
-    "prebuild": "node --test tests/editor-bridge-token.test.mjs && node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/check-assets.mjs",
+    "prebuild": "node --test tests/editor-bridge-token.test.mjs && node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/generate-desktop-flame.mjs && node --test tests/desktop-pwa-icon.test.mjs && node scripts/check-assets.mjs",
     "build": "next build",
     "start": "next start",
     "check:assets": "node scripts/check-assets.mjs",

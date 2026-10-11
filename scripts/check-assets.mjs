@@ -10,6 +10,8 @@ const required = [
   'public/icon-32x32.png',
   'public/icon-192x192.png',
   'public/icon-512x512.png',
+  'public/icons/desktop-flame-192.png',
+  'public/icons/desktop-flame-512.png',
   'public/apple-icon.png',
 
   'public/assets/characters/aria/cards/arias-anthem.jpg',
