@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = new URL('../', import.meta.url);
@@ -23,7 +24,7 @@ test('Windows uses new transparent white flame, mobile/Apple icon paths remain t
 test('desktop flame PNGs have transparent corners and retain real visible artwork', async () => {
   for (const size of [192, 512]) {
     const location = new URL(`public/icons/desktop-flame-${size}.png`, root);
-    const { data, info } = await sharp(location).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const { data, info } = await sharp(fileURLToPath(location)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
     assert.equal(info.width, size);
     assert.equal(info.height, size);
     assert.equal(info.channels, 4);
