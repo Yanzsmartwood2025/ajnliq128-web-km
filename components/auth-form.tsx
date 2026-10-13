@@ -160,10 +160,10 @@ export function AuthForm({ mode, onClose, onSwitchMode }: { mode: 'login' | 'reg
         </button>
         <div className="auth-divider" aria-hidden="true"><span>o</span></div>
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          {isRegister && <label>Nombre<input name="name" type="text" autoComplete="name" required disabled={loading} /></label>}
-          <label>Email<input name="email" type="email" autoComplete="email" required disabled={loading} /></label>
-          <label>Contraseña<input name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} required disabled={loading} /></label>
-          {isRegister && <label>Confirmar contraseña<input name="confirmation" type="password" autoComplete="new-password" required disabled={loading} /></label>}
+          {isRegister && <label>Nombre<input name="name" type="text" autoComplete="name" placeholder="Tu nombre" required disabled={loading} /></label>}
+          <label>Email<input name="email" type="email" autoComplete="email" placeholder="tu.correo@ejemplo.com" required disabled={loading} /></label>
+          <label>Contraseña<input name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} placeholder="••••••••" required disabled={loading} /></label>
+          {isRegister && <label>Confirmar contraseña<input name="confirmation" type="password" autoComplete="new-password" placeholder="••••••••" required disabled={loading} /></label>}
           {error && <p className="auth-error" role="alert">{error}</p>}
           <button className="auth-submit" type="submit" disabled={loading}>{loading ? 'Cargando...' : (isRegister ? 'Crear cuenta' : 'Entrar')}</button>
         </form>
