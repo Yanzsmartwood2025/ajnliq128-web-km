@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 
 const ARIA_MODULE_URL = process.env.NEXT_PUBLIC_ARIA_LLM_URL || 'https://aria-llm.vercel.app/'
 
-function buildAriaUrl(idToken: string) {
+function buildAriaUrl() {
   const target = new URL(ARIA_MODULE_URL)
   const params = new URLSearchParams()
 
@@ -15,9 +15,8 @@ function buildAriaUrl(idToken: string) {
   params.set('loginUrl', `${window.location.origin}/?login=true`)
   target.search = params.toString()
 
-  // Fragment data never reaches Vercel/server logs. arIA consumes it in the browser
-  // and immediately removes it from the visible URL.
-  target.hash = `idToken=${encodeURIComponent(idToken)}`
+  // Credentials travel only through the origin-checked iframe postMessage bridge.
+  // Never place Firebase ID tokens into URLs, including fragments.
   return target.toString()
 }
 
@@ -43,8 +42,8 @@ export default function AriaLLMBridgePage() {
         if (!response.ok) throw new Error('No se pudo preparar la sesión central de arIA.')
 
         // Force refresh so the JWT includes role=authenticated for Supabase.
-        const refreshedToken = await currentUser.getIdToken(true)
-        if (!cancelled) setModuleUrl(buildAriaUrl(refreshedToken))
+        await currentUser.getIdToken(true)
+        if (!cancelled) setModuleUrl(buildAriaUrl())
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'No se pudo abrir arIA.')
       }
@@ -59,8 +58,9 @@ export default function AriaLLMBridgePage() {
     const ariaOrigin = new URL(ARIA_MODULE_URL).origin
 
     const handleMessage = async (event: MessageEvent) => {
-      if (event.origin !== ariaOrigin) return
+      if (event.origin !== ariaOrigin || event.source !== iframeRef.current?.contentWindow) return
       if (event.data?.type !== 'AJN_ARIA_TOKEN_REQUEST') return
+      if (typeof event.data?.requestId !== 'string' || event.data.requestId.length > 128) return
 
       try {
         const token = await user.getIdToken(Boolean(event.data?.forceRefresh))
