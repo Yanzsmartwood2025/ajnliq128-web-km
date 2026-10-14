@@ -35,6 +35,11 @@ export function FuegoHome() {
       const query = studio && /^[a-z-]{1,32}$/.test(studio) ? `?studio=${encodeURIComponent(studio)}` : ''
       router.replace('/aria/aria' + query)
     }
+    const requestId = searchParams.get('requestId') || ''
+    if (!authLoading && user && searchParams.get('next') === '/aria/session' && /^[A-Za-z0-9-]{16,80}$/.test(requestId)) {
+      setShowAuthModal(null)
+      router.replace('/aria/session?requestId=' + encodeURIComponent(requestId))
+    }
   }, [authLoading, user, searchParams, router])
 
   useEffect(() => {
@@ -58,6 +63,7 @@ export function FuegoHome() {
 
   useEffect(() => {
     if (!user || typeof window === 'undefined') return
+    if (searchParams.get('next') === '/aria/aria' || searchParams.get('next') === '/aria/session') return
 
     const pendingRedirect = localStorage.getItem('pendingEditorRedirect')
     if (!pendingRedirect) return
@@ -83,7 +89,7 @@ export function FuegoHome() {
     }
 
     void getAuthTokenAndRedirect()
-  }, [user])
+  }, [user, searchParams])
 
   useEffect(() => {
     if (!splash) return

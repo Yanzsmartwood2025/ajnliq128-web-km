@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "node scripts/prepare-assets.mjs && node scripts/generate-desktop-flame.mjs",
     "dev": "next dev",
-    "prebuild": "node --test tests/aria-bridge-auth.test.mjs tests/editor-bridge-token.test.mjs tests/central-entry.test.mjs && node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/generate-desktop-flame.mjs && node --test tests/desktop-pwa-icon.test.mjs && node scripts/check-assets.mjs",
+    "prebuild": "node --test tests/aria-bridge-auth.test.mjs tests/editor-bridge-token.test.mjs tests/central-entry.test.mjs tests/aria-session.test.mjs && node scripts/check-effects.mjs && node scripts/prepare-assets.mjs && node scripts/generate-desktop-flame.mjs && node --test tests/desktop-pwa-icon.test.mjs && node scripts/check-assets.mjs",
     "build": "next build",
     "start": "next start",
     "check:assets": "node scripts/check-assets.mjs",
