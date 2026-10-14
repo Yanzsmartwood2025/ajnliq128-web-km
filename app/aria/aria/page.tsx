@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { AriaLaunchScreen } from '@/components/AriaLaunchScreen'
 
 const ARIA_MODULE_URL = process.env.NEXT_PUBLIC_ARIA_LLM_URL || 'https://aria-llm.vercel.app/'
 
@@ -28,7 +29,20 @@ export default function AriaLLMBridgePage() {
   const [moduleUrl, setModuleUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [introDone, setIntroDone] = useState(false)
+  const [moduleReady, setModuleReady] = useState(false)
   const ready = useMemo(() => !loading && Boolean(user), [loading, user])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIntroDone(true), 3000)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!moduleUrl || moduleReady || error) return
+    const timer = window.setTimeout(() => setError('No se pudo abrir arIA. Reintenta la conexión.'), 30000)
+    return () => window.clearTimeout(timer)
+  }, [moduleUrl, moduleReady, error])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,6 +63,7 @@ export default function AriaLLMBridgePage() {
         const response = await fetch('/api/auth/token', {
           method: 'POST',
           headers: { Authorization: `Bearer ${currentToken}` },
+          signal: AbortSignal.timeout(15000),
         })
         if (!response.ok) throw new Error('No se pudo preparar la sesión central de arIA.')
 
@@ -70,6 +85,8 @@ export default function AriaLLMBridgePage() {
 
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== ariaOrigin || event.source !== iframeRef.current?.contentWindow) return
+      if (event.data?.type === 'AJN_ARIA_READY') { setModuleReady(true); return }
+      if (event.data?.type === 'AJN_ARIA_ERROR') { setError('No se pudo abrir arIA. Reintenta la conexión.'); return }
       if (event.data?.type !== 'AJN_ARIA_TOKEN_REQUEST') return
       if (typeof event.data?.requestId !== 'string' || event.data.requestId.length > 128) return
 
@@ -92,11 +109,11 @@ export default function AriaLLMBridgePage() {
   }, [user])
 
   if (loading) {
-    return <main className="min-h-[100svh] bg-black text-white grid place-items-center">Conectando con arIA…</main>
+    return <AriaLaunchScreen />
   }
 
   if (!user) {
-    return <main className="min-h-[100svh] bg-black text-white grid place-items-center">Abriendo el inicio de sesión…</main>
+    return <AriaLaunchScreen />
   }
 
   return (
@@ -114,12 +131,13 @@ export default function AriaLLMBridgePage() {
           title="arIA"
           src={moduleUrl}
           className="h-full w-full border-0 bg-black"
-          allow="microphone; camera; clipboard-read; clipboard-write; fullscreen"
+          allow="microphone; camera; clipboard-read; clipboard-write; fullscreen; autoplay"
           referrerPolicy="strict-origin-when-cross-origin"
         />
       ) : (
-        <div className="h-full grid place-items-center text-white/70">Preparando arIA…</div>
+        <AriaLaunchScreen />
       )}
+      {!error && moduleUrl && (!introDone || !moduleReady) && <AriaLaunchScreen />}
     </main>
   )
 }
