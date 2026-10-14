@@ -21,6 +21,7 @@ interface BubbleWrapperProps {
   style?: React.CSSProperties
   onClick?: (e: React.MouseEvent<any>) => void
   simple?: boolean
+  loading?: boolean
   effectOverride?: BubbleEffectType
   controlsOverride?: BubbleControlSettings
 }
@@ -34,7 +35,7 @@ const rgba = (hex: string, alpha: number) => {
   return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${clamp(alpha, 0, 1)})`
 }
 
-export function BubbleWrapper({ children, className = '', style, onClick, simple = false, effectOverride, controlsOverride }: BubbleWrapperProps) {
+export function BubbleWrapper({ children, className = '', style, onClick, simple = false, loading = false, effectOverride, controlsOverride }: BubbleWrapperProps) {
   const { settings } = useBackground()
   const effect = simple ? 'none' : effectOverride ?? settings.bubbleEffect
   const controls = controlsOverride ?? settings.bubbleControls?.[effect] ?? defaultBubbleControls[effect] ?? defaultBubbleControls.none
@@ -81,8 +82,14 @@ export function BubbleWrapper({ children, className = '', style, onClick, simple
   }
 
   return (
-    <div className={`relative ${className}`} onClick={onClick} style={{ width: '100%', height: '100%', ...style }}>
+    <div className={`relative ${className}`} aria-busy={loading} onClick={onClick} style={{ width: '100%', height: '100%', ...style }}>
       {renderEffect()}
+      {loading && (
+        <svg className="home-bubble-loading-ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle className="home-bubble-loading-track" cx="50" cy="50" r="48" />
+          <circle className="home-bubble-loading-progress" cx="50" cy="50" r="48" pathLength="100" />
+        </svg>
+      )}
       {effect !== 'none' && (
         <motion.div
           aria-hidden="true"

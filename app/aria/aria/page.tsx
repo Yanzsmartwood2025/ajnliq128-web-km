@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
@@ -13,6 +13,8 @@ function buildAriaUrl() {
   params.set('source', 'ajnliq128')
   params.set('returnTo', `${window.location.origin}/aria`)
   params.set('loginUrl', `${window.location.origin}/?login=true`)
+  const studio = new URLSearchParams(window.location.search).get('studio')
+  if (studio && /^[a-z-]{1,32}$/.test(studio)) params.set('studio', studio)
   target.search = params.toString()
 
   // Credentials travel only through the origin-checked iframe postMessage bridge.
@@ -21,11 +23,20 @@ function buildAriaUrl() {
 }
 
 export default function AriaLLMBridgePage() {
+  const router = useRouter()
   const { user, loading } = useAuth()
   const [moduleUrl, setModuleUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ready = useMemo(() => !loading && Boolean(user), [loading, user])
+
+  useEffect(() => {
+    if (!loading && !user) {
+      const studio = new URLSearchParams(window.location.search).get('studio')
+      const query = studio && /^[a-z-]{1,32}$/.test(studio) ? `&studio=${encodeURIComponent(studio)}` : ''
+      router.replace('/?login=true&skipIntro=1&next=%2Faria%2Faria' + query)
+    }
+  }, [loading, user, router])
 
   useEffect(() => {
     if (!ready || !user) return
@@ -85,15 +96,7 @@ export default function AriaLLMBridgePage() {
   }
 
   if (!user) {
-    return (
-      <main className="min-h-[100svh] bg-black text-white grid place-items-center px-6 text-center">
-        <div className="max-w-md space-y-4">
-          <h1 className="text-2xl font-semibold">arIA pertenece a AJNLIQ128</h1>
-          <p className="text-white/70">Inicia sesión en la central para entrar con la misma identidad y memoria.</p>
-          <Link href="/?login=true" className="inline-flex rounded-full border border-white/30 px-5 py-3 hover:bg-white hover:text-black transition">Iniciar sesión</Link>
-        </div>
-      </main>
-    )
+    return <main className="min-h-[100svh] bg-black text-white grid place-items-center">Abriendo el inicio de sesión…</main>
   }
 
   return (
