@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { LoginHeader } from './auth-form'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -23,7 +23,19 @@ export function FuegoHome() {
   const [showAuthModal, setShowAuthModal] = useState<'login' | 'register' | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [homeMenuOpen, setHomeMenuOpen] = useState(false)
-  const { user, signOut } = useAuth()
+  const [openingModule, setOpeningModule] = useState<HomeModule | null>(null)
+  const [navigationPending, startNavigation] = useTransition()
+  const { user, signOut, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    // Only this known local destination can be resumed after central login.
+    if (!authLoading && user && searchParams.get('next') === '/aria/aria') {
+      setShowAuthModal(null)
+      const studio = searchParams.get('studio')
+      const query = studio && /^[a-z-]{1,32}$/.test(studio) ? `?studio=${encodeURIComponent(studio)}` : ''
+      router.replace('/aria/aria' + query)
+    }
+  }, [authLoading, user, searchParams, router])
 
   useEffect(() => {
     if (searchParams.get('skipIntro') !== '1' || typeof window === 'undefined') return
@@ -33,7 +45,7 @@ export function FuegoHome() {
   }, [searchParams])
 
   useEffect(() => {
-    if (searchParams.get('login') === 'true' && !user) {
+    if (!authLoading && searchParams.get('login') === 'true' && !user) {
       setShowAuthModal('login')
 
       if (typeof window !== 'undefined') {
@@ -42,7 +54,7 @@ export function FuegoHome() {
         window.history.replaceState({}, '', url)
       }
     }
-  }, [searchParams, user])
+  }, [searchParams, user, authLoading])
 
   useEffect(() => {
     if (!user || typeof window === 'undefined') return
@@ -80,20 +92,24 @@ export function FuegoHome() {
   }, [splash])
 
   const enterModule = useCallback((module: HomeModule) => {
-    window.setTimeout(() => {
+    if (openingModule) return
+    setOpeningModule(module)
+    startNavigation(() => {
       router.push(module === 'ARIA' ? '/aria' : module === 'JOZIEL' ? '/joziel' : '/nayla')
-    }, 900)
+    })
+  }, [router, openingModule])
+
+  useEffect(() => {
+    router.prefetch('/aria')
+    router.prefetch('/joziel')
+    router.prefetch('/nayla')
   }, [router])
 
   const handleModuleSelect = useCallback((module: HomeModule) => {
-    setSelectedModule((current) => {
-      if (current === module) {
-        enterModule(module)
-        return current
-      }
-      return module
-    })
-  }, [enterModule])
+    if (openingModule) return
+    if (selectedModule === module) enterModule(module)
+    else setSelectedModule(module)
+  }, [enterModule, openingModule, selectedModule])
 
   const handleFocusedBubbleClick = useCallback((event: React.MouseEvent, module: HomeModule) => {
     event.stopPropagation()
@@ -101,8 +117,9 @@ export function FuegoHome() {
   }, [handleModuleSelect])
 
   const handleTouchOutside = useCallback(() => {
+    if (openingModule) return
     setSelectedModule(null)
-  }, [])
+  }, [openingModule])
 
   const handleSignOut = useCallback(async () => {
     setHomeMenuOpen(false)
@@ -277,7 +294,7 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'ARIA')}>
+                <BubbleWrapper className="floating-bubble" loading={openingModule === 'ARIA' && navigationPending} onClick={(event) => handleFocusedBubbleClick(event, 'ARIA')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video src={mediaUrl('fuego/botones/aria-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
@@ -297,7 +314,7 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'JOZIEL')}>
+                <BubbleWrapper className="floating-bubble" loading={openingModule === 'JOZIEL' && navigationPending} onClick={(event) => handleFocusedBubbleClick(event, 'JOZIEL')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video src={mediaUrl('fuego/botones/joziel-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
@@ -317,7 +334,7 @@ export function FuegoHome() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 style={{ position: 'absolute' }}
               >
-                <BubbleWrapper className="floating-bubble" onClick={(event) => handleFocusedBubbleClick(event, 'NAYLA')}>
+                <BubbleWrapper className="floating-bubble" loading={openingModule === 'NAYLA' && navigationPending} onClick={(event) => handleFocusedBubbleClick(event, 'NAYLA')}>
                   <div className="bubble-video-container" style={{ opacity: 0.82, transition: 'opacity 0.5s ease' }}>
                     <video src={mediaUrl('fuego/botones/nayla-preview.mp4')} autoPlay loop muted playsInline className="bubble-video" />
                   </div>
