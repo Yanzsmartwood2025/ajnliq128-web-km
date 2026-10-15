@@ -86,3 +86,11 @@ test('central Home resumes authorization only for the fixed route and a valid no
   const invalid = await mount('components/fuego-home.tsx', { user: {}, query: 'next=%2Faria%2Fsession&requestId=bad' })
   assert.deepEqual(invalid.redirects, [])
 })
+
+test('AJN central Home retains installed PWA SSO redirect after signing in',async()=>{
+ const nonce='12345678-1234-1234-1234-123456789012'
+ const flow=await mount('components/fuego-home.tsx',{
+  user:{},query:'next=%2Faria%2Fsession&requestId='+nonce+'&flow=redirect'
+ })
+ assert.equal(flow.redirects[0],'/aria/session?requestId='+nonce+'&flow=redirect')
+});
