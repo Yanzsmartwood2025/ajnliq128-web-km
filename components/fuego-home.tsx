@@ -38,7 +38,7 @@ export function FuegoHome() {
     const requestId = searchParams.get('requestId') || ''
     if (!authLoading && user && searchParams.get('next') === '/aria/session' && /^[A-Za-z0-9-]{16,80}$/.test(requestId)) {
       setShowAuthModal(null)
-      router.replace('/aria/session?requestId=' + encodeURIComponent(requestId))
+      router.replace('/aria/session?requestId=' + encodeURIComponent(requestId) + (searchParams.get('flow') === 'redirect' ? '&flow=redirect' : ''))
     }
   }, [authLoading, user, searchParams, router])
 
