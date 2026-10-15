@@ -12,8 +12,8 @@ export default function AriaSessionPage() {
   const { user, loading } = useAuth()
   const [requestId, setRequestId] = useState('')
   const [requested, setRequested] = useState(false)
-  const [redirectFlow,setRedirectFlow]=useState(false)
   const [error, setError] = useState('')
+  const [redirectFlow,setRedirectFlow]=useState(false)
   useEffect(() => {
     const params=new URLSearchParams(window.location.search)
     const id=params.get('requestId')||''
